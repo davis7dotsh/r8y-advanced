@@ -22,6 +22,8 @@ bun run check         # TypeScript typecheck
 bun run db:generate   # generate SQL migrations
 bun run db:migrate    # apply migrations
 bun run db:push       # push schema directly (dev fast-path)
+bun run db:ensure-schema # create the theo schema if missing
+bun run db:push:reset # drop theo schema (cascade) and push cleanly
 bun run drizzle:studio
 ```
 

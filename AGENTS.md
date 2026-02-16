@@ -4,6 +4,39 @@
 - Use `better-result` for error handling. Never throw exceptions for expected/recoverable errors — return `Result` types instead.
 - Avoid explicit return types unless absolutely needed (e.g., overloads, complex inference failures, or public API contracts that TypeScript can't infer correctly). Let TypeScript infer.
 
+## Services Architecture
+
+- Organize code by domain service (`src/services/<domain>/...`), not by technical layer-only folders.
+- Each domain exposes a single namespace as its public API (`<Domain>Service`) and keeps helpers private to the module.
+- Prefer one `index.ts` per service folder that re-exports only stable public members.
+- Keep service functions small and composable; pass dependencies explicitly as function args (`deps`) instead of using classes or hidden singletons.
+- Keep side effects at boundaries (db/http/fs). Core domain logic should stay pure and deterministic.
+
+### better-result + namespaces pattern
+
+- Model service operations as namespace functions that return `Result`.
+- Use typed `TaggedError` classes for recoverable failures and keep error types local to the service.
+- Wrap effectful boundaries with `Result.try` / `Result.tryPromise`, then compose with `map`, `andThen`, `mapErr`, and `match`.
+- Never throw for expected control flow; only unrecoverable programmer defects may throw.
+- Service-to-service calls should propagate `Result` instead of unwrapping early.
+
+```ts
+export namespace UserService {
+  export class UserNotFoundError extends TaggedError("UserNotFoundError")<{
+    userId: string;
+    message: string;
+  }>() {}
+
+  export const getById = (deps: Deps, userId: string) =>
+    Result.tryPromise(
+      () => deps.userRepo.findById(userId),
+      () => new UserNotFoundError({ userId, message: `User ${userId} not found` }),
+    ).andThen((user) =>
+      user ? Result.ok(user) : Result.err(new UserNotFoundError({ userId, message: `User ${userId} not found` })),
+    );
+}
+```
+
 ## Bun
 
 Default to using Bun instead of Node.js.

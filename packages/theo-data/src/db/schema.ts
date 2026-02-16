@@ -9,7 +9,7 @@ import {
   timestamp,
 } from "drizzle-orm/pg-core";
 
-const theo = pgSchema("theo");
+export const theo = pgSchema("theo");
 
 export const notificationTypeEnum = theo.enum("notification_type", [
   "todoist_video_live",

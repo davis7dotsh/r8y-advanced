@@ -27,6 +27,13 @@ bun run db:push:reset # drop theo schema (cascade) and push cleanly
 bun run drizzle:studio
 ```
 
+## AI Smoke Test
+
+```bash
+bun run ai:test:zen-gemini-object
+bun run ai:test:zen-claude-haiku-object
+```
+
 ## Environment
 
 Set `DATABASE_URL` before running migrations/checks.

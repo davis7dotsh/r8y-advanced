@@ -3,7 +3,8 @@
   "scripts": {
     "start": "bun run src/index.ts",
     "check": "bunx tsc --noEmit",
-    "format": "bunx prettier --write drizzle.config.ts src/db/*.ts src/index.ts",
+    "format": "bunx prettier --write drizzle.config.ts src/db/*.ts src/index.ts scripts/*.ts",
+    "ai:test:zen-claude-haiku-object": "bun run scripts/test-zen-claude-haiku-object.ts",
     "db:ensure-schema": "bun run scripts/ensure-schema.ts",
     "db:reset-schema": "bun run scripts/reset-schema.ts",
     "db:generate": "bunx drizzle-kit generate --config drizzle.config.ts",
@@ -23,5 +24,10 @@
   },
   "peerDependencies": {
     "typescript": "^5"
+  },
+  "dependencies": {
+    "@ai-sdk/anthropic": "^3.0.44",
+    "ai": "^6.0.86",
+    "zod": "^4.3.6"
   }
 }

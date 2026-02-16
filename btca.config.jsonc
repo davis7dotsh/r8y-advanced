@@ -1,7 +1,44 @@
 {
   "$schema": "https://btca.dev/btca.schema.json",
   "dataDirectory": ".btca",
-  "resources": [],
+  "resources": [
+    {
+      "type": "git",
+      "name": "better-result",
+      "url": "https://github.com/dmmulroy/better-result",
+      "branch": "main"
+    },
+    {
+      "type": "git",
+      "name": "ai",
+      "url": "https://github.com/vercel/ai",
+      "branch": "main"
+    },
+    {
+      "type": "git",
+      "name": "tanstackStartAndRouter",
+      "url": "https://github.com/tanstack/router",
+      "branch": "main"
+    },
+    {
+      "type": "git",
+      "name": "turborepo",
+      "url": "https://github.com/vercel/turborepo",
+      "branch": "main"
+    },
+    {
+      "type": "git",
+      "name": "tailwindcss",
+      "url": "https://github.com/tailwindlabs/tailwindcss",
+      "branch": "main"
+    },
+    {
+      "type": "git",
+      "name": "drizzle-orm-docs",
+      "url": "https://github.com/drizzle-team/drizzle-orm-docs",
+      "branch": "main"
+    }
+  ],
   "model": "gpt-5.3-codex",
   "provider": "openai"
 }

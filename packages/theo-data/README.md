@@ -1,15 +1,30 @@
 # theo-data
 
-To install dependencies:
+Drizzle + Bun + PostgreSQL starter setup for the Theo Data package.
+
+## Install
 
 ```bash
 bun install
 ```
 
-To run:
+## Run
 
 ```bash
-bun run index.ts
+# Start the package entrypoint
+bun run start
 ```
 
-This project was created using `bun init` in bun v1.3.9. [Bun](https://bun.com) is a fast all-in-one JavaScript runtime.
+## Drizzle
+
+```bash
+bun run check         # TypeScript typecheck
+bun run db:generate   # generate SQL migrations
+bun run db:migrate    # apply migrations
+bun run db:push       # push schema directly (dev fast-path)
+bun run drizzle:studio
+```
+
+## Environment
+
+Set `DATABASE_URL` before running migrations/checks.

@@ -1,3 +1,11 @@
+## General
+
+- Use functional programming patterns. Prefer pure functions, immutable data, and composition over classes and mutation.
+- Use `better-result` for error handling. Never throw exceptions for expected/recoverable errors — return `Result` types instead.
+- Avoid explicit return types unless absolutely needed (e.g., overloads, complex inference failures, or public API contracts that TypeScript can't infer correctly). Let TypeScript infer.
+
+## Bun
+
 Default to using Bun instead of Node.js.
 
 - Use `bun <file>` instead of `node <file>` or `ts-node <file>`

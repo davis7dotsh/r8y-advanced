@@ -5,8 +5,9 @@ import {
   pgSchema,
   primaryKey,
   text,
-  varchar,
   timestamp,
+  uniqueIndex,
+  varchar,
 } from "drizzle-orm/pg-core";
 
 export const theo = pgSchema("theo");
@@ -55,11 +56,11 @@ export const comments = theo.table(
     publishedAt: timestamp("published_at", { withTimezone: true }).notNull(),
     likeCount: integer("like_count").notNull(),
     replyCount: integer("reply_count").notNull(),
-    isEditingMistake: boolean("is_editing_mistake").notNull(),
-    isSponsorMention: boolean("is_sponsor_mention").notNull(),
-    isQuestion: boolean("is_question").notNull(),
-    isPositiveComment: boolean("is_positive_comment").notNull(),
-    isProcessed: boolean("is_processed").notNull(),
+    isEditingMistake: boolean("is_editing_mistake"),
+    isSponsorMention: boolean("is_sponsor_mention"),
+    isQuestion: boolean("is_question"),
+    isPositiveComment: boolean("is_positive_comment"),
+    isProcessed: boolean("is_processed").notNull().default(false),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -81,6 +82,7 @@ export const sponsors = theo.table(
       .defaultNow(),
   },
   (table) => [
+    uniqueIndex("sponsors_sponsor_key_unique").on(table.sponsorKey),
     index("sponsors_key").on(table.sponsorKey),
     index("sponsors_name_search").on(table.name),
   ],
@@ -125,3 +127,12 @@ export const notifications = theo.table(
   },
   (table) => [index("notifications_video_id").on(table.videoId)],
 );
+
+export const crawlerState = theo.table("crawler_state", {
+  stateKey: varchar("state_key", { length: 255 }).primaryKey(),
+  cursor: text("cursor"),
+  metaJson: text("meta_json"),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});

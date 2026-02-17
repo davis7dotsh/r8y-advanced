@@ -3,12 +3,15 @@
   "scripts": {
     "start": "bun run src/index.ts",
     "check": "bunx tsc --noEmit",
-    "format": "bunx prettier --write drizzle.config.ts src/db/*.ts src/index.ts scripts/*.ts",
-    "ai:test:zen-claude-haiku-object": "bun run scripts/test-zen-claude-haiku-object.ts",
+    "format": "bunx prettier --write drizzle.config.ts src/**/*.ts scripts/**/*.ts",
+    "test": "bun test",
+    "baml:gen": "baml-cli generate --from ./baml_src",
+    "crawl:video": "bun run scripts/crawl-video.ts",
+    "crawl:rss": "bun run scripts/crawl-rss.ts",
+    "crawl:backfill": "bun run scripts/crawl-backfill.ts",
+    "visualizer": "bun run scripts/visualizer.ts",
     "db:ensure-schema": "bun run scripts/ensure-schema.ts",
     "db:reset-schema": "bun run scripts/reset-schema.ts",
-    "db:generate": "bunx drizzle-kit generate --config drizzle.config.ts",
-    "db:migrate": "bun run db:ensure-schema && bunx drizzle-kit migrate --config drizzle.config.ts",
     "db:push": "bun run db:ensure-schema && bunx drizzle-kit push --config drizzle.config.ts",
     "db:push:reset": "bun run db:reset-schema && bunx drizzle-kit push --config drizzle.config.ts",
     "db:studio": "bunx drizzle-kit studio --config drizzle.config.ts"
@@ -27,7 +30,10 @@
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.44",
+    "@boundaryml/baml": "^0.219.0",
     "ai": "^6.0.86",
+    "better-result": "^2.7.0",
+    "fast-xml-parser": "^5.3.6",
     "zod": "^4.3.6"
   }
 }

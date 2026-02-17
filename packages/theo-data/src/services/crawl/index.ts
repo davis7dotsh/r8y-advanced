@@ -16,8 +16,8 @@ import { StateService } from "../state";
 import { YouTubeApiService } from "../youtube-api";
 
 type Logger = Pick<Console, "info" | "warn" | "error">;
-const MAX_COMMENTS_PER_VIDEO = 200;
-const MAX_COMMENT_CLASSIFICATIONS_PER_CRAWL = 200;
+const MAX_COMMENTS_PER_VIDEO = 100;
+const MAX_COMMENT_CLASSIFICATIONS_PER_CRAWL = 100;
 
 const createSponsorId = (sponsorKey: string) =>
   `sponsor_${createHash("sha1").update(sponsorKey).digest("hex").slice(0, 40)}`;

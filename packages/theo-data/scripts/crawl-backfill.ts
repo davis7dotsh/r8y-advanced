@@ -16,7 +16,7 @@ const readArg = (name: string) => {
 };
 
 const parseLimit = () => {
-  const raw = readArg("limit") ?? "all";
+  const raw = readArg("limit") ?? "400";
 
   if (raw === "all") {
     return "all" as const;

@@ -20,7 +20,7 @@ $ pnpm add @boundaryml/baml
 
 import type { Image, Audio, Pdf, Video } from "@boundaryml/baml"
 import type { Checked, Check } from "./types"
-import type {  SponsorInfo } from "./types"
+import type {  CommentParse,  SponsorInfo } from "./types"
 import type * as types from "./types"
 
 /******************************************************************************
@@ -36,6 +36,12 @@ export interface StreamState<T> {
 }
 
 export namespace partial_types {
+    export interface CommentParse {
+      isEditingMistake?: boolean | null
+      isSponsorMention?: boolean | null
+      isQuestion?: boolean | null
+      isPositiveComment?: boolean | null
+    }
     export interface SponsorInfo {
       sponsorName?: string | null
       sponsorKey?: string | null

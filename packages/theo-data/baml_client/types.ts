@@ -47,6 +47,14 @@ export function all_succeeded<CheckName extends string>(checks: Record<CheckName
 export function get_checks<CheckName extends string>(checks: Record<CheckName, Check>): Check[] {
     return Object.values(checks)
 }
+export interface CommentParse {
+  isEditingMistake: boolean
+  isSponsorMention: boolean
+  isQuestion: boolean
+  isPositiveComment: boolean
+  
+}
+
 export interface SponsorInfo {
   sponsorName: string
   sponsorKey: string

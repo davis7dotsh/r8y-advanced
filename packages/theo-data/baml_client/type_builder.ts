@@ -27,6 +27,8 @@ export { FieldType, EnumBuilder, ClassBuilder }
 export default class TypeBuilder {
     private tb: _TypeBuilder;
     
+    CommentParse: ClassViewer<'CommentParse', "isEditingMistake" | "isSponsorMention" | "isQuestion" | "isPositiveComment">;
+    
     SponsorInfo: ClassViewer<'SponsorInfo', "sponsorName" | "sponsorKey">;
     
     
@@ -34,13 +36,17 @@ export default class TypeBuilder {
     constructor() {
         this.tb = new _TypeBuilder({
           classes: new Set([
-            "SponsorInfo",
+            "CommentParse","SponsorInfo",
           ]),
           enums: new Set([
             
           ]),
           runtime: DO_NOT_USE_DIRECTLY_UNLESS_YOU_KNOW_WHAT_YOURE_DOING_RUNTIME
         });
+        
+        this.CommentParse = this.tb.classViewer("CommentParse", [
+          "isEditingMistake","isSponsorMention","isQuestion","isPositiveComment",
+        ]);
         
         this.SponsorInfo = this.tb.classViewer("SponsorInfo", [
           "sponsorName","sponsorKey",

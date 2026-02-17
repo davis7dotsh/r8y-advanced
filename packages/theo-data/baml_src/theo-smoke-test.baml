@@ -3,6 +3,13 @@ class SponsorInfo {
   sponsorKey string
 }
 
+class CommentParse {
+  isEditingMistake bool
+  isSponsorMention bool
+  isQuestion bool
+  isPositiveComment bool
+}
+
 function GetSponsor(sponsorPrompt: string, videoDescription: string) -> SponsorInfo {
   client OpenCodeZenClaudeHaikuClient
   prompt #"
@@ -13,6 +20,38 @@ function GetSponsor(sponsorPrompt: string, videoDescription: string) -> SponsorI
 
     The video description is:
     {{ videoDescription }}
+
+    {{ ctx.output_format }}
+  "#
+}
+
+function ParseComment(
+  videoTitle: string,
+  videoDescription: string,
+  commentAuthor: string,
+  commentText: string
+) -> CommentParse {
+  client OpenCodeZenClaudeHaikuClient
+  prompt #"
+    Classify this YouTube comment for Theo channel analytics.
+
+    Output booleans using the following rules:
+    - isEditingMistake: true if the comment reports mistakes, bugs, wrong facts, timestamp/editing issues, or asks for corrections.
+    - isSponsorMention: true if the comment mentions sponsorship, ad reads, affiliate links, or sponsor brands.
+    - isQuestion: true if the comment asks a question requiring an answer.
+    - isPositiveComment: true if the tone is positive/supportive.
+
+    Video title:
+    {{ videoTitle }}
+
+    Video description:
+    {{ videoDescription }}
+
+    Comment author:
+    {{ commentAuthor }}
+
+    Comment text:
+    {{ commentText }}
 
     {{ ctx.output_format }}
   "#
@@ -97,3 +136,32 @@ S/O Ph4se0n3 for the awesome edit 🙏
   }
 }
 
+test comment_positive_question {
+  functions [ParseComment]
+  args {
+    videoTitle "How to ship with Bun"
+    videoDescription "A walkthrough of Bun SQL and deployment workflows."
+    commentAuthor "dev1"
+    commentText "Great vid, this helped a lot. Do you have a follow-up for auth patterns?"
+  }
+}
+
+test comment_sponsor_mention {
+  functions [ParseComment]
+  args {
+    videoTitle "My honest review of build tools"
+    videoDescription "This video has a sponsor and goes through tradeoffs."
+    commentAuthor "dev2"
+    commentText "Convex sponsoring this was interesting, thanks for disclosing the ad."
+  }
+}
+
+test comment_editing_mistake {
+  functions [ParseComment]
+  args {
+    videoTitle "Database performance tuning"
+    videoDescription "Benchmarks and practical production tuning tips."
+    commentAuthor "dev3"
+    commentText "At 08:14 the query plan shown is wrong and the index name is misspelled."
+  }
+}

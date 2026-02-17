@@ -1,6 +1,13 @@
 {
   "name": "r8y",
   "private": true,
+  "packageManager": "bun@1.3.9",
+  "scripts": {
+    "dev": "bunx turbo run dev --filter=web",
+    "check": "bunx turbo run check",
+    "format": "bunx turbo run format",
+    "test": "bunx turbo run test"
+  },
   "workspaces": [
     "apps/*",
     "packages/*"

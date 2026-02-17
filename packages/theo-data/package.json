@@ -17,6 +17,10 @@
     "db:studio": "bunx drizzle-kit studio --config drizzle.config.ts"
   },
   "main": "src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./schema": "./src/schema.ts"
+  },
   "type": "module",
   "private": true,
   "devDependencies": {

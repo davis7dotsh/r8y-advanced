@@ -30,6 +30,12 @@ test('parses theo video search params', () => {
 })
 
 test('parses theo sponsor search params', () => {
-  expect(parseTheoSponsorSearch({ page: '4' })).toEqual({ page: 4 })
-  expect(parseTheoSponsorSearch({})).toEqual({ page: 1 })
+  expect(parseTheoSponsorSearch({ page: '4' })).toEqual({
+    page: 4,
+    mentionsPage: 1,
+  })
+  expect(parseTheoSponsorSearch({})).toEqual({
+    page: 1,
+    mentionsPage: 1,
+  })
 })

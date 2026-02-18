@@ -32,6 +32,11 @@ test('returns sponsor details and paginated videos', async () => {
             viewCount: 100,
             likeCount: 20,
             commentCount: 5,
+            xUrl: null,
+            xViews: null,
+            xLikes: null,
+            xReposts: null,
+            xComments: null,
           },
         ],
         loadSponsorStats: async () => [
@@ -39,6 +44,7 @@ test('returns sponsor details and paginated videos', async () => {
             totalViews: 100,
             averageViews: 100,
             lastPublishedAt: new Date('2026-01-02T00:00:00.000Z'),
+            totalXViews: 0,
           },
         ],
         loadSponsorTopVideo: async () => [
@@ -48,6 +54,8 @@ test('returns sponsor details and paginated videos', async () => {
             viewCount: 100,
           },
         ],
+        countSponsorMentions: async () => [{ total: 0 }],
+        loadSponsorMentions: async () => [],
       },
     },
     {

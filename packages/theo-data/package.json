@@ -19,7 +19,9 @@
   "main": "src/index.ts",
   "exports": {
     ".": "./src/index.ts",
-    "./schema": "./src/schema.ts"
+    "./schema": "./src/schema.ts",
+    "./crawl": "./src/services/crawl/index.ts",
+    "./channel-info": "./src/THEO_CHANNEL_INFO.ts"
   },
   "type": "module",
   "private": true,

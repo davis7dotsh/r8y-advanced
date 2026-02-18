@@ -4,6 +4,7 @@
   "packageManager": "bun@1.3.9",
   "scripts": {
     "dev": "bunx turbo run dev --filter=web",
+    "dev:crawler": "bunx turbo run dev --filter=live-crawler",
     "check": "bunx turbo run check",
     "format": "bunx turbo run format",
     "test": "bunx turbo run test"

@@ -19,6 +19,8 @@ test('renders sponsor detail view', () => {
   render(
     <TheoSponsorView
       sponsorSlug="acme--0001"
+      page={1}
+      mentionsPage={1}
       payload={{
         status: 'ok',
         data: {
@@ -32,6 +34,7 @@ test('renders sponsor detail view', () => {
             totalViews: 10,
             averageViews: 10,
             lastPublishedAt: new Date('2026-01-01T00:00:00.000Z').toISOString(),
+            totalXViews: 0,
             bestPerformingVideo: {
               videoId: 'video-1',
               title: 'Sponsored episode',
@@ -58,6 +61,15 @@ test('renders sponsor detail view', () => {
               },
             ],
           },
+          sponsorMentions: {
+            pagination: {
+              page: 1,
+              pageSize: 50,
+              total: 0,
+              totalPages: 1,
+            },
+            items: [],
+          },
         },
       }}
     />,
@@ -65,5 +77,5 @@ test('renders sponsor detail view', () => {
 
   expect(screen.getByText('Acme')).toBeTruthy()
   expect(screen.getByText('Sponsored episode')).toBeTruthy()
-  expect(screen.getByText('Total views')).toBeTruthy()
+  expect(screen.getByText('Total YT views')).toBeTruthy()
 })

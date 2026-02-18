@@ -134,7 +134,7 @@ export const TheoSponsorView = ({
             </dt>
             <dd className="mt-1 text-sm font-semibold text-neutral-900">
               {stats.lastPublishedAt
-                ? new Date(stats.lastPublishedAt).toLocaleString()
+                ? `${Math.floor((Date.now() - new Date(stats.lastPublishedAt).getTime()) / 86400000)} days ago`
                 : 'N/A'}
             </dd>
           </div>

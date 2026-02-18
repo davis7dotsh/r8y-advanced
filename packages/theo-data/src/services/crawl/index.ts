@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { Client } from "@xdevplatform/xdk";
 import { Result, TaggedError } from "better-result";
 import { and, desc, eq, inArray, ne } from "drizzle-orm";
 import { XMLParser } from "fast-xml-parser";
@@ -18,6 +19,7 @@ import { YouTubeApiService } from "../youtube-api";
 type Logger = Pick<Console, "info" | "warn" | "error">;
 const MAX_COMMENTS_PER_VIDEO = 100;
 const MAX_COMMENT_CLASSIFICATIONS_PER_CRAWL = 100;
+const X_POST_HOSTS = new Set(["x.com", "www.x.com", "twitter.com", "www.twitter.com"]);
 
 const createSponsorId = (sponsorKey: string) =>
   `sponsor_${createHash("sha1").update(sponsorKey).digest("hex").slice(0, 40)}`;
@@ -124,6 +126,51 @@ const parseRssVideoIds = (xml: string) => {
   return [...new Set(entries.map((item) => item.videoId).filter((id): id is string => Boolean(id)))];
 };
 
+const parseXPostUrl = (rawUrl: string) => {
+  const value = rawUrl.trim();
+
+  if (!value) {
+    return null;
+  }
+
+  let parsed: URL;
+  try {
+    parsed = new URL(value);
+  } catch {
+    return null;
+  }
+
+  if (!X_POST_HOSTS.has(parsed.hostname.toLowerCase())) {
+    return null;
+  }
+
+  const match = parsed.pathname.match(/\/status\/(\d+)/);
+  const postId = match?.[1];
+  if (!postId) {
+    return null;
+  }
+
+  return {
+    postId,
+    canonicalUrl: `https://x.com/i/web/status/${postId}`,
+  };
+};
+
+const asRecord = (value: unknown) =>
+  value && typeof value === "object" ? (value as Record<string, unknown>) : null;
+
+const readMetric = (metrics: Record<string, unknown> | null, keys: string[]) => {
+  if (!metrics) {
+    return null;
+  }
+
+  const matched = keys
+    .map((key) => metrics[key])
+    .find((entry) => typeof entry === "number" && Number.isFinite(entry));
+
+  return typeof matched === "number" ? Math.floor(matched) : null;
+};
+
 export namespace CrawlService {
   export class InvalidCrawlInputError extends TaggedError("InvalidCrawlInputError")<{
     message: string;
@@ -136,6 +183,139 @@ export namespace CrawlService {
   export class CrawlExternalError extends TaggedError("CrawlExternalError")<{
     message: string;
   }>() {}
+
+  const refreshXMetrics = async (
+    deps: {
+      db: typeof defaultDb;
+      logger?: Logger;
+    },
+    input: {
+      videoId: string;
+    },
+  ) => {
+    const { db, logger } = deps;
+    const linkedVideoResult = await Result.tryPromise({
+      try: () =>
+        db.query.videos.findFirst({
+          where: eq(videos.videoId, input.videoId),
+          columns: {
+            xUrl: true,
+          },
+        }),
+      catch: (cause) =>
+        new CrawlPersistenceError({
+          message:
+            cause instanceof Error
+              ? cause.message
+              : "Failed while loading linked X url for video",
+        }),
+    });
+
+    if (linkedVideoResult.status === "error") {
+      return linkedVideoResult;
+    }
+
+    const linkedUrl = linkedVideoResult.value?.xUrl;
+    if (!linkedUrl) {
+      return Result.ok({
+        refreshed: false,
+        reason: "no-linked-url",
+      } as const);
+    }
+
+    const parsed = parseXPostUrl(linkedUrl);
+    if (!parsed) {
+      return Result.err(
+        new CrawlExternalError({
+          message: `Invalid linked X URL for ${input.videoId}: ${linkedUrl}`,
+        }),
+      );
+    }
+
+    const bearerToken = process.env.X_API_KEY?.trim();
+    if (!bearerToken) {
+      logWarn(logger, "crawlVideo", "x api key missing; skipping x refresh", {
+        videoId: input.videoId,
+      });
+      return Result.ok({
+        refreshed: false,
+        reason: "missing-api-key",
+      } as const);
+    }
+
+    const client = new Client({ bearerToken });
+    const xPostResult = await Result.tryPromise(
+      {
+        try: () =>
+          client.posts.getById(parsed.postId, {
+            tweetFields: ["public_metrics"],
+          }),
+        catch: (cause) =>
+          new CrawlExternalError({
+            message:
+              cause instanceof Error ? cause.message : "Failed while requesting X post metrics",
+          }),
+      },
+      {
+        retry: {
+          times: 2,
+          delayMs: 250,
+          backoff: "exponential",
+        },
+      },
+    );
+
+    if (xPostResult.status === "error") {
+      return xPostResult;
+    }
+
+    const publicMetrics = asRecord(xPostResult.value.data?.publicMetrics);
+    const metrics = {
+      xUrl: parsed.canonicalUrl,
+      xViews: readMetric(publicMetrics, [
+        "impression_count",
+        "impressionCount",
+        "view_count",
+        "viewCount",
+      ]),
+      xLikes: readMetric(publicMetrics, ["like_count", "likeCount"]),
+      xReposts: readMetric(publicMetrics, [
+        "retweet_count",
+        "retweetCount",
+        "repost_count",
+        "repostCount",
+      ]),
+      xComments: readMetric(publicMetrics, ["reply_count", "replyCount"]),
+    };
+
+    const updateResult = await Result.tryPromise({
+      try: () =>
+        db
+          .update(videos)
+          .set({
+            xUrl: metrics.xUrl,
+            xViews: metrics.xViews,
+            xLikes: metrics.xLikes,
+            xReposts: metrics.xReposts,
+            xComments: metrics.xComments,
+          })
+          .where(eq(videos.videoId, input.videoId)),
+      catch: (cause) =>
+        new CrawlPersistenceError({
+          message:
+            cause instanceof Error ? cause.message : "Failed while saving X post metrics",
+        }),
+    });
+
+    if (updateResult.status === "error") {
+      return updateResult;
+    }
+
+    return Result.ok({
+      refreshed: true,
+      metrics,
+    } as const);
+  };
 
   export const crawlVideo = async (
     deps: {
@@ -344,7 +524,26 @@ export namespace CrawlService {
       commentsDeleted: persistedResult.value.deletedComments,
     });
 
-    logInfo(logger, "crawlVideo", "step 4/7 run sponsor extraction", {
+    logInfo(logger, "crawlVideo", "step 4/8 refresh linked X metrics", {
+      videoId,
+    });
+    const xRefreshResult = await refreshXMetrics({ db, logger }, { videoId });
+
+    if (xRefreshResult.status === "error") {
+      logStageFailure(stageFailures, "x-refresh", xRefreshResult.error.message);
+      logWarn(logger, "crawlVideo", "x refresh failed; continuing", {
+        videoId,
+        error: xRefreshResult.error.message,
+      });
+    } else {
+      logInfo(logger, "crawlVideo", "x refresh stage complete", {
+        videoId,
+        refreshed: xRefreshResult.value.refreshed,
+        reason: xRefreshResult.value.refreshed ? null : xRefreshResult.value.reason,
+      });
+    }
+
+    logInfo(logger, "crawlVideo", "step 5/8 run sponsor extraction", {
       videoId,
     });
     const sponsorResult = await AiEnrichmentService.extractSponsor({
@@ -432,7 +631,7 @@ export namespace CrawlService {
       }
     }
 
-    logInfo(logger, "crawlVideo", "step 5/7 load pending comments for AI", {
+    logInfo(logger, "crawlVideo", "step 6/8 load pending comments for AI", {
       videoId,
       maxClassifications: MAX_COMMENT_CLASSIFICATIONS_PER_CRAWL,
     });
@@ -462,7 +661,7 @@ export namespace CrawlService {
       return pendingCommentsResult;
     }
 
-    logInfo(logger, "crawlVideo", "step 6/7 classify pending comments", {
+    logInfo(logger, "crawlVideo", "step 7/8 classify pending comments", {
       videoId,
       pendingCommentCount: pendingCommentsResult.value.length,
       maxClassifications: MAX_COMMENT_CLASSIFICATIONS_PER_CRAWL,
@@ -541,7 +740,7 @@ export namespace CrawlService {
     let notificationsInserted = 0;
 
     if (input.sendNotifications) {
-      logInfo(logger, "crawlVideo", "step 7/7 emit live notifications", {
+      logInfo(logger, "crawlVideo", "step 8/8 emit live notifications", {
         videoId,
       });
       const notificationRows = [
@@ -593,7 +792,7 @@ export namespace CrawlService {
         });
       }
     } else {
-      logInfo(logger, "crawlVideo", "step 7/7 notifications skipped", {
+      logInfo(logger, "crawlVideo", "step 8/8 notifications skipped", {
         videoId,
       });
     }

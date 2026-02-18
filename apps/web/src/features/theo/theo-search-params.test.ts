@@ -19,8 +19,14 @@ test('parses theo list search params', () => {
 test('parses theo video search params', () => {
   expect(parseTheoVideoSearch({ commentsPage: '3' })).toEqual({
     commentsPage: 3,
+    commentsSort: 'likeCount',
+    commentsFilter: 'all',
   })
-  expect(parseTheoVideoSearch({})).toEqual({ commentsPage: 1 })
+  expect(parseTheoVideoSearch({})).toEqual({
+    commentsPage: 1,
+    commentsSort: 'likeCount',
+    commentsFilter: 'all',
+  })
 })
 
 test('parses theo sponsor search params', () => {

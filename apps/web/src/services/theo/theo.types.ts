@@ -24,6 +24,13 @@ export type VideoSummary = {
   likeCount: number
   commentCount: number
   sponsors: SponsorSummary[]
+  xPost: {
+    url: string
+    views: number | null
+    likes: number | null
+    reposts: number | null
+    comments: number | null
+  } | null
 }
 
 export type TheoVideoComment = {
@@ -51,11 +58,29 @@ export type TheoVideoDetails = {
     likeCount: number
     commentCount: number
     sponsors: SponsorSummary[]
+    xPost: {
+      url: string
+      views: number | null
+      likes: number | null
+      reposts: number | null
+      comments: number | null
+    } | null
   }
   comments: {
     items: TheoVideoComment[]
     pagination: Pagination
   }
+}
+
+export type SponsorMentionComment = {
+  commentId: string
+  author: string
+  text: string
+  publishedAt: string
+  likeCount: number
+  replyCount: number
+  videoId: string
+  videoTitle: string
 }
 
 export type TheoSponsorDetails = {
@@ -69,6 +94,7 @@ export type TheoSponsorDetails = {
     totalViews: number
     averageViews: number
     lastPublishedAt: string | null
+    totalXViews: number
     bestPerformingVideo: {
       videoId: string
       title: string
@@ -77,6 +103,10 @@ export type TheoSponsorDetails = {
   }
   videos: {
     items: VideoSummary[]
+    pagination: Pagination
+  }
+  sponsorMentions: {
+    items: SponsorMentionComment[]
     pagination: Pagination
   }
 }

@@ -5,7 +5,11 @@ import type {
   TheoVideoDetails,
   VideoSummary,
 } from '@/services/theo/theo.types'
-import { parseTheoListSearch } from './theo-search-params'
+import {
+  parseTheoListSearch,
+  parseTheoSponsorSearch,
+  parseTheoVideoSearch,
+} from './theo-search-params'
 
 type ServerError = {
   tag: string
@@ -62,15 +66,14 @@ export const getTheoVideoDetails = createServerFn({ method: 'GET' })
       input && typeof input === 'object'
         ? (input as Record<string, unknown>)
         : {}
+    const { commentsPage, commentsSort, commentsFilter } =
+      parseTheoVideoSearch(value)
 
     return {
       videoId: typeof value.videoId === 'string' ? value.videoId : '',
-      commentsPage:
-        typeof value.commentsPage === 'number'
-          ? value.commentsPage
-          : typeof value.commentsPage === 'string'
-            ? Number.parseInt(value.commentsPage, 10)
-            : 1,
+      commentsPage,
+      commentsSort,
+      commentsFilter,
     }
   })
   .handler(async ({ data }) => {
@@ -91,7 +94,7 @@ export const getTheoVideoDetails = createServerFn({ method: 'GET' })
     } satisfies ServerPayload<TheoVideoDetails>
   })
 
-export const getTheoSponsorDetails = createServerFn({ method: 'GET' })
+export const linkTheoVideoToXPost = createServerFn({ method: 'POST' })
   .inputValidator((input: unknown) => {
     const value =
       input && typeof input === 'object'
@@ -99,13 +102,44 @@ export const getTheoSponsorDetails = createServerFn({ method: 'GET' })
         : {}
 
     return {
+      videoId: typeof value.videoId === 'string' ? value.videoId.trim() : '',
+      xPostUrl: typeof value.xPostUrl === 'string' ? value.xPostUrl.trim() : '',
+    }
+  })
+  .handler(async ({ data }) => {
+    const { TheoVideoService } =
+      await import('@/services/theo/theo-video.server')
+    const result = await TheoVideoService.linkXPost({}, data)
+
+    if (result.status === 'error') {
+      return {
+        status: 'error',
+        error: toError(result.error),
+      } satisfies ServerPayload<{
+        xPost: NonNullable<TheoVideoDetails['video']['xPost']>
+      }>
+    }
+
+    return {
+      status: 'ok',
+      data: result.value,
+    } satisfies ServerPayload<{
+      xPost: NonNullable<TheoVideoDetails['video']['xPost']>
+    }>
+  })
+
+export const getTheoSponsorDetails = createServerFn({ method: 'GET' })
+  .inputValidator((input: unknown) => {
+    const value =
+      input && typeof input === 'object'
+        ? (input as Record<string, unknown>)
+        : {}
+
+    const { page, mentionsPage } = parseTheoSponsorSearch(value)
+    return {
       slug: typeof value.slug === 'string' ? value.slug : '',
-      page:
-        typeof value.page === 'number'
-          ? value.page
-          : typeof value.page === 'string'
-            ? Number.parseInt(value.page, 10)
-            : 1,
+      page,
+      mentionsPage,
     }
   })
   .handler(async ({ data }) => {
@@ -162,4 +196,7 @@ export type TheoSponsorPayload = Awaited<
 >
 export type TheoSearchPayload = Awaited<
   ReturnType<typeof getTheoSearchSuggestions>
+>
+export type LinkTheoVideoToXPostPayload = Awaited<
+  ReturnType<typeof linkTheoVideoToXPost>
 >

@@ -36,6 +36,11 @@ const toVideoSummaries = (
     commentCount: number
     sponsorId: string | null
     sponsorName: string | null
+    xUrl: string | null
+    xViews: number | null
+    xLikes: number | null
+    xReposts: number | null
+    xComments: number | null
   }>,
   orderedVideoIds: string[],
 ) => {
@@ -55,6 +60,11 @@ const toVideoSummaries = (
         viewCount: row.viewCount,
         likeCount: row.likeCount,
         commentCount: row.commentCount,
+        xUrl: row.xUrl,
+        xViews: row.xViews,
+        xLikes: row.xLikes,
+        xReposts: row.xReposts,
+        xComments: row.xComments,
         sponsorsById: new Map<
           string,
           { sponsorId: string; name: string; slug: string }
@@ -82,6 +92,11 @@ const toVideoSummaries = (
         viewCount: number
         likeCount: number
         commentCount: number
+        xUrl: string | null
+        xViews: number | null
+        xLikes: number | null
+        xReposts: number | null
+        xComments: number | null
         sponsorsById: Map<
           string,
           { sponsorId: string; name: string; slug: string }
@@ -96,10 +111,29 @@ const toVideoSummaries = (
         (order.get(left.videoId) ?? Number.MAX_SAFE_INTEGER) -
         (order.get(right.videoId) ?? Number.MAX_SAFE_INTEGER),
     )
-    .map(({ sponsorsById, ...video }) => ({
-      ...video,
-      sponsors: Array.from(sponsorsById.values()),
-    }))
+    .map(
+      ({
+        sponsorsById,
+        xUrl,
+        xViews,
+        xLikes,
+        xReposts,
+        xComments,
+        ...video
+      }) => ({
+        ...video,
+        sponsors: Array.from(sponsorsById.values()),
+        xPost: xUrl
+          ? {
+              url: xUrl,
+              views: xViews,
+              likes: xLikes,
+              reposts: xReposts,
+              comments: xComments,
+            }
+          : null,
+      }),
+    )
 }
 
 const loadIdsAndTotalFromDb = async (
@@ -171,6 +205,11 @@ const loadVideosFromDb = (db: typeof defaultDb, videoIds: string[]) =>
       commentCount: videos.commentCount,
       sponsorId: sponsors.sponsorId,
       sponsorName: sponsors.name,
+      xUrl: videos.xUrl,
+      xViews: videos.xViews,
+      xLikes: videos.xLikes,
+      xReposts: videos.xReposts,
+      xComments: videos.xComments,
     })
     .from(videos)
     .leftJoin(sponsorToVideos, eq(sponsorToVideos.videoId, videos.videoId))
@@ -209,6 +248,11 @@ export namespace TheoVideosService {
             commentCount: number
             sponsorId: string | null
             sponsorName: string | null
+            xUrl: string | null
+            xViews: number | null
+            xLikes: number | null
+            xReposts: number | null
+            xComments: number | null
           }>
         >
       }
@@ -285,6 +329,11 @@ export namespace TheoVideosService {
             commentCount: number
             sponsorId: string | null
             sponsorName: string | null
+            xUrl: string | null
+            xViews: number | null
+            xLikes: number | null
+            xReposts: number | null
+            xComments: number | null
           }>
         >)
 

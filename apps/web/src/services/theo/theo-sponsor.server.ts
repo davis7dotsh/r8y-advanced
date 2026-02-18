@@ -1,8 +1,12 @@
 import { Result, TaggedError } from 'better-result'
-import { desc, eq, sql } from 'drizzle-orm'
-import { sponsorToVideos, sponsors, videos } from 'theo-data/schema'
+import { and, desc, eq, sql } from 'drizzle-orm'
+import { comments, sponsorToVideos, sponsors, videos } from 'theo-data/schema'
 import { db as defaultDb } from '@/db/client.server'
-import { VIDEO_PAGE_SIZE, type VideoSummary } from './theo.types'
+import {
+  COMMENT_PAGE_SIZE,
+  VIDEO_PAGE_SIZE,
+  type VideoSummary,
+} from './theo.types'
 import {
   asIsoDate,
   asNumber,
@@ -21,6 +25,11 @@ const buildVideoSummaries = (
     viewCount: number
     likeCount: number
     commentCount: number
+    xUrl?: string | null
+    xViews?: number | null
+    xLikes?: number | null
+    xReposts?: number | null
+    xComments?: number | null
   }>,
 ) =>
   rows.map(
@@ -34,6 +43,15 @@ const buildVideoSummaries = (
         likeCount: row.likeCount,
         commentCount: row.commentCount,
         sponsors: [],
+        xPost: row.xUrl
+          ? {
+              url: row.xUrl,
+              views: row.xViews ?? null,
+              likes: row.xLikes ?? null,
+              reposts: row.xReposts ?? null,
+              comments: row.xComments ?? null,
+            }
+          : null,
       }) satisfies VideoSummary,
   )
 
@@ -70,6 +88,11 @@ const loadSponsorVideosFromDb = (
       viewCount: videos.viewCount,
       likeCount: videos.likeCount,
       commentCount: videos.commentCount,
+      xUrl: videos.xUrl,
+      xViews: videos.xViews,
+      xLikes: videos.xLikes,
+      xReposts: videos.xReposts,
+      xComments: videos.xComments,
     })
     .from(sponsorToVideos)
     .innerJoin(videos, eq(videos.videoId, sponsorToVideos.videoId))
@@ -84,6 +107,7 @@ const loadSponsorStatsFromDb = (db: typeof defaultDb, sponsorId: string) =>
       totalViews: sql<number>`coalesce(sum(${videos.viewCount}), 0)`,
       averageViews: sql<number>`coalesce(avg(${videos.viewCount}), 0)`,
       lastPublishedAt: sql<Date | null>`max(${videos.publishedAt})`,
+      totalXViews: sql<number>`coalesce(sum(${videos.xViews}), 0)`,
     })
     .from(sponsorToVideos)
     .innerJoin(videos, eq(videos.videoId, sponsorToVideos.videoId))
@@ -101,6 +125,46 @@ const loadSponsorTopVideoFromDb = (db: typeof defaultDb, sponsorId: string) =>
     .where(eq(sponsorToVideos.sponsorId, sponsorId))
     .orderBy(desc(videos.viewCount), desc(videos.publishedAt))
     .limit(1)
+
+const countSponsorMentionsFromDb = (db: typeof defaultDb, sponsorId: string) =>
+  db
+    .select({ total: sql<number>`count(*)` })
+    .from(comments)
+    .innerJoin(sponsorToVideos, eq(sponsorToVideos.videoId, comments.videoId))
+    .where(
+      and(
+        eq(sponsorToVideos.sponsorId, sponsorId),
+        eq(comments.isSponsorMention, true),
+      ),
+    )
+
+const loadSponsorMentionsFromDb = (
+  db: typeof defaultDb,
+  input: { sponsorId: string; page: number; pageSize: number },
+) =>
+  db
+    .select({
+      commentId: comments.commentId,
+      author: comments.author,
+      text: comments.text,
+      publishedAt: comments.publishedAt,
+      likeCount: comments.likeCount,
+      replyCount: comments.replyCount,
+      videoId: videos.videoId,
+      videoTitle: videos.title,
+    })
+    .from(comments)
+    .innerJoin(sponsorToVideos, eq(sponsorToVideos.videoId, comments.videoId))
+    .innerJoin(videos, eq(videos.videoId, comments.videoId))
+    .where(
+      and(
+        eq(sponsorToVideos.sponsorId, input.sponsorId),
+        eq(comments.isSponsorMention, true),
+      ),
+    )
+    .orderBy(desc(comments.likeCount))
+    .limit(input.pageSize)
+    .offset(toOffset(input.page, input.pageSize))
 
 export namespace TheoSponsorService {
   export class InvalidSponsorInputError extends TaggedError(
@@ -147,6 +211,11 @@ export namespace TheoSponsorService {
             viewCount: number
             likeCount: number
             commentCount: number
+            xUrl: string | null
+            xViews: number | null
+            xLikes: number | null
+            xReposts: number | null
+            xComments: number | null
           }>
         >
         loadSponsorStats?: (sponsorId: string) => Promise<
@@ -154,6 +223,7 @@ export namespace TheoSponsorService {
             totalViews: number
             averageViews: number
             lastPublishedAt: Date | null
+            totalXViews: number
           }>
         >
         loadSponsorTopVideo?: (sponsorId: string) => Promise<
@@ -163,17 +233,39 @@ export namespace TheoSponsorService {
             viewCount: number
           }>
         >
+        countSponsorMentions?: (
+          sponsorId: string,
+        ) => Promise<Array<{ total: number }>>
+        loadSponsorMentions?: (input: {
+          sponsorId: string
+          page: number
+          pageSize: number
+        }) => Promise<
+          Array<{
+            commentId: string
+            author: string
+            text: string
+            publishedAt: Date
+            likeCount: number
+            replyCount: number
+            videoId: string
+            videoTitle: string
+          }>
+        >
       }
     },
     input: {
       slug: string
       page?: number
       pageSize?: number
+      mentionsPage?: number
     },
   ) => {
     const slug = input.slug.trim().toLowerCase()
     const page = normalizePage(input.page)
     const pageSize = input.pageSize ?? VIDEO_PAGE_SIZE
+    const mentionsPage = normalizePage(input.mentionsPage)
+    const mentionsPageSize = COMMENT_PAGE_SIZE
 
     if (!slug) {
       return Result.err(
@@ -230,6 +322,11 @@ export namespace TheoSponsorService {
             viewCount: number
             likeCount: number
             commentCount: number
+            xUrl: string | null
+            xViews: number | null
+            xLikes: number | null
+            xReposts: number | null
+            xComments: number | null
           }>
         >)
 
@@ -241,6 +338,7 @@ export namespace TheoSponsorService {
             totalViews: number
             averageViews: number
             lastPublishedAt: Date | null
+            totalXViews: number
           }>
         >)
 
@@ -255,54 +353,105 @@ export namespace TheoSponsorService {
           }>
         >)
 
-    const [countResult, videosResult, statsResult, topVideoResult] =
-      await Promise.all([
-        Result.tryPromise({
-          try: () => countSponsorVideos(sponsor.sponsorId),
-          catch: (cause) =>
-            new SponsorQueryError({
-              message:
-                cause instanceof Error
-                  ? cause.message
-                  : 'Failed to count sponsor videos',
-            }),
-        }),
-        Result.tryPromise({
-          try: () =>
-            loadSponsorVideos({
-              sponsorId: sponsor.sponsorId,
-              page,
-              pageSize,
-            }),
-          catch: (cause) =>
-            new SponsorQueryError({
-              message:
-                cause instanceof Error
-                  ? cause.message
-                  : 'Failed to load sponsor videos',
-            }),
-        }),
-        Result.tryPromise({
-          try: () => loadSponsorStats(sponsor.sponsorId),
-          catch: (cause) =>
-            new SponsorQueryError({
-              message:
-                cause instanceof Error
-                  ? cause.message
-                  : 'Failed to load sponsor stats',
-            }),
-        }),
-        Result.tryPromise({
-          try: () => loadSponsorTopVideo(sponsor.sponsorId),
-          catch: (cause) =>
-            new SponsorQueryError({
-              message:
-                cause instanceof Error
-                  ? cause.message
-                  : 'Failed to load sponsor top video',
-            }),
-        }),
-      ])
+    const countSponsorMentions =
+      deps.queries?.countSponsorMentions ??
+      ((sponsorId: string) => countSponsorMentionsFromDb(db, sponsorId))
+
+    const loadSponsorMentions =
+      deps.queries?.loadSponsorMentions ??
+      ((queryInput: { sponsorId: string; page: number; pageSize: number }) =>
+        loadSponsorMentionsFromDb(db, queryInput) as Promise<
+          Array<{
+            commentId: string
+            author: string
+            text: string
+            publishedAt: Date
+            likeCount: number
+            replyCount: number
+            videoId: string
+            videoTitle: string
+          }>
+        >)
+
+    const [
+      countResult,
+      videosResult,
+      statsResult,
+      topVideoResult,
+      mentionsCountResult,
+      mentionsResult,
+    ] = await Promise.all([
+      Result.tryPromise({
+        try: () => countSponsorVideos(sponsor.sponsorId),
+        catch: (cause) =>
+          new SponsorQueryError({
+            message:
+              cause instanceof Error
+                ? cause.message
+                : 'Failed to count sponsor videos',
+          }),
+      }),
+      Result.tryPromise({
+        try: () =>
+          loadSponsorVideos({
+            sponsorId: sponsor.sponsorId,
+            page,
+            pageSize,
+          }),
+        catch: (cause) =>
+          new SponsorQueryError({
+            message:
+              cause instanceof Error
+                ? cause.message
+                : 'Failed to load sponsor videos',
+          }),
+      }),
+      Result.tryPromise({
+        try: () => loadSponsorStats(sponsor.sponsorId),
+        catch: (cause) =>
+          new SponsorQueryError({
+            message:
+              cause instanceof Error
+                ? cause.message
+                : 'Failed to load sponsor stats',
+          }),
+      }),
+      Result.tryPromise({
+        try: () => loadSponsorTopVideo(sponsor.sponsorId),
+        catch: (cause) =>
+          new SponsorQueryError({
+            message:
+              cause instanceof Error
+                ? cause.message
+                : 'Failed to load sponsor top video',
+          }),
+      }),
+      Result.tryPromise({
+        try: () => countSponsorMentions(sponsor.sponsorId),
+        catch: (cause) =>
+          new SponsorQueryError({
+            message:
+              cause instanceof Error
+                ? cause.message
+                : 'Failed to count sponsor mentions',
+          }),
+      }),
+      Result.tryPromise({
+        try: () =>
+          loadSponsorMentions({
+            sponsorId: sponsor.sponsorId,
+            page: mentionsPage,
+            pageSize: mentionsPageSize,
+          }),
+        catch: (cause) =>
+          new SponsorQueryError({
+            message:
+              cause instanceof Error
+                ? cause.message
+                : 'Failed to load sponsor mentions',
+          }),
+      }),
+    ])
 
     if (countResult.status === 'error') {
       return countResult
@@ -318,6 +467,14 @@ export namespace TheoSponsorService {
 
     if (topVideoResult.status === 'error') {
       return topVideoResult
+    }
+
+    if (mentionsCountResult.status === 'error') {
+      return mentionsCountResult
+    }
+
+    if (mentionsResult.status === 'error') {
+      return mentionsResult
     }
 
     const statsRow = statsResult.value[0]
@@ -336,6 +493,7 @@ export namespace TheoSponsorService {
         lastPublishedAt: statsRow?.lastPublishedAt
           ? asIsoDate(statsRow.lastPublishedAt)
           : null,
+        totalXViews: asNumber(statsRow?.totalXViews),
         bestPerformingVideo: topVideo
           ? {
               videoId: topVideo.videoId,
@@ -350,6 +508,17 @@ export namespace TheoSponsorService {
           page,
           pageSize,
           total: asNumber(countResult.value[0]?.total),
+        }),
+      },
+      sponsorMentions: {
+        items: mentionsResult.value.map((c) => ({
+          ...c,
+          publishedAt: asIsoDate(c.publishedAt),
+        })),
+        pagination: toPagination({
+          page: mentionsPage,
+          pageSize: mentionsPageSize,
+          total: asNumber(mentionsCountResult.value[0]?.total),
         }),
       },
     })

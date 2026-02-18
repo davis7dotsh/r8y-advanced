@@ -7,17 +7,14 @@ import { parseTheoListSearch } from '@/features/theo/theo-search-params'
 
 export const Route = createFileRoute('/theo/')({
   validateSearch: parseTheoListSearch,
-  loader: ({ location, search }) => {
-    const resolvedSearch =
-      search ??
-      parseTheoListSearch(
-        Object.fromEntries(new URLSearchParams(location?.search ?? '')),
-      )
-
-    return getTheoVideos({
-      data: resolvedSearch,
-    })
-  },
+  loaderDeps: ({ search }) => ({
+    page: search.page,
+    q: search.q,
+  }),
+  loader: ({ deps }) =>
+    getTheoVideos({
+      data: deps,
+    }),
   component: TheoVideosRoute,
 })
 
@@ -124,13 +121,29 @@ export const TheoVideosView = ({
                 </p>
               </div>
 
-              <div className="flex items-center gap-4 text-xs text-neutral-500">
+              <div className="flex flex-wrap items-center gap-4 text-xs text-neutral-500">
                 <span>
                   <span className="font-medium text-neutral-700">
+                    {(
+                      video.viewCount + (video.xPost?.views ?? 0)
+                    ).toLocaleString()}
+                  </span>{' '}
+                  total
+                </span>
+                <span className="text-red-600">
+                  <span className="font-medium">
                     {video.viewCount.toLocaleString()}
                   </span>{' '}
-                  views
+                  yt
                 </span>
+                {video.xPost?.views != null ? (
+                  <span className="text-sky-600">
+                    <span className="font-medium">
+                      {video.xPost.views.toLocaleString()}
+                    </span>{' '}
+                    X
+                  </span>
+                ) : null}
                 <span>
                   <span className="font-medium text-neutral-700">
                     {video.likeCount.toLocaleString()}

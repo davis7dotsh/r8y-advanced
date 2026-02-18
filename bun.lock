@@ -20,6 +20,7 @@
         "@tanstack/react-router-ssr-query": "^1.131.7",
         "@tanstack/react-start": "^1.132.0",
         "@tanstack/router-plugin": "^1.132.0",
+        "@xdevplatform/xdk": "^0.4.0",
         "better-result": "^2.7.0",
         "drizzle-orm": "^0.45.1",
         "lucide-react": "^0.545.0",
@@ -50,6 +51,7 @@
       "dependencies": {
         "@ai-sdk/anthropic": "^3.0.44",
         "@boundaryml/baml": "^0.219.0",
+        "@xdevplatform/xdk": "^0.4.0",
         "ai": "^6.0.86",
         "better-result": "^2.7.0",
         "fast-xml-parser": "^5.3.6",
@@ -548,6 +550,8 @@
     "@vitest/spy": ["@vitest/spy@3.2.4", "", { "dependencies": { "tinyspy": "^4.0.3" } }, "sha512-vAfasCOe6AIK70iP5UD11Ac4siNUNJ9i/9PZ3NKx07sG6sUxeag1LWdNrMWeKKYBLlzuK+Gn65Yd5nyL6ds+nw=="],
 
     "@vitest/utils": ["@vitest/utils@3.2.4", "", { "dependencies": { "@vitest/pretty-format": "3.2.4", "loupe": "^3.1.4", "tinyrainbow": "^2.0.0" } }, "sha512-fB2V0JFrQSMsCo9HiSq3Ezpdv4iYaXRG1Sx8edX3MwxfyNn83mKiGzOcH+Fkxt4MHxr3y42fQi1oeAInqgX2QA=="],
+
+    "@xdevplatform/xdk": ["@xdevplatform/xdk@0.4.0", "", { "peerDependencies": { "node-fetch": "^3.3.0" }, "optionalPeers": ["node-fetch"] }, "sha512-jl0lPyMYVFaQOWvG2D4i8vC72/CMh/bOcMbjZA2jP5gUMV2MztC5zTEsF3I76VS8wxdDrtrOTiX2BRzKsua6LA=="],
 
     "acorn": ["acorn@8.15.0", "", { "bin": { "acorn": "bin/acorn" } }, "sha512-NZyJarBfL7nWwIq+FDL6Zp/yHEhePMNnnJ0y3qfieCrmNvYct8uvtiV41UvlSe6apAfk0fY1FbWx+NwfmpvtTg=="],
 

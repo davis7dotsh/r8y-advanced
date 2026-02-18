@@ -1,5 +1,5 @@
 import { useNavigate, useRouterState } from '@tanstack/react-router'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { getTheoSearchSuggestions } from './theo.functions'
 
 type Suggestion =
@@ -47,6 +47,19 @@ export const TheoSearchBar = () => {
   const [activeIndex, setActiveIndex] = useState(-1)
   const [isLoading, setIsLoading] = useState(false)
   const [suggestions, setSuggestions] = useState(emptySuggestions)
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    const handler = (event: KeyboardEvent) => {
+      if (event.metaKey && event.key === 'k') {
+        event.preventDefault()
+        inputRef.current?.focus()
+        inputRef.current?.select()
+      }
+    }
+    document.addEventListener('keydown', handler)
+    return () => document.removeEventListener('keydown', handler)
+  }, [])
 
   useEffect(() => {
     if (location.pathname === '/theo') {
@@ -184,6 +197,7 @@ export const TheoSearchBar = () => {
         }}
       >
         <input
+          ref={inputRef}
           type="search"
           value={value}
           onChange={(event) => {
@@ -226,9 +240,7 @@ export const TheoSearchBar = () => {
               Searching...
             </div>
           ) : flattened.length === 0 ? (
-            <div className="px-4 py-3 text-sm text-neutral-400">
-              No matches
-            </div>
+            <div className="px-4 py-3 text-sm text-neutral-400">No matches</div>
           ) : (
             <div className="max-h-80 overflow-y-auto">
               {suggestions.videos.length > 0 ? (

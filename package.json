@@ -6,6 +6,7 @@
     "dev": "bunx turbo run dev",
     "dev:web": "bunx turbo run dev --filter=web",
     "dev:crawler": "bunx turbo run dev --filter=live-crawler",
+    "start:live-crawler": "bun run --cwd apps/live-crawler start",
     "db:studio": "bun run --cwd packages/theo-data db:studio",
     "check": "bunx turbo run check",
     "format": "bunx turbo run format",

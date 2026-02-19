@@ -12,15 +12,16 @@ Channel management system for Theo (t3) and Ben Davis.
 ### Web (`apps/web`) on Vercel
 
 1. Create a Vercel project with root directory set to `apps/web`.
-2. Confirm build command is `bun run build` (configured in `apps/web/vercel.json`).
-3. Set required environment variables:
+2. Confirm install/build commands are `bun install` and `bun run build` (configured in `apps/web/vercel.json`).
+3. The web app uses Nitro (`apps/web/vite.config.ts`) so Vercel can run SSR/server routes.
+4. Set required environment variables:
    - `DATABASE_URL`
    - `X_API_KEY` (optional, required for X metrics features)
 
 ### Live crawler (`apps/live-crawler`) on Railway
 
-1. Create a Railway service with root directory set to `apps/live-crawler`.
-2. `railway.json` runs the service with `bun run start`.
+1. This is a shared Bun workspace monorepo, so set Railway root directory to repository root (`/`), not `apps/live-crawler`.
+2. Use the root `railway.json`, which runs the service with `bun run start:live-crawler`.
 3. Set environment variables:
    - `DATABASE_URL`
    - `YT_API_KEY`

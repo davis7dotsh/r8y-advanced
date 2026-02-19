@@ -1,4 +1,5 @@
-import { drizzle } from 'drizzle-orm/bun-sql'
+import { Pool } from 'pg'
+import { drizzle } from 'drizzle-orm/node-postgres'
 import { theoSchema } from 'theo-data/schema'
 
 const databaseUrl = process.env.DATABASE_URL
@@ -7,6 +8,10 @@ if (!databaseUrl) {
   throw new Error('DATABASE_URL is required for web')
 }
 
-export const db = drizzle(databaseUrl, {
+const pool = new Pool({
+  connectionString: databaseUrl,
+})
+
+export const db = drizzle(pool, {
   schema: theoSchema,
 })

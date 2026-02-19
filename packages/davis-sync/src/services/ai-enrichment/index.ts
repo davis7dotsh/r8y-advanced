@@ -1,7 +1,7 @@
 import { Result, TaggedError } from "better-result";
 import { createAiEnrichmentHelpers, type BamlClientLike } from "yt-sync";
 import { b as bamlClient } from "../../../baml_client";
-import { THEO_CHANNEL_INFO } from "../../THEO_CHANNEL_INFO";
+import { BEN_CHANNEL_INFO } from "../../BEN_CHANNEL_INFO";
 
 type Logger = Pick<Console, "info" | "warn" | "error">;
 
@@ -64,7 +64,7 @@ export namespace AiEnrichmentService {
       input: {
         videoDescription: input.videoDescription,
         sponsorPrompt: input.sponsorPrompt,
-        noSponsorKey: THEO_CHANNEL_INFO.noSponsorKey,
+        noSponsorKey: BEN_CHANNEL_INFO.noSponsorKey,
       },
     });
 

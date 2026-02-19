@@ -3,7 +3,7 @@ import { Result, TaggedError } from "better-result";
 import { and, desc, eq, inArray, ne } from "drizzle-orm";
 import { fetchXPostMetrics, parseXPostUrl } from "x-sync";
 import { fetchRssVideoIds } from "yt-sync";
-import { THEO_CHANNEL_INFO } from "../../THEO_CHANNEL_INFO";
+import { BEN_CHANNEL_INFO } from "../../BEN_CHANNEL_INFO";
 import { db as defaultDb } from "../../db/client";
 import {
   comments,
@@ -453,7 +453,7 @@ export namespace CrawlService {
       input: {
         videoTitle: videoResult.value.title,
         videoDescription: videoResult.value.description,
-        sponsorPrompt: THEO_CHANNEL_INFO.sponsorPrompt,
+        sponsorPrompt: BEN_CHANNEL_INFO.sponsorPrompt,
       },
     });
 
@@ -650,14 +650,14 @@ export namespace CrawlService {
           notificationId: createNotificationId("discord_video_live", videoId),
           videoId,
           type: "discord_video_live" as const,
-          message: `Theo video live: ${videoResult.value.title}`,
+          message: `Ben video live: ${videoResult.value.title}`,
           commentId: null,
         },
         {
           notificationId: createNotificationId("todoist_video_live", videoId),
           videoId,
           type: "todoist_video_live" as const,
-          message: `Theo video live: ${videoResult.value.title}`,
+          message: `Ben video live: ${videoResult.value.title}`,
           commentId: null,
         },
       ];
@@ -729,7 +729,7 @@ export namespace CrawlService {
       channelId?: string;
     },
   ) => {
-    const channelId = input?.channelId ?? THEO_CHANNEL_INFO.channelId;
+    const channelId = input?.channelId ?? BEN_CHANNEL_INFO.channelId;
     const logger = deps.logger;
 
     logInfo(logger, "crawlRss", "start", {
@@ -827,7 +827,7 @@ export namespace CrawlService {
   ) => {
     const db = deps.db ?? defaultDb;
     const logger = deps.logger;
-    const channelId = input.channelId ?? THEO_CHANNEL_INFO.channelId;
+    const channelId = input.channelId ?? BEN_CHANNEL_INFO.channelId;
     const concurrency = Math.max(1, input.concurrency ?? 3);
 
     if (input.limit !== "all" && (!Number.isInteger(input.limit) || input.limit < 1)) {

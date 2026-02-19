@@ -1,4 +1,6 @@
 import { beforeAll, expect, test } from "bun:test";
+import { BEN_CHANNEL_INFO } from "davis-sync/channel-info";
+import { THEO_CHANNEL_INFO } from "theo-data/channel-info";
 
 beforeAll(() => {
   process.env.DATABASE_URL ??= "postgres://local:test@localhost:5432/local";
@@ -6,9 +8,12 @@ beforeAll(() => {
 
 const loadModule = () => import("./index");
 
-test("readChannelIds falls back to Theo channel id", async () => {
+test("readChannelIds falls back to Theo + Ben channel ids", async () => {
   const { readChannelIds } = await loadModule();
-  expect(readChannelIds("")).toEqual(["UCbRP3c757lWg9M-U7TyEkXA"]);
+  expect(readChannelIds("")).toEqual([
+    THEO_CHANNEL_INFO.channelId,
+    BEN_CHANNEL_INFO.channelId,
+  ]);
 });
 
 test("readChannelIds normalizes comma-separated values", async () => {
@@ -33,4 +38,23 @@ test("shouldRunOnce only enables on true", async () => {
   expect(shouldRunOnce("TRUE")).toBe(true);
   expect(shouldRunOnce("1")).toBe(false);
   expect(shouldRunOnce(undefined)).toBe(false);
+});
+
+test("crawlChannels skips unknown ids", async () => {
+  const { crawlChannels } = await loadModule();
+  const logger = {
+    info: () => undefined,
+    warn: () => undefined,
+    error: () => undefined,
+  };
+
+  const result = await crawlChannels(logger, ["unknown-channel-id"]);
+
+  expect(result).toEqual([
+    {
+      channelId: "unknown-channel-id",
+      status: "skipped",
+      message: "Unknown channel id",
+    },
+  ]);
 });

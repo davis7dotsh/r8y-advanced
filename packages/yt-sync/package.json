@@ -1,0 +1,21 @@
+{
+  "name": "yt-sync",
+  "type": "module",
+  "private": true,
+  "main": "src/index.ts",
+  "scripts": {
+    "check": "bunx tsc --noEmit",
+    "format": "bunx prettier --write src/**/*.ts",
+    "test": "bun test"
+  },
+  "dependencies": {
+    "better-result": "^2.7.0",
+    "fast-xml-parser": "^5.3.6"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  }
+}

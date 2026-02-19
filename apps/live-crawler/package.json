@@ -10,6 +10,7 @@
     "test": "bun test"
   },
   "dependencies": {
+    "davis-sync": "workspace:*",
     "theo-data": "workspace:*"
   },
   "devDependencies": {

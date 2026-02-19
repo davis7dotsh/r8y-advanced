@@ -1,5 +1,7 @@
+import { BEN_CHANNEL_INFO } from "davis-sync/channel-info";
+import { CrawlService as DavisCrawlService } from "davis-sync/crawl";
 import { THEO_CHANNEL_INFO } from "theo-data/channel-info";
-import { CrawlService } from "theo-data/crawl";
+import { CrawlService as TheoCrawlService } from "theo-data/crawl";
 
 type Logger = Pick<Console, "info" | "warn" | "error">;
 
@@ -14,15 +16,23 @@ const readPositiveInt = (value: string | undefined, fallback: number) => {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
 };
 
+const CHANNEL_CRAWLERS = {
+  [THEO_CHANNEL_INFO.channelId]: TheoCrawlService,
+  [BEN_CHANNEL_INFO.channelId]: DavisCrawlService,
+} as const;
+
+const DEFAULT_CHANNEL_IDS = [
+  THEO_CHANNEL_INFO.channelId,
+  BEN_CHANNEL_INFO.channelId,
+];
+
 export const readChannelIds = (raw = process.env.CRAWLER_CHANNEL_IDS) => {
   const parsed = (raw ?? "")
     .split(",")
     .map((entry) => entry.trim())
     .filter(Boolean);
 
-  return parsed.length > 0
-    ? [...new Set(parsed)]
-    : [THEO_CHANNEL_INFO.channelId];
+  return parsed.length > 0 ? [...new Set(parsed)] : DEFAULT_CHANNEL_IDS;
 };
 
 export const readIntervalMs = (raw = process.env.CRAWLER_INTERVAL_MS) =>
@@ -31,9 +41,25 @@ export const readIntervalMs = (raw = process.env.CRAWLER_INTERVAL_MS) =>
 export const shouldRunOnce = (raw = process.env.CRAWLER_RUN_ONCE) =>
   raw?.trim().toLowerCase() === "true";
 
+const resolveCrawler = (channelId: string) =>
+  CHANNEL_CRAWLERS[channelId as keyof typeof CHANNEL_CRAWLERS];
+
 const crawlSingleChannel = async (logger: Logger, channelId: string) => {
+  const crawler = resolveCrawler(channelId);
+  if (!crawler) {
+    logger.warn("[live-crawler] unknown channel id, skipping", {
+      channelId,
+    });
+
+    return {
+      channelId,
+      status: "skipped" as const,
+      message: "Unknown channel id",
+    };
+  }
+
   const startedAt = Date.now();
-  const result = await CrawlService.crawlRss(
+  const result = await crawler.crawlRss(
     { logger },
     {
       channelId,

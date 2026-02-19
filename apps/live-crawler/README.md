@@ -18,4 +18,4 @@ bun run start
 - `CRAWLER_INTERVAL_MS` (optional, default `300000`)
 - `CRAWLER_RUN_ONCE` (optional, set `true` for one-off execution)
 
-Default channel is Theo (`UCbRP3c757lWg9M-U7TyEkXA`).
+Default channels are Theo (`UCbRP3c757lWg9M-U7TyEkXA`) and Ben (`UCFvPgPdb_emE_bpMZq6hmJQ`).

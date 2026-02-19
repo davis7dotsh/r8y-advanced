@@ -21,6 +21,7 @@
     "@tanstack/router-plugin": "^1.132.0",
     "@xdevplatform/xdk": "^0.4.0",
     "better-result": "^2.7.0",
+    "davis-sync": "workspace:*",
     "drizzle-orm": "^0.45.1",
     "lucide-react": "^0.545.0",
     "react": "^19.2.0",

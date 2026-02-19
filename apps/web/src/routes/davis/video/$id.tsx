@@ -4,26 +4,26 @@ import { ErrorState } from '@/components/error-state'
 import { PaginationControls } from '@/components/pagination-controls'
 import { VideoMetrics } from '@/components/video-metrics'
 import {
-  getTheoVideoDetails,
-  linkTheoVideoToXPost,
-  type TheoVideoPayload,
-} from '@/features/theo/theo.functions'
+  getDavisVideoDetails,
+  linkDavisVideoToXPost,
+  type DavisVideoPayload,
+} from '@/features/davis/davis.functions'
 import {
-  parseTheoVideoSearch,
+  parseDavisVideoSearch,
   type CommentsFilter,
   type CommentsSort,
-} from '@/features/theo/theo-search-params'
+} from '@/features/davis/davis-search-params'
 
-export const Route = createFileRoute('/theo/video/$id')({
-  validateSearch: parseTheoVideoSearch,
+export const Route = createFileRoute('/davis/video/$id')({
+  validateSearch: parseDavisVideoSearch,
   loader: async ({ params, location, search }) => {
     const resolvedSearch =
       search ??
-      parseTheoVideoSearch(
+      parseDavisVideoSearch(
         Object.fromEntries(new URLSearchParams(location?.search ?? '')),
       )
 
-    const payload = await getTheoVideoDetails({
+    const payload = await getDavisVideoDetails({
       data: {
         videoId: params.id,
         commentsPage: resolvedSearch.commentsPage,
@@ -41,16 +41,16 @@ export const Route = createFileRoute('/theo/video/$id')({
 
     return payload
   },
-  component: TheoVideoRoute,
+  component: DavisVideoRoute,
 })
 
-function TheoVideoRoute() {
+function DavisVideoRoute() {
   const payload = Route.useLoaderData()
   const params = Route.useParams()
   const search = Route.useSearch()
 
   return (
-    <TheoVideoView
+    <DavisVideoView
       payload={payload}
       videoId={params.id}
       commentsPage={search.commentsPage}
@@ -151,14 +151,14 @@ class XPostLinkForm extends React.Component<
         commentsFilter,
       })
       window.location.assign(
-        `/theo/video/${encodeURIComponent(videoId)}?${params.toString()}`,
+        `/davis/video/${encodeURIComponent(videoId)}?${params.toString()}`,
       )
     }
 
     const syncXPost = (xPostUrl: string) => {
       this.setState({ isSavingXPost: true, xPostSaveError: null })
 
-      linkTheoVideoToXPost({
+      linkDavisVideoToXPost({
         data: { videoId, xPostUrl },
       })
         .then((result) => {
@@ -233,14 +233,14 @@ class XPostLinkForm extends React.Component<
   }
 }
 
-export const TheoVideoView = ({
+export const DavisVideoView = ({
   payload,
   videoId,
   commentsPage,
   commentsSort,
   commentsFilter,
 }: {
-  payload: TheoVideoPayload
+  payload: DavisVideoPayload
   videoId: string
   commentsPage: number
   commentsSort: CommentsSort
@@ -331,7 +331,7 @@ export const TheoVideoView = ({
               video.sponsors.map((sponsor) => (
                 <Link
                   key={sponsor.sponsorId}
-                  to="/theo/sponsor/$id"
+                  to="/davis/sponsor/$id"
                   params={{ id: sponsor.slug }}
                   search={{ page: 1 }}
                   className="rounded-full border border-amber-200 bg-amber-50 px-2.5 py-0.5 text-xs font-medium text-amber-800 transition-colors hover:bg-amber-100"
@@ -362,7 +362,7 @@ export const TheoVideoView = ({
               {SORT_OPTIONS.map((opt) => (
                 <Link
                   key={opt.value}
-                  to="/theo/video/$id"
+                  to="/davis/video/$id"
                   params={{ id: videoId }}
                   search={{
                     commentsPage: 1,
@@ -386,7 +386,7 @@ export const TheoVideoView = ({
             {FILTER_OPTIONS.map((opt) => (
               <Link
                 key={opt.value}
-                to="/theo/video/$id"
+                to="/davis/video/$id"
                 params={{ id: videoId }}
                 search={{
                   commentsPage: 1,
@@ -411,7 +411,7 @@ export const TheoVideoView = ({
           totalPages={totalPages}
           className="mb-4 flex items-center justify-end gap-2 text-sm"
           getLink={(nextPage) => ({
-            to: '/theo/video/$id' as const,
+            to: '/davis/video/$id' as const,
             params: { id: videoId },
             search: {
               commentsPage: nextPage,

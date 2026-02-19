@@ -3,36 +3,36 @@ import { ErrorState } from '@/components/error-state'
 import { PaginationControls } from '@/components/pagination-controls'
 import { VideoMetrics } from '@/components/video-metrics'
 import {
-  getTheoVideos,
-  type TheoVideosPayload,
-} from '@/features/theo/theo.functions'
-import { parseTheoListSearch } from '@/features/theo/theo-search-params'
+  getDavisVideos,
+  type DavisVideosPayload,
+} from '@/features/davis/davis.functions'
+import { parseDavisListSearch } from '@/features/davis/davis-search-params'
 
-export const Route = createFileRoute('/theo/')({
-  validateSearch: parseTheoListSearch,
+export const Route = createFileRoute('/davis/')({
+  validateSearch: parseDavisListSearch,
   loaderDeps: ({ search }) => ({
     page: search.page,
     q: search.q,
   }),
   loader: ({ deps }) =>
-    getTheoVideos({
+    getDavisVideos({
       data: deps,
     }),
-  component: TheoVideosRoute,
+  component: DavisVideosRoute,
 })
 
-function TheoVideosRoute() {
+function DavisVideosRoute() {
   const payload = Route.useLoaderData()
   const search = Route.useSearch()
 
-  return <TheoVideosView payload={payload} search={search} />
+  return <DavisVideosView payload={payload} search={search} />
 }
 
-export const TheoVideosView = ({
+export const DavisVideosView = ({
   payload,
   search,
 }: {
-  payload: TheoVideosPayload
+  payload: DavisVideosPayload
   search: {
     page: number
     q?: string
@@ -41,7 +41,7 @@ export const TheoVideosView = ({
   if (payload.status === 'error') {
     return (
       <ErrorState
-        title="Unable to load Theo videos"
+        title="Unable to load Davis videos"
         message={payload.error.message}
       />
     )
@@ -73,7 +73,7 @@ export const TheoVideosView = ({
           page={page}
           totalPages={totalPages}
           getLink={(p) => ({
-            to: '/theo' as const,
+            to: '/davis' as const,
             search: { page: p, q: search.q },
           })}
         />
@@ -86,7 +86,7 @@ export const TheoVideosView = ({
             className="grid gap-4 rounded-xl border border-neutral-200 bg-white p-4 transition-shadow hover:shadow-sm md:grid-cols-[200px_1fr]"
           >
             <Link
-              to="/theo/video/$id"
+              to="/davis/video/$id"
               params={{
                 id: video.videoId,
               }}
@@ -106,7 +106,7 @@ export const TheoVideosView = ({
             <div className="space-y-2.5">
               <div>
                 <Link
-                  to="/theo/video/$id"
+                  to="/davis/video/$id"
                   params={{
                     id: video.videoId,
                   }}
@@ -134,7 +134,7 @@ export const TheoVideosView = ({
                   video.sponsors.map((sponsor) => (
                     <Link
                       key={sponsor.sponsorId}
-                      to="/theo/sponsor/$id"
+                      to="/davis/sponsor/$id"
                       params={{
                         id: sponsor.slug,
                       }}

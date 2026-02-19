@@ -10,14 +10,23 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TheoRouteImport } from './routes/theo'
+import { Route as DavisRouteImport } from './routes/davis'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TheoIndexRouteImport } from './routes/theo/index'
+import { Route as DavisIndexRouteImport } from './routes/davis/index'
 import { Route as TheoVideoIdRouteImport } from './routes/theo/video/$id'
 import { Route as TheoSponsorIdRouteImport } from './routes/theo/sponsor/$id'
+import { Route as DavisVideoIdRouteImport } from './routes/davis/video/$id'
+import { Route as DavisSponsorIdRouteImport } from './routes/davis/sponsor/$id'
 
 const TheoRoute = TheoRouteImport.update({
   id: '/theo',
   path: '/theo',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DavisRoute = DavisRouteImport.update({
+  id: '/davis',
+  path: '/davis',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -30,6 +39,11 @@ const TheoIndexRoute = TheoIndexRouteImport.update({
   path: '/',
   getParentRoute: () => TheoRoute,
 } as any)
+const DavisIndexRoute = DavisIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => DavisRoute,
+} as any)
 const TheoVideoIdRoute = TheoVideoIdRouteImport.update({
   id: '/video/$id',
   path: '/video/$id',
@@ -40,44 +54,86 @@ const TheoSponsorIdRoute = TheoSponsorIdRouteImport.update({
   path: '/sponsor/$id',
   getParentRoute: () => TheoRoute,
 } as any)
+const DavisVideoIdRoute = DavisVideoIdRouteImport.update({
+  id: '/video/$id',
+  path: '/video/$id',
+  getParentRoute: () => DavisRoute,
+} as any)
+const DavisSponsorIdRoute = DavisSponsorIdRouteImport.update({
+  id: '/sponsor/$id',
+  path: '/sponsor/$id',
+  getParentRoute: () => DavisRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/davis': typeof DavisRouteWithChildren
   '/theo': typeof TheoRouteWithChildren
+  '/davis/': typeof DavisIndexRoute
   '/theo/': typeof TheoIndexRoute
+  '/davis/sponsor/$id': typeof DavisSponsorIdRoute
+  '/davis/video/$id': typeof DavisVideoIdRoute
   '/theo/sponsor/$id': typeof TheoSponsorIdRoute
   '/theo/video/$id': typeof TheoVideoIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/davis': typeof DavisIndexRoute
   '/theo': typeof TheoIndexRoute
+  '/davis/sponsor/$id': typeof DavisSponsorIdRoute
+  '/davis/video/$id': typeof DavisVideoIdRoute
   '/theo/sponsor/$id': typeof TheoSponsorIdRoute
   '/theo/video/$id': typeof TheoVideoIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/davis': typeof DavisRouteWithChildren
   '/theo': typeof TheoRouteWithChildren
+  '/davis/': typeof DavisIndexRoute
   '/theo/': typeof TheoIndexRoute
+  '/davis/sponsor/$id': typeof DavisSponsorIdRoute
+  '/davis/video/$id': typeof DavisVideoIdRoute
   '/theo/sponsor/$id': typeof TheoSponsorIdRoute
   '/theo/video/$id': typeof TheoVideoIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/theo' | '/theo/' | '/theo/sponsor/$id' | '/theo/video/$id'
+  fullPaths:
+    | '/'
+    | '/davis'
+    | '/theo'
+    | '/davis/'
+    | '/theo/'
+    | '/davis/sponsor/$id'
+    | '/davis/video/$id'
+    | '/theo/sponsor/$id'
+    | '/theo/video/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/theo' | '/theo/sponsor/$id' | '/theo/video/$id'
+  to:
+    | '/'
+    | '/davis'
+    | '/theo'
+    | '/davis/sponsor/$id'
+    | '/davis/video/$id'
+    | '/theo/sponsor/$id'
+    | '/theo/video/$id'
   id:
     | '__root__'
     | '/'
+    | '/davis'
     | '/theo'
+    | '/davis/'
     | '/theo/'
+    | '/davis/sponsor/$id'
+    | '/davis/video/$id'
     | '/theo/sponsor/$id'
     | '/theo/video/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  DavisRoute: typeof DavisRouteWithChildren
   TheoRoute: typeof TheoRouteWithChildren
 }
 
@@ -88,6 +144,13 @@ declare module '@tanstack/react-router' {
       path: '/theo'
       fullPath: '/theo'
       preLoaderRoute: typeof TheoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/davis': {
+      id: '/davis'
+      path: '/davis'
+      fullPath: '/davis'
+      preLoaderRoute: typeof DavisRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -104,6 +167,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TheoIndexRouteImport
       parentRoute: typeof TheoRoute
     }
+    '/davis/': {
+      id: '/davis/'
+      path: '/'
+      fullPath: '/davis/'
+      preLoaderRoute: typeof DavisIndexRouteImport
+      parentRoute: typeof DavisRoute
+    }
     '/theo/video/$id': {
       id: '/theo/video/$id'
       path: '/video/$id'
@@ -118,8 +188,36 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TheoSponsorIdRouteImport
       parentRoute: typeof TheoRoute
     }
+    '/davis/video/$id': {
+      id: '/davis/video/$id'
+      path: '/video/$id'
+      fullPath: '/davis/video/$id'
+      preLoaderRoute: typeof DavisVideoIdRouteImport
+      parentRoute: typeof DavisRoute
+    }
+    '/davis/sponsor/$id': {
+      id: '/davis/sponsor/$id'
+      path: '/sponsor/$id'
+      fullPath: '/davis/sponsor/$id'
+      preLoaderRoute: typeof DavisSponsorIdRouteImport
+      parentRoute: typeof DavisRoute
+    }
   }
 }
+
+interface DavisRouteChildren {
+  DavisIndexRoute: typeof DavisIndexRoute
+  DavisSponsorIdRoute: typeof DavisSponsorIdRoute
+  DavisVideoIdRoute: typeof DavisVideoIdRoute
+}
+
+const DavisRouteChildren: DavisRouteChildren = {
+  DavisIndexRoute: DavisIndexRoute,
+  DavisSponsorIdRoute: DavisSponsorIdRoute,
+  DavisVideoIdRoute: DavisVideoIdRoute,
+}
+
+const DavisRouteWithChildren = DavisRoute._addFileChildren(DavisRouteChildren)
 
 interface TheoRouteChildren {
   TheoIndexRoute: typeof TheoIndexRoute
@@ -137,6 +235,7 @@ const TheoRouteWithChildren = TheoRoute._addFileChildren(TheoRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  DavisRoute: DavisRouteWithChildren,
   TheoRoute: TheoRouteWithChildren,
 }
 export const routeTree = rootRouteImport

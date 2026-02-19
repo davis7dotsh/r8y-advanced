@@ -3,21 +3,21 @@ import { ErrorState } from '@/components/error-state'
 import { PaginationControls } from '@/components/pagination-controls'
 import { VideoMetrics } from '@/components/video-metrics'
 import {
-  getTheoSponsorDetails,
-  type TheoSponsorPayload,
-} from '@/features/theo/theo.functions'
-import { parseTheoSponsorSearch } from '@/features/theo/theo-search-params'
+  getDavisSponsorDetails,
+  type DavisSponsorPayload,
+} from '@/features/davis/davis.functions'
+import { parseDavisSponsorSearch } from '@/features/davis/davis-search-params'
 
-export const Route = createFileRoute('/theo/sponsor/$id')({
-  validateSearch: parseTheoSponsorSearch,
+export const Route = createFileRoute('/davis/sponsor/$id')({
+  validateSearch: parseDavisSponsorSearch,
   loader: async ({ params, location, search }) => {
     const resolvedSearch =
       search ??
-      parseTheoSponsorSearch(
+      parseDavisSponsorSearch(
         Object.fromEntries(new URLSearchParams(location?.search ?? '')),
       )
 
-    const payload = await getTheoSponsorDetails({
+    const payload = await getDavisSponsorDetails({
       data: {
         slug: params.id,
         page: resolvedSearch.page,
@@ -34,16 +34,16 @@ export const Route = createFileRoute('/theo/sponsor/$id')({
 
     return payload
   },
-  component: TheoSponsorRoute,
+  component: DavisSponsorRoute,
 })
 
-function TheoSponsorRoute() {
+function DavisSponsorRoute() {
   const payload = Route.useLoaderData()
   const params = Route.useParams()
   const search = Route.useSearch()
 
   return (
-    <TheoSponsorView
+    <DavisSponsorView
       payload={payload}
       sponsorSlug={params.id}
       page={search.page}
@@ -52,13 +52,13 @@ function TheoSponsorRoute() {
   )
 }
 
-export const TheoSponsorView = ({
+export const DavisSponsorView = ({
   payload,
   sponsorSlug,
   page: currentPage,
   mentionsPage: currentMentionsPage,
 }: {
-  payload: TheoSponsorPayload
+  payload: DavisSponsorPayload
   sponsorSlug: string
   page: number
   mentionsPage: number
@@ -169,7 +169,7 @@ export const TheoSponsorView = ({
           page={page}
           totalPages={totalPages}
           getLink={(nextPage) => ({
-            to: '/theo/sponsor/$id' as const,
+            to: '/davis/sponsor/$id' as const,
             params: { id: sponsorSlug },
             search: { page: nextPage, mentionsPage: currentMentionsPage },
           })}
@@ -183,7 +183,7 @@ export const TheoSponsorView = ({
             className="grid gap-4 rounded-xl border border-neutral-200 bg-white p-4 transition-shadow hover:shadow-sm md:grid-cols-[200px_1fr]"
           >
             <Link
-              to="/theo/video/$id"
+              to="/davis/video/$id"
               params={{ id: video.videoId }}
               search={{ commentsPage: 1 }}
               className="block overflow-hidden rounded-lg"
@@ -198,7 +198,7 @@ export const TheoSponsorView = ({
 
             <div className="space-y-2.5">
               <Link
-                to="/theo/video/$id"
+                to="/davis/video/$id"
                 params={{ id: video.videoId }}
                 search={{ commentsPage: 1 }}
                 className="font-medium text-neutral-900 transition-colors hover:text-amber-700"
@@ -237,7 +237,7 @@ export const TheoSponsorView = ({
             page={mentionsPage}
             totalPages={mentionsTotalPages}
             getLink={(nextPage) => ({
-              to: '/theo/sponsor/$id' as const,
+              to: '/davis/sponsor/$id' as const,
               params: { id: sponsorSlug },
               search: { page: currentPage, mentionsPage: nextPage },
             })}
@@ -259,7 +259,7 @@ export const TheoSponsorView = ({
                   </span>
                   <span className="text-neutral-300">&middot;</span>
                   <Link
-                    to="/theo/video/$id"
+                    to="/davis/video/$id"
                     params={{ id: comment.videoId }}
                     search={{ commentsPage: 1 }}
                     className="text-amber-600 hover:underline"

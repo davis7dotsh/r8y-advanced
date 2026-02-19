@@ -264,7 +264,7 @@ export namespace YouTubeApiService {
         videoId,
         part: "snippet",
         maxResults: "100",
-        order: "time",
+        order: "relevance",
         textFormat: "plainText",
         pageToken: nextPageToken,
       });

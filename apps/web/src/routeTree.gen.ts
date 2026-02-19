@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as UnlockRouteImport } from './routes/unlock'
 import { Route as TheoRouteImport } from './routes/theo'
 import { Route as DavisRouteImport } from './routes/davis'
 import { Route as IndexRouteImport } from './routes/index'
@@ -19,6 +20,11 @@ import { Route as TheoSponsorIdRouteImport } from './routes/theo/sponsor/$id'
 import { Route as DavisVideoIdRouteImport } from './routes/davis/video/$id'
 import { Route as DavisSponsorIdRouteImport } from './routes/davis/sponsor/$id'
 
+const UnlockRoute = UnlockRouteImport.update({
+  id: '/unlock',
+  path: '/unlock',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TheoRoute = TheoRouteImport.update({
   id: '/theo',
   path: '/theo',
@@ -69,6 +75,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/davis': typeof DavisRouteWithChildren
   '/theo': typeof TheoRouteWithChildren
+  '/unlock': typeof UnlockRoute
   '/davis/': typeof DavisIndexRoute
   '/theo/': typeof TheoIndexRoute
   '/davis/sponsor/$id': typeof DavisSponsorIdRoute
@@ -78,6 +85,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/unlock': typeof UnlockRoute
   '/davis': typeof DavisIndexRoute
   '/theo': typeof TheoIndexRoute
   '/davis/sponsor/$id': typeof DavisSponsorIdRoute
@@ -90,6 +98,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/davis': typeof DavisRouteWithChildren
   '/theo': typeof TheoRouteWithChildren
+  '/unlock': typeof UnlockRoute
   '/davis/': typeof DavisIndexRoute
   '/theo/': typeof TheoIndexRoute
   '/davis/sponsor/$id': typeof DavisSponsorIdRoute
@@ -103,6 +112,7 @@ export interface FileRouteTypes {
     | '/'
     | '/davis'
     | '/theo'
+    | '/unlock'
     | '/davis/'
     | '/theo/'
     | '/davis/sponsor/$id'
@@ -112,6 +122,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/unlock'
     | '/davis'
     | '/theo'
     | '/davis/sponsor/$id'
@@ -123,6 +134,7 @@ export interface FileRouteTypes {
     | '/'
     | '/davis'
     | '/theo'
+    | '/unlock'
     | '/davis/'
     | '/theo/'
     | '/davis/sponsor/$id'
@@ -135,10 +147,18 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   DavisRoute: typeof DavisRouteWithChildren
   TheoRoute: typeof TheoRouteWithChildren
+  UnlockRoute: typeof UnlockRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/unlock': {
+      id: '/unlock'
+      path: '/unlock'
+      fullPath: '/unlock'
+      preLoaderRoute: typeof UnlockRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/theo': {
       id: '/theo'
       path: '/theo'
@@ -237,6 +257,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   DavisRoute: DavisRouteWithChildren,
   TheoRoute: TheoRouteWithChildren,
+  UnlockRoute: UnlockRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

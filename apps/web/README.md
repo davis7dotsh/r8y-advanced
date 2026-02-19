@@ -9,6 +9,8 @@ bun install
 bun --bun run dev
 ```
 
+Set `APP_SECRET_PASSCODE` in your environment to unlock the app.
+
 # Building For Production
 
 To build this application for production:

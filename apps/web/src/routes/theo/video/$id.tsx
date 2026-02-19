@@ -293,7 +293,7 @@ export const TheoVideoView = ({
             viewCount={video.viewCount}
             likeCount={video.likeCount}
             commentCount={video.commentCount}
-            variant="detail"
+            xViews={video.xPost?.views}
           />
 
           <XPostLinkForm

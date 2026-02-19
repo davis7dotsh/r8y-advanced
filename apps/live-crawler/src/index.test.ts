@@ -40,6 +40,20 @@ test("shouldRunOnce only enables on true", async () => {
   expect(shouldRunOnce(undefined)).toBe(false);
 });
 
+test("readLogLevel defaults to warn", async () => {
+  const { readLogLevel } = await loadModule();
+  expect(readLogLevel(undefined)).toBe("warn");
+  expect(readLogLevel("")).toBe("warn");
+});
+
+test("readLogLevel normalizes valid values", async () => {
+  const { readLogLevel } = await loadModule();
+  expect(readLogLevel("INFO")).toBe("info");
+  expect(readLogLevel(" error ")).toBe("error");
+  expect(readLogLevel("silent")).toBe("silent");
+  expect(readLogLevel("verbose")).toBe("warn");
+});
+
 test("crawlChannels skips unknown ids", async () => {
   const { crawlChannels } = await loadModule();
   const logger = {

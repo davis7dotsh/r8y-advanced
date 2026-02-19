@@ -17,5 +17,6 @@ bun run start
 - `CRAWLER_CHANNEL_IDS` (optional, comma-separated list of YouTube channel ids)
 - `CRAWLER_INTERVAL_MS` (optional, default `300000`)
 - `CRAWLER_RUN_ONCE` (optional, set `true` for one-off execution)
+- `CRAWLER_LOG_LEVEL` (optional, one of `info`, `warn`, `error`, `silent`; default `warn`)
 
 Default channels are Theo (`UCbRP3c757lWg9M-U7TyEkXA`) and Ben (`UCFvPgPdb_emE_bpMZq6hmJQ`).

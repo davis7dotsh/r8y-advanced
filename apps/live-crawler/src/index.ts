@@ -4,8 +4,17 @@ import { THEO_CHANNEL_INFO } from "theo-data/channel-info";
 import { CrawlService as TheoCrawlService } from "theo-data/crawl";
 
 type Logger = Pick<Console, "info" | "warn" | "error">;
+type LogLevel = "info" | "warn" | "error" | "silent";
 
 const DEFAULT_INTERVAL_MS = 5 * 60 * 1000;
+const DEFAULT_LOG_LEVEL: LogLevel = "warn";
+const LOG_LEVELS: LogLevel[] = ["info", "warn", "error", "silent"];
+const LOG_LEVEL_WEIGHT: Record<LogLevel, number> = {
+  info: 0,
+  warn: 1,
+  error: 2,
+  silent: 3,
+};
 
 const readPositiveInt = (value: string | undefined, fallback: number) => {
   if (!value) {
@@ -40,6 +49,36 @@ export const readIntervalMs = (raw = process.env.CRAWLER_INTERVAL_MS) =>
 
 export const shouldRunOnce = (raw = process.env.CRAWLER_RUN_ONCE) =>
   raw?.trim().toLowerCase() === "true";
+
+export const readLogLevel = (raw = process.env.CRAWLER_LOG_LEVEL) => {
+  const normalized = raw?.trim().toLowerCase();
+  return LOG_LEVELS.includes(normalized as LogLevel)
+    ? (normalized as LogLevel)
+    : DEFAULT_LOG_LEVEL;
+};
+
+const createLogger = (logger: Logger, minLevel: LogLevel): Logger => {
+  const shouldLog = (level: Exclude<LogLevel, "silent">) =>
+    LOG_LEVEL_WEIGHT[level] >= LOG_LEVEL_WEIGHT[minLevel];
+
+  return {
+    info: (...args) => {
+      if (shouldLog("info")) {
+        logger.info(...args);
+      }
+    },
+    warn: (...args) => {
+      if (shouldLog("warn")) {
+        logger.warn(...args);
+      }
+    },
+    error: (...args) => {
+      if (shouldLog("error")) {
+        logger.error(...args);
+      }
+    },
+  };
+};
 
 const resolveCrawler = (channelId: string) =>
   CHANNEL_CRAWLERS[channelId as keyof typeof CHANNEL_CRAWLERS];
@@ -115,24 +154,26 @@ export const crawlChannels = async (logger: Logger, channelIds: string[]) => {
 };
 
 export const startCrawler = async (logger: Logger = console) => {
+  const filteredLogger = createLogger(logger, readLogLevel());
   const channelIds = readChannelIds();
   const intervalMs = readIntervalMs();
 
-  logger.info("[live-crawler] starting", {
+  filteredLogger.info("[live-crawler] starting", {
     channelIds,
     intervalMs,
+    logLevel: readLogLevel(),
     runOnce: shouldRunOnce(),
   });
 
-  await crawlChannels(logger, channelIds);
+  await crawlChannels(filteredLogger, channelIds);
 
   if (shouldRunOnce()) {
-    logger.info("[live-crawler] run-once mode complete");
+    filteredLogger.info("[live-crawler] run-once mode complete");
     return;
   }
 
   const timer = setInterval(() => {
-    void crawlChannels(logger, channelIds);
+    void crawlChannels(filteredLogger, channelIds);
   }, intervalMs);
 
   timer.unref?.();

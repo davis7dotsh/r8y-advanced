@@ -2,6 +2,7 @@ import { Link, createFileRoute } from '@tanstack/react-router'
 import { ErrorState } from '@/components/error-state'
 import { PaginationControls } from '@/components/pagination-controls'
 import { VideoMetrics } from '@/components/video-metrics'
+import { Card, CardContent } from '@/components/ui/card'
 import {
   getDavisVideos,
   type DavisVideosPayload,
@@ -55,10 +56,10 @@ export const DavisVideosView = ({
   return (
     <section className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-sm text-neutral-500">
+        <p className="text-sm text-muted-foreground">
           Showing{' '}
-          <span className="font-medium text-neutral-900">{items.length}</span>{' '}
-          of <span className="font-medium text-neutral-900">{total}</span>{' '}
+          <span className="font-medium text-foreground">{items.length}</span>{' '}
+          of <span className="font-medium text-foreground">{total}</span>{' '}
           videos
           {search.q ? (
             <>
@@ -79,45 +80,37 @@ export const DavisVideosView = ({
         />
       </div>
 
-      <div className="grid gap-3">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
         {items.map((video) => (
-          <article
+          <Card
             key={video.videoId}
-            className="grid gap-4 rounded-xl border border-neutral-200 bg-white p-4 transition-shadow hover:shadow-sm md:grid-cols-[200px_1fr]"
+            className="overflow-hidden transition-shadow hover:shadow-md"
           >
             <Link
               to="/davis/video/$id"
-              params={{
-                id: video.videoId,
-              }}
-              search={{
-                commentsPage: 1,
-              }}
-              className="block overflow-hidden rounded-lg"
+              params={{ id: video.videoId }}
+              search={{ commentsPage: 1 }}
+              className="block overflow-hidden"
             >
               <img
                 src={video.thumbnailUrl}
                 alt={video.title}
-                className="h-full w-full object-cover transition duration-200 hover:scale-[1.02]"
+                className="aspect-video w-full object-cover transition duration-200 hover:scale-[1.02]"
                 loading="lazy"
               />
             </Link>
 
-            <div className="space-y-2.5">
+            <CardContent className="space-y-2.5 p-3">
               <div>
                 <Link
                   to="/davis/video/$id"
-                  params={{
-                    id: video.videoId,
-                  }}
-                  search={{
-                    commentsPage: 1,
-                  }}
-                  className="font-medium text-neutral-900 transition-colors hover:text-amber-700"
+                  params={{ id: video.videoId }}
+                  search={{ commentsPage: 1 }}
+                  className="line-clamp-2 text-sm font-medium leading-snug transition-colors hover:text-amber-700"
                 >
                   {video.title}
                 </Link>
-                <p className="mt-0.5 text-xs text-neutral-400">
+                <p className="mt-0.5 text-xs text-muted-foreground">
                   {new Date(video.publishedAt).toLocaleString()}
                 </p>
               </div>
@@ -135,25 +128,21 @@ export const DavisVideosView = ({
                     <Link
                       key={sponsor.sponsorId}
                       to="/davis/sponsor/$id"
-                      params={{
-                        id: sponsor.slug,
-                      }}
-                      search={{
-                        page: 1,
-                      }}
-                      className="rounded-full border border-amber-200 bg-amber-50 px-2.5 py-0.5 text-xs font-medium text-amber-800 transition-colors hover:bg-amber-100"
+                      params={{ id: sponsor.slug }}
+                      search={{ page: 1 }}
+                      className="rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-800 transition-colors hover:bg-amber-100 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-300"
                     >
                       {sponsor.name}
                     </Link>
                   ))
                 ) : (
-                  <span className="rounded-full border border-neutral-200 px-2.5 py-0.5 text-xs text-neutral-400">
+                  <span className="rounded-full border border-border px-2 py-0.5 text-xs text-muted-foreground">
                     No sponsor
                   </span>
                 )}
               </div>
-            </div>
-          </article>
+            </CardContent>
+          </Card>
         ))}
       </div>
     </section>

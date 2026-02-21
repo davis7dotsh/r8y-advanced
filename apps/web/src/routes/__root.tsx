@@ -9,7 +9,8 @@ import {
 } from '@tanstack/react-router'
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 import { TanStackDevtools } from '@tanstack/react-devtools'
-import { useEffect } from 'react'
+import { MoonIcon, SearchIcon, SunIcon } from 'lucide-react'
+import { useEffect, useState } from 'react'
 import appCss from '../styles.css?url'
 import { resolveAuthRedirect } from '@/features/auth/auth-redirect'
 import {
@@ -18,6 +19,8 @@ import {
   readPersistedPasscode,
   signOut,
 } from '@/features/auth/auth.functions'
+import { GlobalCommand } from '@/components/global-command'
+import { Button } from '@/components/ui/button'
 
 const getRedirectTarget = async (pathname: string) => {
   const auth = await getAuthStatus({
@@ -49,6 +52,8 @@ const redirectTo = (target: '/unlock' | '/theo') => {
     replace: true,
   })
 }
+
+const themeScript = `(function(){try{var t=localStorage.getItem('theme');if(t==='dark')document.documentElement.classList.add('dark')}catch(e){}})();`
 
 export const Route = createRootRoute({
   beforeLoad: async ({ location }) => {
@@ -90,6 +95,38 @@ function RootDocument({ children }: { children: React.ReactNode }) {
   })
   const navigate = useNavigate()
   const showNavigation = pathname !== '/unlock'
+
+  const [theme, setTheme] = useState<'light' | 'dark'>('light')
+  const [commandOpen, setCommandOpen] = useState(false)
+
+  useEffect(() => {
+    const isDark = document.documentElement.classList.contains('dark')
+    setTheme(isDark ? 'dark' : 'light')
+  }, [])
+
+  const toggleTheme = () => {
+    const next = theme === 'dark' ? 'light' : 'dark'
+    setTheme(next)
+    if (next === 'dark') {
+      document.documentElement.classList.add('dark')
+    } else {
+      document.documentElement.classList.remove('dark')
+    }
+    try {
+      localStorage.setItem('theme', next)
+    } catch {}
+  }
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.metaKey && e.key === 'k') {
+        e.preventDefault()
+        setCommandOpen((o) => !o)
+      }
+    }
+    document.addEventListener('keydown', handler)
+    return () => document.removeEventListener('keydown', handler)
+  }, [])
 
   useEffect(() => {
     let isMounted = true
@@ -135,42 +172,82 @@ function RootDocument({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         <HeadContent />
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
-      <body className="min-h-screen bg-neutral-50 text-neutral-900 font-sans">
+      <body className="min-h-screen font-sans">
         {showNavigation ? (
-          <nav className="border-b border-neutral-200 bg-white px-4 sm:px-6 lg:px-8">
-            <div className="mx-auto flex h-12 max-w-5xl items-center justify-between gap-6">
-              <div className="flex items-center gap-6">
+          <nav className="border-b border-border bg-background px-4 sm:px-6 lg:px-8">
+            <div className="mx-auto flex h-12 max-w-5xl items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
                 <Link
                   to="/davis"
                   search={{ page: 1, q: undefined }}
-                  className="text-sm font-medium text-neutral-500 transition-colors hover:text-neutral-900 [&.active]:text-neutral-900 [&.active]:font-semibold"
+                  className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground [&.active]:text-foreground [&.active]:font-semibold"
                 >
                   Davis
                 </Link>
                 <Link
                   to="/theo"
                   search={{ page: 1, q: undefined }}
-                  className="text-sm font-medium text-neutral-500 transition-colors hover:text-neutral-900 [&.active]:text-neutral-900 [&.active]:font-semibold"
+                  className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground [&.active]:text-foreground [&.active]:font-semibold"
                 >
                   Theo
                 </Link>
               </div>
 
-              <button
-                type="button"
-                onClick={handleSignOut}
-                className="text-sm font-medium text-neutral-500 transition-colors hover:text-neutral-900"
-              >
-                Sign out
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setCommandOpen(true)}
+                  className="hidden items-center gap-2 rounded-md border border-border bg-muted/50 px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground sm:flex"
+                >
+                  <SearchIcon className="size-3.5" />
+                  <span>Search</span>
+                  <kbd className="ml-1 rounded border border-border bg-background px-1.5 py-0.5 text-[10px] font-mono">
+                    ⌘K
+                  </kbd>
+                </button>
+
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setCommandOpen(true)}
+                  className="flex sm:hidden"
+                  aria-label="Open search"
+                >
+                  <SearchIcon className="size-4" />
+                </Button>
+
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={toggleTheme}
+                  aria-label="Toggle theme"
+                >
+                  {theme === 'dark' ? (
+                    <SunIcon className="size-4" />
+                  ) : (
+                    <MoonIcon className="size-4" />
+                  )}
+                </Button>
+
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleSignOut}
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  Sign out
+                </Button>
+              </div>
             </div>
           </nav>
         ) : null}
         {children}
+        <GlobalCommand open={commandOpen} onOpenChange={setCommandOpen} />
         <TanStackDevtools
           config={{
             position: 'bottom-right',

@@ -1,13 +1,20 @@
 import { Link, createFileRoute } from '@tanstack/react-router'
+import { BarChart2, ThumbsUp, Youtube } from 'lucide-react'
 import { ErrorState } from '@/components/error-state'
 import { PaginationControls } from '@/components/pagination-controls'
-import { VideoMetrics } from '@/components/video-metrics'
 import { Card, CardContent } from '@/components/ui/card'
 import {
   getDavisVideos,
   type DavisVideosPayload,
 } from '@/features/davis/davis.functions'
 import { parseDavisListSearch } from '@/features/davis/davis-search-params'
+
+const fmt = (n: number) =>
+  n >= 1_000_000
+    ? `${(n / 1_000_000).toFixed(1)}M`
+    : n >= 1_000
+      ? `${Math.round(n / 1_000)}K`
+      : String(n)
 
 export const Route = createFileRoute('/davis/')({
   validateSearch: parseDavisListSearch,
@@ -80,11 +87,11 @@ export const DavisVideosView = ({
         />
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
         {items.map((video) => (
           <Card
             key={video.videoId}
-            className="overflow-hidden transition-shadow hover:shadow-md"
+            className="overflow-hidden gap-0 py-0 transition-shadow hover:shadow-md"
           >
             <Link
               to="/davis/video/$id"
@@ -100,29 +107,17 @@ export const DavisVideosView = ({
               />
             </Link>
 
-            <CardContent className="space-y-2.5 p-3">
-              <div>
-                <Link
-                  to="/davis/video/$id"
-                  params={{ id: video.videoId }}
-                  search={{ commentsPage: 1 }}
-                  className="line-clamp-2 text-sm font-medium leading-snug transition-colors hover:text-amber-700"
-                >
-                  {video.title}
-                </Link>
-                <p className="mt-0.5 text-xs text-muted-foreground">
-                  {new Date(video.publishedAt).toLocaleString()}
-                </p>
-              </div>
+            <CardContent className="p-4 pt-3.5">
+              <Link
+                to="/davis/video/$id"
+                params={{ id: video.videoId }}
+                search={{ commentsPage: 1 }}
+                className="block truncate text-sm font-medium transition-colors hover:text-amber-700"
+              >
+                {video.title}
+              </Link>
 
-              <VideoMetrics
-                viewCount={video.viewCount}
-                likeCount={video.likeCount}
-                commentCount={video.commentCount}
-                xViews={video.xPost?.views}
-              />
-
-              <div className="flex flex-wrap gap-1.5">
+              <div className="mt-1.5 flex flex-wrap gap-1">
                 {video.sponsors.length > 0 ? (
                   video.sponsors.map((sponsor) => (
                     <Link
@@ -130,16 +125,37 @@ export const DavisVideosView = ({
                       to="/davis/sponsor/$id"
                       params={{ id: sponsor.slug }}
                       search={{ page: 1 }}
-                      className="rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-800 transition-colors hover:bg-amber-100 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-300"
+                      className="rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700 bg-amber-100 transition-colors hover:bg-amber-200 dark:bg-amber-900/40 dark:text-amber-400 dark:hover:bg-amber-900/60"
                     >
                       {sponsor.name}
                     </Link>
                   ))
-                ) : (
-                  <span className="rounded-full border border-border px-2 py-0.5 text-xs text-muted-foreground">
-                    No sponsor
+                ) : null}
+              </div>
+
+              <div className="mt-4 flex items-center gap-3.5 text-xs text-muted-foreground">
+                <span className="flex items-center gap-1">
+                  <BarChart2 className="size-3 shrink-0" />
+                  <span className="font-medium text-foreground">
+                    {fmt(video.viewCount + (video.xPost?.views ?? 0))}
                   </span>
-                )}
+                </span>
+                <span className="flex items-center gap-1 text-red-500">
+                  <Youtube className="size-3 shrink-0" />
+                  <span className="font-medium">{fmt(video.viewCount)}</span>
+                </span>
+                {video.xPost?.views != null ? (
+                  <span className="flex items-center gap-1 text-sky-500">
+                    <span className="text-[10px] font-bold leading-none">X</span>
+                    <span className="font-medium">{fmt(video.xPost.views)}</span>
+                  </span>
+                ) : null}
+                <span className="flex items-center gap-1">
+                  <ThumbsUp className="size-3 shrink-0" />
+                  <span className="font-medium text-foreground">
+                    {fmt(video.likeCount)}
+                  </span>
+                </span>
               </div>
             </CardContent>
           </Card>

@@ -91,11 +91,11 @@ export const DavisSponsorView = ({
 
   return (
     <section className="space-y-6">
-      <article className="rounded-xl border border-neutral-200 bg-white p-5">
+      <article className="rounded-xl border border-neutral-200 bg-white p-5 dark:border-neutral-700 dark:bg-neutral-900">
         <p className="text-xs font-semibold uppercase tracking-[0.15em] text-amber-600">
           Sponsor
         </p>
-        <h2 className="mt-1.5 text-2xl font-bold tracking-tight text-neutral-900">
+        <h2 className="mt-1.5 text-2xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100">
           {sponsor.name}
         </h2>
         <p className="mt-1 text-sm text-neutral-400">
@@ -103,47 +103,47 @@ export const DavisSponsorView = ({
         </p>
 
         <dl className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-          <div className="rounded-lg border border-red-100 bg-red-50 p-3.5">
+          <div className="rounded-lg border border-red-100 bg-red-50 p-3.5 dark:border-red-900 dark:bg-red-950">
             <dt className="text-xs font-medium uppercase tracking-wide text-red-400">
               Total YT views
             </dt>
-            <dd className="mt-1 text-lg font-semibold text-red-700">
+            <dd className="mt-1 text-lg font-semibold text-red-700 dark:text-red-400">
               {stats.totalViews.toLocaleString()}
             </dd>
           </div>
-          <div className="rounded-lg border border-neutral-100 bg-neutral-50 p-3.5">
+          <div className="rounded-lg border border-neutral-100 bg-neutral-50 p-3.5 dark:border-neutral-700 dark:bg-neutral-800">
             <dt className="text-xs font-medium uppercase tracking-wide text-neutral-400">
               Average views
             </dt>
-            <dd className="mt-1 text-lg font-semibold text-neutral-900">
+            <dd className="mt-1 text-lg font-semibold text-neutral-900 dark:text-neutral-100">
               {stats.averageViews.toLocaleString()}
             </dd>
           </div>
-          <div className="rounded-lg border border-sky-100 bg-sky-50 p-3.5">
+          <div className="rounded-lg border border-sky-100 bg-sky-50 p-3.5 dark:border-sky-900 dark:bg-sky-950">
             <dt className="text-xs font-medium uppercase tracking-wide text-sky-500">
               Total X views
             </dt>
-            <dd className="mt-1 text-lg font-semibold text-sky-900">
+            <dd className="mt-1 text-lg font-semibold text-sky-900 dark:text-sky-300">
               {stats.totalXViews > 0
                 ? stats.totalXViews.toLocaleString()
                 : 'N/A'}
             </dd>
           </div>
-          <div className="rounded-lg border border-neutral-100 bg-neutral-50 p-3.5">
+          <div className="rounded-lg border border-neutral-100 bg-neutral-50 p-3.5 dark:border-neutral-700 dark:bg-neutral-800">
             <dt className="text-xs font-medium uppercase tracking-wide text-neutral-400">
               Last published
             </dt>
-            <dd className="mt-1 text-sm font-semibold text-neutral-900">
+            <dd className="mt-1 text-sm font-semibold text-neutral-900 dark:text-neutral-100">
               {stats.lastPublishedAt
                 ? `${Math.floor((Date.now() - new Date(stats.lastPublishedAt).getTime()) / 86400000)} days ago`
                 : 'N/A'}
             </dd>
           </div>
-          <div className="rounded-lg border border-neutral-100 bg-neutral-50 p-3.5">
+          <div className="rounded-lg border border-neutral-100 bg-neutral-50 p-3.5 dark:border-neutral-700 dark:bg-neutral-800">
             <dt className="text-xs font-medium uppercase tracking-wide text-neutral-400">
               Best performing
             </dt>
-            <dd className="mt-1 text-sm font-semibold text-neutral-900">
+            <dd className="mt-1 text-sm font-semibold text-neutral-900 dark:text-neutral-100">
               {stats.bestPerformingVideo ? (
                 <>
                   {stats.bestPerformingVideo.viewCount.toLocaleString()} &mdash;{' '}
@@ -160,8 +160,8 @@ export const DavisSponsorView = ({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-neutral-500">
           Showing{' '}
-          <span className="font-medium text-neutral-900">{items.length}</span>{' '}
-          of <span className="font-medium text-neutral-900">{total}</span>{' '}
+          <span className="font-medium text-neutral-900 dark:text-neutral-100">{items.length}</span>{' '}
+          of <span className="font-medium text-neutral-900 dark:text-neutral-100">{total}</span>{' '}
           sponsor videos
         </p>
 
@@ -180,7 +180,7 @@ export const DavisSponsorView = ({
         {items.map((video) => (
           <article
             key={video.videoId}
-            className="grid gap-4 rounded-xl border border-neutral-200 bg-white p-4 transition-shadow hover:shadow-sm md:grid-cols-[200px_1fr]"
+            className="grid gap-4 rounded-xl border border-neutral-200 bg-white p-4 transition-shadow hover:shadow-sm md:grid-cols-[200px_1fr] dark:border-neutral-700 dark:bg-neutral-900"
           >
             <Link
               to="/davis/video/$id"
@@ -201,7 +201,7 @@ export const DavisSponsorView = ({
                 to="/davis/video/$id"
                 params={{ id: video.videoId }}
                 search={{ commentsPage: 1 }}
-                className="font-medium text-neutral-900 transition-colors hover:text-amber-700"
+                className="font-medium text-neutral-900 transition-colors hover:text-amber-700 dark:text-neutral-100 dark:hover:text-amber-400"
               >
                 {video.title}
               </Link>
@@ -221,10 +221,10 @@ export const DavisSponsorView = ({
         ))}
       </div>
 
-      <section className="rounded-xl border border-neutral-200 bg-white p-5">
+      <section className="rounded-xl border border-neutral-200 bg-white p-5 dark:border-neutral-700 dark:bg-neutral-900">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h3 className="text-base font-semibold text-neutral-900">
+            <h3 className="text-base font-semibold text-neutral-900 dark:text-neutral-100">
               Sponsor mentions
             </h3>
             <p className="mt-0.5 text-xs text-neutral-400">
@@ -251,13 +251,13 @@ export const DavisSponsorView = ({
             {mentions.map((comment) => (
               <article
                 key={comment.commentId}
-                className="rounded-lg border border-neutral-100 bg-neutral-50 p-3.5"
+                className="rounded-lg border border-neutral-100 bg-neutral-50 p-3.5 dark:border-neutral-700 dark:bg-neutral-800"
               >
                 <div className="mb-1.5 flex flex-wrap items-center gap-2 text-xs text-neutral-400">
-                  <span className="font-medium text-neutral-700">
+                  <span className="font-medium text-neutral-700 dark:text-neutral-300">
                     {comment.author}
                   </span>
-                  <span className="text-neutral-300">&middot;</span>
+                  <span className="text-neutral-300 dark:text-neutral-600">&middot;</span>
                   <Link
                     to="/davis/video/$id"
                     params={{ id: comment.videoId }}
@@ -266,14 +266,14 @@ export const DavisSponsorView = ({
                   >
                     {comment.videoTitle}
                   </Link>
-                  <span className="text-neutral-300">&middot;</span>
+                  <span className="text-neutral-300 dark:text-neutral-600">&middot;</span>
                   <span>{new Date(comment.publishedAt).toLocaleString()}</span>
-                  <span className="text-neutral-300">&middot;</span>
+                  <span className="text-neutral-300 dark:text-neutral-600">&middot;</span>
                   <span>{comment.likeCount.toLocaleString()} likes</span>
-                  <span className="text-neutral-300">&middot;</span>
+                  <span className="text-neutral-300 dark:text-neutral-600">&middot;</span>
                   <span>{comment.replyCount.toLocaleString()} replies</span>
                 </div>
-                <p className="whitespace-pre-wrap text-sm leading-relaxed text-neutral-700">
+                <p className="whitespace-pre-wrap text-sm leading-relaxed text-neutral-700 dark:text-neutral-300">
                   {comment.text}
                 </p>
               </article>

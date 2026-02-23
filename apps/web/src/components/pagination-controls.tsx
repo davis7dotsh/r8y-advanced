@@ -19,12 +19,12 @@ export const PaginationControls = ({
     {page > 1 ? (
       <Link
         {...(getLink(page - 1) as any)}
-        className="rounded-lg border border-neutral-200 bg-white px-3 py-1.5 text-neutral-700 transition-colors hover:border-neutral-300 hover:bg-neutral-50"
+        className="rounded-lg border border-neutral-200 bg-white px-3 py-1.5 text-neutral-700 transition-colors hover:border-neutral-300 hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:border-neutral-600 dark:hover:bg-neutral-700"
       >
         Previous
       </Link>
     ) : (
-      <span className="rounded-lg border border-neutral-100 px-3 py-1.5 text-neutral-300">
+      <span className="rounded-lg border border-neutral-100 px-3 py-1.5 text-neutral-300 dark:border-neutral-800 dark:text-neutral-600">
         Previous
       </span>
     )}
@@ -36,12 +36,12 @@ export const PaginationControls = ({
     {page < totalPages ? (
       <Link
         {...(getLink(page + 1) as any)}
-        className="rounded-lg border border-neutral-200 bg-white px-3 py-1.5 text-neutral-700 transition-colors hover:border-neutral-300 hover:bg-neutral-50"
+        className="rounded-lg border border-neutral-200 bg-white px-3 py-1.5 text-neutral-700 transition-colors hover:border-neutral-300 hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:border-neutral-600 dark:hover:bg-neutral-700"
       >
         Next
       </Link>
     ) : (
-      <span className="rounded-lg border border-neutral-100 px-3 py-1.5 text-neutral-300">
+      <span className="rounded-lg border border-neutral-100 px-3 py-1.5 text-neutral-300 dark:border-neutral-800 dark:text-neutral-600">
         Next
       </span>
     )}

@@ -89,7 +89,7 @@ function Linkified({ text }: { text: string }) {
     parts.push(text.slice(lastIndex))
   }
   return (
-    <p className="whitespace-pre-wrap text-sm leading-relaxed text-neutral-600">
+    <p className="whitespace-pre-wrap text-sm leading-relaxed text-neutral-600 dark:text-neutral-400">
       {parts}
     </p>
   )
@@ -182,7 +182,7 @@ class XPostLinkForm extends React.Component<
 
     return (
       <form
-        className="space-y-2 rounded-lg border border-neutral-200 p-3"
+        className="space-y-2 rounded-lg border border-neutral-200 p-3 dark:border-neutral-700"
         onSubmit={(event) => {
           event.preventDefault()
           syncXPost(xPostUrlInput)
@@ -190,7 +190,7 @@ class XPostLinkForm extends React.Component<
       >
         <label
           htmlFor="x-post-url"
-          className="block text-sm font-medium text-neutral-700"
+          className="block text-sm font-medium text-neutral-700 dark:text-neutral-300"
         >
           Link X Post
         </label>
@@ -205,7 +205,7 @@ class XPostLinkForm extends React.Component<
               })
             }
             placeholder="https://x.com/.../status/123"
-            className="min-w-[220px] flex-1 rounded-lg border border-neutral-300 px-3 py-2 text-sm text-neutral-900 outline-none placeholder:text-neutral-400 focus:border-neutral-400 focus:ring-2 focus:ring-neutral-200"
+            className="min-w-[220px] flex-1 rounded-lg border border-neutral-300 px-3 py-2 text-sm text-neutral-900 outline-none placeholder:text-neutral-400 focus:border-neutral-400 focus:ring-2 focus:ring-neutral-200 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder:text-neutral-500 dark:focus:border-neutral-500 dark:focus:ring-neutral-700"
           />
           <button
             type="submit"
@@ -219,7 +219,7 @@ class XPostLinkForm extends React.Component<
               type="button"
               disabled={isSavingXPost}
               onClick={() => syncXPost(this.props.currentUrl ?? '')}
-              className="rounded-lg border border-sky-300 bg-sky-100 px-3 py-2 text-sm font-medium text-sky-900 transition-colors hover:bg-sky-200 disabled:cursor-not-allowed disabled:opacity-60"
+              className="rounded-lg border border-sky-300 bg-sky-100 px-3 py-2 text-sm font-medium text-sky-900 transition-colors hover:bg-sky-200 disabled:cursor-not-allowed disabled:opacity-60 dark:border-sky-700 dark:bg-sky-900/40 dark:text-sky-300 dark:hover:bg-sky-900/60"
             >
               {isSavingXPost ? 'Refreshing...' : 'Refresh data'}
             </button>
@@ -265,7 +265,7 @@ export const DavisVideoView = ({
 
   return (
     <section className="space-y-6">
-      <article className="grid gap-6 rounded-xl border border-neutral-200 bg-white p-5 lg:grid-cols-[320px_1fr]">
+      <article className="grid gap-6 rounded-xl border border-neutral-200 bg-white p-5 lg:grid-cols-[320px_1fr] dark:border-neutral-700 dark:bg-neutral-900">
         <img
           src={video.thumbnailUrl}
           alt={video.title}
@@ -274,7 +274,7 @@ export const DavisVideoView = ({
 
         <div className="space-y-4">
           <div>
-            <h2 className="text-xl font-bold tracking-tight text-neutral-900 sm:text-2xl">
+            <h2 className="text-xl font-bold tracking-tight text-neutral-900 sm:text-2xl dark:text-neutral-100">
               <a
                 href={`https://www.youtube.com/watch?v=${video.videoId}`}
                 target="_blank"
@@ -305,19 +305,19 @@ export const DavisVideoView = ({
           />
 
           {video.xPost ? (
-            <div className="rounded-lg border border-sky-200 bg-sky-50 p-3">
-              <p className="text-xs font-semibold uppercase tracking-wide text-sky-700">
+            <div className="rounded-lg border border-sky-200 bg-sky-50 p-3 dark:border-sky-800 dark:bg-sky-950">
+              <p className="text-xs font-semibold uppercase tracking-wide text-sky-700 dark:text-sky-400">
                 Linked X Post
               </p>
               <a
                 href={video.xPost.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mt-1 block break-all text-sm text-sky-700 hover:underline"
+                className="mt-1 block break-all text-sm text-sky-700 hover:underline dark:text-sky-400"
               >
                 {video.xPost.url}
               </a>
-              <div className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-sm text-sky-900">
+              <div className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-sm text-sky-900 dark:text-sky-200">
                 <span>Views: {formatMetric(video.xPost.views)}</span>
                 <span>Likes: {formatMetric(video.xPost.likes)}</span>
                 <span>Reposts: {formatMetric(video.xPost.reposts)}</span>
@@ -334,13 +334,13 @@ export const DavisVideoView = ({
                   to="/davis/sponsor/$id"
                   params={{ id: sponsor.slug }}
                   search={{ page: 1 }}
-                  className="rounded-full border border-amber-200 bg-amber-50 px-2.5 py-0.5 text-xs font-medium text-amber-800 transition-colors hover:bg-amber-100"
+                  className="rounded-full border border-amber-200 bg-amber-50 px-2.5 py-0.5 text-xs font-medium text-amber-800 transition-colors hover:bg-amber-100 dark:border-amber-700 dark:bg-amber-900/40 dark:text-amber-300 dark:hover:bg-amber-900/60"
                 >
                   {sponsor.name}
                 </Link>
               ))
             ) : (
-              <span className="rounded-full border border-neutral-200 px-2.5 py-0.5 text-xs text-neutral-400">
+              <span className="rounded-full border border-neutral-200 px-2.5 py-0.5 text-xs text-neutral-400 dark:border-neutral-700">
                 No sponsor
               </span>
             )}
@@ -350,15 +350,15 @@ export const DavisVideoView = ({
         </div>
       </article>
 
-      <section className="rounded-xl border border-neutral-200 bg-white p-5">
+      <section className="rounded-xl border border-neutral-200 bg-white p-5 dark:border-neutral-700 dark:bg-neutral-900">
         <div className="mb-4 space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <h3 className="text-base font-semibold text-neutral-900">
+            <h3 className="text-base font-semibold text-neutral-900 dark:text-neutral-100">
               Comments
             </h3>
 
             {/* Sort */}
-            <div className="flex items-center gap-1 rounded-lg border border-neutral-200 p-0.5">
+            <div className="flex items-center gap-1 rounded-lg border border-neutral-200 p-0.5 dark:border-neutral-700">
               {SORT_OPTIONS.map((opt) => (
                 <Link
                   key={opt.value}
@@ -371,8 +371,8 @@ export const DavisVideoView = ({
                   }}
                   className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${
                     commentsSort === opt.value
-                      ? 'bg-neutral-900 text-white'
-                      : 'text-neutral-500 hover:text-neutral-800'
+                      ? 'bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900'
+                      : 'text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200'
                   }`}
                 >
                   {opt.label}
@@ -395,8 +395,8 @@ export const DavisVideoView = ({
                 }}
                 className={`rounded-full border px-2.5 py-0.5 text-xs font-medium transition-colors ${
                   commentsFilter === opt.value
-                    ? 'border-neutral-800 bg-neutral-800 text-white'
-                    : 'border-neutral-200 text-neutral-500 hover:border-neutral-300 hover:text-neutral-700'
+                    ? 'border-neutral-800 bg-neutral-800 text-white dark:border-neutral-200 dark:bg-neutral-200 dark:text-neutral-900'
+                    : 'border-neutral-200 text-neutral-500 hover:border-neutral-300 hover:text-neutral-700 dark:border-neutral-700 dark:hover:border-neutral-500 dark:hover:text-neutral-300'
                 }`}
               >
                 {opt.label}
@@ -425,20 +425,20 @@ export const DavisVideoView = ({
           {items.map((comment) => (
             <article
               key={comment.commentId}
-              className="rounded-lg border border-neutral-100 bg-neutral-50 p-3.5"
+              className="rounded-lg border border-neutral-100 bg-neutral-50 p-3.5 dark:border-neutral-700 dark:bg-neutral-800"
             >
               <div className="mb-1.5 flex flex-wrap items-center gap-2 text-xs text-neutral-400">
-                <span className="font-medium text-neutral-700">
+                <span className="font-medium text-neutral-700 dark:text-neutral-300">
                   {comment.author}
                 </span>
-                <span className="text-neutral-300">&middot;</span>
+                <span className="text-neutral-300 dark:text-neutral-600">&middot;</span>
                 <span>{new Date(comment.publishedAt).toLocaleString()}</span>
-                <span className="text-neutral-300">&middot;</span>
+                <span className="text-neutral-300 dark:text-neutral-600">&middot;</span>
                 <span>{comment.likeCount.toLocaleString()} likes</span>
-                <span className="text-neutral-300">&middot;</span>
+                <span className="text-neutral-300 dark:text-neutral-600">&middot;</span>
                 <span>{comment.replyCount.toLocaleString()} replies</span>
               </div>
-              <p className="whitespace-pre-wrap text-sm leading-relaxed text-neutral-700">
+              <p className="whitespace-pre-wrap text-sm leading-relaxed text-neutral-700 dark:text-neutral-300">
                 {comment.text}
               </p>
             </article>

@@ -78,8 +78,8 @@ export function UnlockView() {
 
   return (
     <main className="flex min-h-screen items-center justify-center px-4">
-      <div className="w-full max-w-sm rounded-xl border border-neutral-200 bg-white p-6 shadow-sm">
-        <h1 className="text-lg font-semibold text-neutral-900">
+      <div className="w-full max-w-sm rounded-xl border border-neutral-200 bg-white p-6 shadow-sm dark:border-neutral-700 dark:bg-neutral-900">
+        <h1 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">
           Enter passcode
         </h1>
         <p className="mt-1 text-sm text-neutral-500">This app is protected.</p>
@@ -90,12 +90,12 @@ export function UnlockView() {
             value={passcode}
             onChange={(event) => setPasscode(event.target.value)}
             placeholder="Passcode"
-            className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm outline-none ring-amber-500/30 transition focus:border-amber-500 focus:ring"
+            className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm outline-none ring-amber-500/30 transition focus:border-amber-500 focus:ring dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder:text-neutral-500"
             autoFocus
           />
 
           {errorMessage ? (
-            <p className="text-sm text-red-600" role="alert">
+            <p className="text-sm text-red-600 dark:text-red-400" role="alert">
               {errorMessage}
             </p>
           ) : null}
@@ -103,7 +103,7 @@ export function UnlockView() {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full rounded-lg bg-neutral-900 px-3 py-2 text-sm font-medium text-white transition hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-60"
+            className="w-full rounded-lg bg-neutral-900 px-3 py-2 text-sm font-medium text-white transition hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-neutral-100 dark:text-neutral-900 dark:hover:bg-neutral-200"
           >
             {isSubmitting ? 'Checking…' : 'Unlock'}
           </button>

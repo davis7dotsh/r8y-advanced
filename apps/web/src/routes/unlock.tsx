@@ -90,7 +90,7 @@ export function UnlockView() {
             value={passcode}
             onChange={(event) => setPasscode(event.target.value)}
             placeholder="Passcode"
-            className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm outline-none ring-amber-500/30 transition focus:border-amber-500 focus:ring dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder:text-neutral-500"
+            className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm outline-none ring-violet-500/30 transition focus:border-violet-500 focus:ring dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder:text-neutral-500"
             autoFocus
           />
 

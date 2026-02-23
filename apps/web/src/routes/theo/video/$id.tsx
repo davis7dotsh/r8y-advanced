@@ -334,7 +334,7 @@ export const TheoVideoView = ({
                   to="/theo/sponsor/$id"
                   params={{ id: sponsor.slug }}
                   search={{ page: 1 }}
-                  className="rounded-full border border-amber-200 bg-amber-50 px-2.5 py-0.5 text-xs font-medium text-amber-800 transition-colors hover:bg-amber-100 dark:border-amber-700 dark:bg-amber-900/40 dark:text-amber-300 dark:hover:bg-amber-900/60"
+                  className="rounded-full border border-violet-200 bg-violet-50 px-2.5 py-0.5 text-xs font-medium text-violet-800 transition-colors hover:bg-violet-100 dark:border-violet-700 dark:bg-violet-900/40 dark:text-violet-300 dark:hover:bg-violet-900/60"
                 >
                   {sponsor.name}
                 </Link>
@@ -372,7 +372,7 @@ export const TheoVideoView = ({
                   className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${
                     commentsSort === opt.value
                       ? 'bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900'
-                      : 'text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200'
+                      : 'text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-200'
                   }`}
                 >
                   {opt.label}

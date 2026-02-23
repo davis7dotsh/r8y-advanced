@@ -92,7 +92,7 @@ export const TheoSponsorView = ({
   return (
     <section className="space-y-6">
       <article className="rounded-xl border border-neutral-200 bg-white p-5 dark:border-neutral-700 dark:bg-neutral-900">
-        <p className="text-xs font-semibold uppercase tracking-[0.15em] text-amber-600">
+        <p className="text-xs font-semibold uppercase tracking-[0.15em] text-violet-600">
           Sponsor
         </p>
         <h2 className="mt-1.5 text-2xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100">
@@ -103,8 +103,8 @@ export const TheoSponsorView = ({
         </p>
 
         <dl className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-          <div className="rounded-lg border border-red-100 bg-red-50 p-3.5 dark:border-red-900 dark:bg-red-950">
-            <dt className="text-xs font-medium uppercase tracking-wide text-red-400">
+          <div className="rounded-lg border border-red-100 bg-red-50 p-3.5 dark:border-neutral-700 dark:bg-neutral-800">
+            <dt className="text-xs font-medium uppercase tracking-wide text-red-400 dark:text-red-400">
               Total YT views
             </dt>
             <dd className="mt-1 text-lg font-semibold text-red-700 dark:text-red-400">
@@ -119,11 +119,11 @@ export const TheoSponsorView = ({
               {stats.averageViews.toLocaleString()}
             </dd>
           </div>
-          <div className="rounded-lg border border-sky-100 bg-sky-50 p-3.5 dark:border-sky-900 dark:bg-sky-950">
+          <div className="rounded-lg border border-sky-100 bg-sky-50 p-3.5 dark:border-neutral-700 dark:bg-neutral-800">
             <dt className="text-xs font-medium uppercase tracking-wide text-sky-500">
               Total X views
             </dt>
-            <dd className="mt-1 text-lg font-semibold text-sky-900 dark:text-sky-300">
+            <dd className="mt-1 text-lg font-semibold text-sky-700 dark:text-sky-400">
               {stats.totalXViews > 0
                 ? stats.totalXViews.toLocaleString()
                 : 'N/A'}
@@ -201,7 +201,7 @@ export const TheoSponsorView = ({
                 to="/theo/video/$id"
                 params={{ id: video.videoId }}
                 search={{ commentsPage: 1 }}
-                className="font-medium text-neutral-900 transition-colors hover:text-amber-700 dark:text-neutral-100 dark:hover:text-amber-400"
+                className="font-medium text-neutral-900 transition-colors hover:text-violet-600 dark:text-neutral-100 dark:hover:text-violet-400"
               >
                 {video.title}
               </Link>
@@ -262,7 +262,7 @@ export const TheoSponsorView = ({
                     to="/theo/video/$id"
                     params={{ id: comment.videoId }}
                     search={{ commentsPage: 1 }}
-                    className="text-amber-600 hover:underline"
+                    className="text-violet-600 hover:underline"
                   >
                     {comment.videoTitle}
                   </Link>

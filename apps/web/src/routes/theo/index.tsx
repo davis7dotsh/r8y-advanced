@@ -72,7 +72,7 @@ export const TheoVideosView = ({
             <>
               {' '}
               for{' '}
-              <span className="font-medium text-amber-700">"{search.q}"</span>
+              <span className="font-medium text-violet-600">"{search.q}"</span>
             </>
           ) : null}
         </p>
@@ -112,7 +112,7 @@ export const TheoVideosView = ({
                 to="/theo/video/$id"
                 params={{ id: video.videoId }}
                 search={{ commentsPage: 1 }}
-                className="block truncate text-sm font-medium transition-colors hover:text-amber-700"
+                className="block truncate text-sm font-medium transition-colors hover:text-violet-600"
               >
                 {video.title}
               </Link>
@@ -125,7 +125,7 @@ export const TheoVideosView = ({
                       to="/theo/sponsor/$id"
                       params={{ id: sponsor.slug }}
                       search={{ page: 1 }}
-                      className="rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700 bg-amber-100 transition-colors hover:bg-amber-200 dark:bg-amber-900/40 dark:text-amber-400 dark:hover:bg-amber-900/60"
+                      className="rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-violet-700 bg-violet-100 transition-colors hover:bg-violet-200 dark:bg-violet-900/40 dark:text-violet-400 dark:hover:bg-violet-900/60"
                     >
                       {sponsor.name}
                     </Link>

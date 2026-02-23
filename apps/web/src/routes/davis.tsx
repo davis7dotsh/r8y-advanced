@@ -11,7 +11,7 @@ function DavisLayout() {
       <header className="mb-10">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.15em] text-amber-600">
+            <p className="text-xs font-semibold uppercase tracking-[0.15em] text-violet-600">
               Davis Data
             </p>
             <h1 className="mt-1 text-2xl font-bold tracking-tight sm:text-3xl">

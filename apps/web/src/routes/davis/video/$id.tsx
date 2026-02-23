@@ -334,7 +334,7 @@ export const DavisVideoView = ({
                   to="/davis/sponsor/$id"
                   params={{ id: sponsor.slug }}
                   search={{ page: 1 }}
-                  className="rounded-full border border-amber-200 bg-amber-50 px-2.5 py-0.5 text-xs font-medium text-amber-800 transition-colors hover:bg-amber-100 dark:border-amber-700 dark:bg-amber-900/40 dark:text-amber-300 dark:hover:bg-amber-900/60"
+                  className="rounded-full border border-violet-200 bg-violet-50 px-2.5 py-0.5 text-xs font-medium text-violet-800 transition-colors hover:bg-violet-100 dark:border-violet-700 dark:bg-violet-900/40 dark:text-violet-300 dark:hover:bg-violet-900/60"
                 >
                   {sponsor.name}
                 </Link>

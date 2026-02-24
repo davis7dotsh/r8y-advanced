@@ -3,7 +3,7 @@ import { and, desc, eq, sql } from 'drizzle-orm'
 import { comments, sponsorToVideos, sponsors, videos } from '@r8y/theo-data/schema'
 import { Client } from '@xdevplatform/xdk'
 import { db as defaultDb } from '@/db/client.server'
-import { X_API_KEY } from '$env/static/private'
+import { env } from '$env/dynamic/private'
 import type {
   CommentsFilter,
   CommentsSort,
@@ -483,7 +483,7 @@ export namespace TheoVideoService {
       )
     }
 
-    const bearerToken = X_API_KEY?.trim()
+    const bearerToken = env.X_API_KEY?.trim()
     if (!deps.xClient && !bearerToken) {
       return Result.err(
         new XApiConfigError({

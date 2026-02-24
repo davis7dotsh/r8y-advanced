@@ -1,3 +1,3 @@
-import { APP_SECRET_PASSCODE } from '$env/static/private'
+import { env } from '$env/dynamic/private'
 
-export const readServerPasscode = () => APP_SECRET_PASSCODE?.trim() ?? ''
+export const readServerPasscode = () => env.APP_SECRET_PASSCODE?.trim() ?? ''

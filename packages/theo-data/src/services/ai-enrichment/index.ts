@@ -1,5 +1,5 @@
 import { Result, TaggedError } from "better-result";
-import { createAiEnrichmentHelpers, type BamlClientLike } from "yt-sync";
+import { createAiEnrichmentHelpers, type BamlClientLike } from "@r8y/yt-sync";
 import { b as bamlClient } from "../../../baml_client";
 import { THEO_CHANNEL_INFO } from "../../THEO_CHANNEL_INFO";
 

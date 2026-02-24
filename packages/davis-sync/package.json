@@ -1,5 +1,5 @@
 {
-  "name": "davis-sync",
+  "name": "@r8y/davis-sync",
   "scripts": {
     "start": "bun run src/index.ts",
     "check": "bunx tsc --noEmit",
@@ -42,8 +42,8 @@
     "ai": "^6.0.86",
     "better-result": "^2.7.0",
     "fast-xml-parser": "^5.3.6",
-    "x-sync": "workspace:*",
-    "yt-sync": "workspace:*",
+    "@r8y/x-sync": "workspace:*",
+    "@r8y/yt-sync": "workspace:*",
     "zod": "^4.3.6"
   }
 }

@@ -1,8 +1,8 @@
 import { createHash } from "node:crypto";
 import { Result, TaggedError } from "better-result";
 import { and, desc, eq, inArray, ne } from "drizzle-orm";
-import { fetchXPostMetrics, parseXPostUrl } from "x-sync";
-import { fetchRssVideoIds } from "yt-sync";
+import { fetchXPostMetrics, parseXPostUrl } from "/x-sync";
+import { fetchRssVideoIds } from "/yt-sync";
 import { THEO_CHANNEL_INFO } from "../../THEO_CHANNEL_INFO";
 import { db as defaultDb } from "../../db/client";
 import {

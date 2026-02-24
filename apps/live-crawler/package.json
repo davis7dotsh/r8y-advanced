@@ -1,5 +1,5 @@
 {
-  "name": "live-crawler",
+  "name": "@r8y/live-crawler",
   "private": true,
   "type": "module",
   "scripts": {
@@ -10,8 +10,8 @@
     "test": "bun test"
   },
   "dependencies": {
-    "davis-sync": "workspace:*",
-    "theo-data": "workspace:*"
+    "@r8y/davis-sync": "workspace:*",
+    "@r8y/theo-data": "workspace:*"
   },
   "devDependencies": {
     "@types/bun": "^1.3.9",

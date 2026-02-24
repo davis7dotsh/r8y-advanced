@@ -1,5 +1,5 @@
 {
-  "name": "x-sync",
+  "name": "@r8y/x-sync",
   "type": "module",
   "private": true,
   "main": "src/index.ts",

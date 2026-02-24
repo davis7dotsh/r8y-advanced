@@ -1,6 +1,6 @@
 import { beforeAll, expect, test } from "bun:test";
-import { BEN_CHANNEL_INFO } from "davis-sync/channel-info";
-import { THEO_CHANNEL_INFO } from "theo-data/channel-info";
+import { BEN_CHANNEL_INFO } from "/davis-sync/channel-info";
+import { THEO_CHANNEL_INFO } from "/theo-data/channel-info";
 
 beforeAll(() => {
   process.env.DATABASE_URL ??= "postgres://local:test@localhost:5432/local";

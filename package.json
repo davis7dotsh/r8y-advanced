@@ -4,8 +4,8 @@
   "packageManager": "bun@1.3.9",
   "scripts": {
     "dev": "bunx turbo run dev",
-    "dev:web": "bunx turbo run dev --filter=web",
-    "dev:crawler": "bunx turbo run dev --filter=live-crawler",
+    "dev:web": "bunx turbo run dev --filter=@r8y/web",
+    "dev:crawler": "bunx turbo run dev --filter=@r8y/live-crawler",
     "start:live-crawler": "bun run --cwd apps/live-crawler start",
     "db:studio": "bun run --cwd packages/theo-data db:studio",
     "check": "bunx turbo run check",

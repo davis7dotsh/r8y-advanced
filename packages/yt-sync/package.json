@@ -1,5 +1,5 @@
 {
-  "name": "yt-sync",
+  "name": "@r8y/yt-sync",
   "type": "module",
   "private": true,
   "main": "src/index.ts",

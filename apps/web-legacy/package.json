@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "bunx --bun vite dev",
+    "dev:start": "bunx --bun vite dev",
     "build": "vite build",
     "start": "node .output/server/index.mjs",
     "preview": "vite preview",

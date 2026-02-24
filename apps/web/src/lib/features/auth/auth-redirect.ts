@@ -1,3 +1,8 @@
+const PUBLIC_PREFIXES = ['/unlock', '/share']
+
+const isPublicPath = (pathname: string) =>
+  PUBLIC_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`))
+
 export const resolveAuthRedirect = ({
   pathname,
   authenticated,
@@ -5,7 +10,7 @@ export const resolveAuthRedirect = ({
   pathname: string
   authenticated: boolean
 }) => {
-  if (!authenticated && pathname !== '/unlock') {
+  if (!authenticated && !isPublicPath(pathname)) {
     return '/unlock'
   }
 

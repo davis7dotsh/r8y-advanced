@@ -1,7 +1,7 @@
-import { BEN_CHANNEL_INFO } from "/davis-sync/channel-info";
-import { CrawlService as DavisCrawlService } from "/davis-sync/crawl";
-import { THEO_CHANNEL_INFO } from "/theo-data/channel-info";
-import { CrawlService as TheoCrawlService } from "/theo-data/crawl";
+import { BEN_CHANNEL_INFO } from "@r8y/davis-sync/channel-info";
+import { CrawlService as DavisCrawlService } from "@r8y/davis-sync/crawl";
+import { THEO_CHANNEL_INFO } from "@r8y/theo-data/channel-info";
+import { CrawlService as TheoCrawlService } from "@r8y/theo-data/crawl";
 
 type Logger = Pick<Console, "info" | "warn" | "error">;
 type LogLevel = "info" | "warn" | "error" | "silent";

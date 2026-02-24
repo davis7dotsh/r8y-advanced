@@ -13,7 +13,9 @@
   let theme = $state<'light' | 'dark'>('light')
   let commandOpen = $state(false)
 
-  const showNavigation = $derived(page.url.pathname !== '/unlock')
+  const showNavigation = $derived(
+    !page.url.pathname.startsWith('/unlock') && !page.url.pathname.startsWith('/share'),
+  )
 
   const toggleTheme = () => {
     const next = theme === 'dark' ? 'light' : 'dark'

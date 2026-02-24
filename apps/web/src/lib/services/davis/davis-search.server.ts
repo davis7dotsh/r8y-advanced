@@ -1,6 +1,6 @@
 import { Result, TaggedError } from 'better-result'
 import { desc, ilike, or, sql } from 'drizzle-orm'
-import { sponsors, videos } from 'davis-sync/schema'
+import { sponsors, videos } from '@r8y/davis-sync/schema'
 import { davisDb as defaultDb } from '@/db/davis.client.server'
 import { SEARCH_SUGGESTION_LIMIT } from './davis.types'
 import { normalizeQuery, toSponsorSlug } from './davis-utils'

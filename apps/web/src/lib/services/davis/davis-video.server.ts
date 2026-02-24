@@ -1,6 +1,6 @@
 import { Result, TaggedError } from 'better-result'
 import { and, desc, eq, sql } from 'drizzle-orm'
-import { comments, sponsorToVideos, sponsors, videos } from 'davis-sync/schema'
+import { comments, sponsorToVideos, sponsors, videos } from '@r8y/davis-sync/schema'
 import { Client } from '@xdevplatform/xdk'
 import { davisDb as defaultDb } from '@/db/davis.client.server'
 import { X_API_KEY } from '$env/static/private'

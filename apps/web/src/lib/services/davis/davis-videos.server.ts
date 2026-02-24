@@ -1,6 +1,6 @@
 import { Result, TaggedError } from 'better-result'
 import { desc, eq, ilike, inArray, or, sql } from 'drizzle-orm'
-import { sponsorToVideos, sponsors, videos } from 'davis-sync/schema'
+import { sponsorToVideos, sponsors, videos } from '@r8y/davis-sync/schema'
 import { davisDb as defaultDb } from '@/db/davis.client.server'
 import { VIDEO_PAGE_SIZE, type VideoSummary } from './davis.types'
 import {

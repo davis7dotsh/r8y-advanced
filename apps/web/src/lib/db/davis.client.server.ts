@@ -1,6 +1,6 @@
 import { Pool } from 'pg'
 import { drizzle } from 'drizzle-orm/node-postgres'
-import { davisSchema } from 'davis-sync/schema'
+import { davisSchema } from '@r8y/davis-sync/schema'
 import { DATABASE_URL } from '$env/static/private'
 
 if (!DATABASE_URL) {

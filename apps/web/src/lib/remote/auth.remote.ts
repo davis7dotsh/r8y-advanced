@@ -1,5 +1,9 @@
 import { command, getRequestEvent, query } from '$app/server'
-import { authCookieConfig, resolveAuthStatus, resolveSignInResult } from '@/features/auth/auth'
+import {
+  authCookieConfig,
+  resolveAuthStatus,
+  resolveSignInResult,
+} from '@/features/auth/auth'
 import { readServerPasscode } from '@/features/auth/auth.server'
 
 const toObject = (input: unknown) =>

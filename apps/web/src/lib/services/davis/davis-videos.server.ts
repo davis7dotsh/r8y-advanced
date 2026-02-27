@@ -145,51 +145,72 @@ const loadIdsAndTotalFromDb = async (
   },
 ) => {
   if (!input.query) {
-    const [countRow, ids] = await Promise.all([
-      db.select({ total: sql<number>`count(*)` }).from(videos),
-      db
-        .select({
-          videoId: videos.videoId,
-        })
+    // Single query: window function returns count alongside paged IDs
+    const rows = await db
+      .select({
+        videoId: videos.videoId,
+        total: sql<number>`count(*) over ()`,
+      })
+      .from(videos)
+      .orderBy(desc(videos.publishedAt))
+      .limit(input.pageSize)
+      .offset(input.offset)
+
+    if (rows.length === 0) {
+      const [countRow] = await db
+        .select({ total: sql<number>`count(*)` })
         .from(videos)
-        .orderBy(desc(videos.publishedAt))
-        .limit(input.pageSize)
-        .offset(input.offset),
-    ])
+
+      return {
+        total: asNumber(countRow?.total ?? 0),
+        videoIds: [],
+      }
+    }
 
     return {
-      total: asNumber(countRow[0]?.total),
-      videoIds: ids.map((row) => row.videoId),
+      total: asNumber(rows[0]?.total ?? 0),
+      videoIds: rows.map((row) => row.videoId),
     }
   }
 
   const where = buildVideoSearchWhere(input.query)
+  const deduped = db
+    .select({
+      videoId: videos.videoId,
+      publishedAt: videos.publishedAt,
+    })
+    .from(videos)
+    .leftJoin(sponsorToVideos, eq(sponsorToVideos.videoId, videos.videoId))
+    .leftJoin(sponsors, eq(sponsors.sponsorId, sponsorToVideos.sponsorId))
+    .where(where)
+    .groupBy(videos.videoId, videos.publishedAt)
+    .as('deduped')
 
-  const [countRow, ids] = await Promise.all([
-    db
-      .select({ total: sql<number>`count(distinct ${videos.videoId})` })
-      .from(videos)
-      .leftJoin(sponsorToVideos, eq(sponsorToVideos.videoId, videos.videoId))
-      .leftJoin(sponsors, eq(sponsors.sponsorId, sponsorToVideos.sponsorId))
-      .where(where),
-    db
-      .select({
-        videoId: videos.videoId,
-        publishedAt: videos.publishedAt,
-      })
-      .from(videos)
-      .leftJoin(sponsorToVideos, eq(sponsorToVideos.videoId, videos.videoId))
-      .leftJoin(sponsors, eq(sponsors.sponsorId, sponsorToVideos.sponsorId))
-      .where(where)
-      .groupBy(videos.videoId, videos.publishedAt)
-      .orderBy(desc(videos.publishedAt))
-      .limit(input.pageSize)
-      .offset(input.offset),
-  ])
+  // Single query: deduplicate via subquery, then apply window count + pagination
+  const rows = await db
+    .select({
+      videoId: deduped.videoId,
+      total: sql<number>`count(*) over ()`,
+    })
+    .from(deduped)
+    .orderBy(desc(deduped.publishedAt))
+    .limit(input.pageSize)
+    .offset(input.offset)
+
+  if (rows.length === 0) {
+    const [countRow] = await db
+      .select({ total: sql<number>`count(*)` })
+      .from(deduped)
+
+    return {
+      total: asNumber(countRow?.total ?? 0),
+      videoIds: [],
+    }
+  }
 
   return {
-    total: asNumber(countRow[0]?.total),
-    videoIds: ids.map((row) => row.videoId),
+    total: asNumber(rows[0]?.total ?? 0),
+    videoIds: rows.map((row) => row.videoId),
   }
 }
 

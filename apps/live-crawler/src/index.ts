@@ -172,11 +172,9 @@ export const startCrawler = async (logger: Logger = console) => {
     return;
   }
 
-  const timer = setInterval(() => {
+  setInterval(() => {
     void crawlChannels(filteredLogger, channelIds);
   }, intervalMs);
-
-  timer.unref?.();
 };
 
 if (import.meta.main) {

@@ -1,6 +1,11 @@
 import { Result, TaggedError } from 'better-result'
 import { and, desc, eq, sql } from 'drizzle-orm'
-import { comments, sponsorToVideos, sponsors, videos } from '@r8y/theo-data/schema'
+import {
+  comments,
+  sponsorToVideos,
+  sponsors,
+  videos,
+} from '@r8y/theo-data/schema'
 import { Client } from '@xdevplatform/xdk'
 import { db as defaultDb } from '@/db/client.server'
 import { env } from '$env/dynamic/private'

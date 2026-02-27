@@ -1,12 +1,8 @@
-import { Pool } from 'pg'
 import { drizzle } from 'drizzle-orm/node-postgres'
 import { davisSchema } from '@r8y/davis-sync/schema'
-import { env } from '$env/dynamic/private'
+import { sharedPool } from './client.server'
 
-const pool = new Pool({
-  connectionString: env.DATABASE_URL,
-})
-
-export const davisDb = drizzle(pool, {
+// Reuse the shared pool — same DATABASE_URL, just a different Drizzle schema overlay.
+export const davisDb = drizzle(sharedPool, {
   schema: davisSchema,
 })

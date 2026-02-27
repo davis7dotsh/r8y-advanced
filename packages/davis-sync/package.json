@@ -12,7 +12,8 @@
     "visualizer": "bun run scripts/visualizer.ts",
     "db:ensure-schema": "bun run scripts/ensure-schema.ts",
     "db:reset-schema": "bun run scripts/reset-schema.ts",
-    "db:push": "bun run db:ensure-schema && bunx drizzle-kit push --config drizzle.config.ts",
+    "db:ensure-trgm-indexes": "bun run scripts/ensure-trgm-indexes.ts",
+    "db:push": "bun run db:ensure-schema && bunx drizzle-kit push --config drizzle.config.ts && bun run db:ensure-trgm-indexes",
     "db:push:reset": "bun run db:reset-schema && bunx drizzle-kit push --config drizzle.config.ts",
     "db:studio": "bunx drizzle-kit studio --config drizzle.config.ts"
   },

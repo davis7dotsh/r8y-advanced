@@ -1,6 +1,11 @@
 import { Result, TaggedError } from 'better-result'
 import { and, desc, eq, sql } from 'drizzle-orm'
-import { comments, sponsorToVideos, sponsors, videos } from '@r8y/theo-data/schema'
+import {
+  comments,
+  sponsorToVideos,
+  sponsors,
+  videos,
+} from '@r8y/theo-data/schema'
 import { db as defaultDb } from '@/db/client.server'
 import {
   COMMENT_PAGE_SIZE,
@@ -55,7 +60,10 @@ const buildVideoSummaries = (
       }) satisfies VideoSummary,
   )
 
-const loadSponsorsFromDb = (db: typeof defaultDb) =>
+const loadSponsorCandidatesBySlugSuffixFromDb = (
+  db: typeof defaultDb,
+  slugSuffix: string,
+) =>
   db
     .select({
       sponsorId: sponsors.sponsorId,
@@ -63,7 +71,9 @@ const loadSponsorsFromDb = (db: typeof defaultDb) =>
       createdAt: sponsors.createdAt,
     })
     .from(sponsors)
-    .orderBy(sponsors.name)
+    .where(
+      sql`lower(regexp_replace(${sponsors.sponsorId}, '[^a-z0-9]', '', 'g')) like ${'%' + slugSuffix}`,
+    )
 
 const countSponsorVideosFromDb = (db: typeof defaultDb, sponsorId: string) =>
   db
@@ -188,7 +198,7 @@ export namespace TheoSponsorService {
     deps: {
       db?: typeof defaultDb
       queries?: {
-        loadSponsors?: () => Promise<
+        loadSponsorCandidatesBySlugSuffix?: (slugSuffix: string) => Promise<
           Array<{
             sponsorId: string
             name: string
@@ -276,11 +286,27 @@ export namespace TheoSponsorService {
     }
 
     const db = deps.db ?? defaultDb
-    const loadSponsors =
-      deps.queries?.loadSponsors ?? (() => loadSponsorsFromDb(db))
+
+    // Extract the 4-char alphanumeric suffix embedded in the slug (format: "{name}--{suffix}")
+    const slugSuffix = (slug.split('--').pop() ?? '')
+      .replace(/[^a-z0-9]/g, '')
+      .slice(-4)
+
+    if (!slugSuffix) {
+      return Result.err(
+        new SponsorNotFoundError({
+          slug,
+          message: `Sponsor ${slug} not found`,
+        }),
+      )
+    }
+
+    const loadSponsorCandidatesBySlugSuffix =
+      deps.queries?.loadSponsorCandidatesBySlugSuffix ??
+      ((suffix: string) => loadSponsorCandidatesBySlugSuffixFromDb(db, suffix))
 
     const sponsorResult = await Result.tryPromise({
-      try: () => loadSponsors(),
+      try: () => loadSponsorCandidatesBySlugSuffix(slugSuffix),
       catch: (cause) =>
         new SponsorQueryError({
           message:

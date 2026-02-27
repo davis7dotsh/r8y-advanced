@@ -1,7 +1,9 @@
 const PUBLIC_PREFIXES = ['/unlock', '/share']
 
 const isPublicPath = (pathname: string) =>
-  PUBLIC_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`))
+  PUBLIC_PREFIXES.some(
+    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
+  )
 
 export const resolveAuthRedirect = ({
   pathname,

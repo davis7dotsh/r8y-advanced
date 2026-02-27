@@ -20,9 +20,8 @@ const toObject = (input: unknown) =>
 
 export const getShareVideo = query('unchecked', async (input: unknown) => {
   const value = toObject(input)
-  const { ShareVideoService } = await import(
-    '@/services/share/share-video.server'
-  )
+  const { ShareVideoService } =
+    await import('@/services/share/share-video.server')
 
   const channel = typeof value.channel === 'string' ? value.channel : ''
   const videoId = typeof value.videoId === 'string' ? value.videoId : ''

@@ -50,8 +50,14 @@ const loadTheoVideo = (videoId: string) =>
       sponsorName: theoSponsors.name,
     })
     .from(theoVideos)
-    .leftJoin(theoSponsorToVideos, eq(theoSponsorToVideos.videoId, theoVideos.videoId))
-    .leftJoin(theoSponsors, eq(theoSponsors.sponsorId, theoSponsorToVideos.sponsorId))
+    .leftJoin(
+      theoSponsorToVideos,
+      eq(theoSponsorToVideos.videoId, theoVideos.videoId),
+    )
+    .leftJoin(
+      theoSponsors,
+      eq(theoSponsors.sponsorId, theoSponsorToVideos.sponsorId),
+    )
     .where(eq(theoVideos.videoId, videoId))
 
 const loadDavisVideo = (videoId: string) =>
@@ -73,8 +79,14 @@ const loadDavisVideo = (videoId: string) =>
       sponsorName: davisSponsors.name,
     })
     .from(davisVideos)
-    .leftJoin(davisSponsorToVideos, eq(davisSponsorToVideos.videoId, davisVideos.videoId))
-    .leftJoin(davisSponsors, eq(davisSponsors.sponsorId, davisSponsorToVideos.sponsorId))
+    .leftJoin(
+      davisSponsorToVideos,
+      eq(davisSponsorToVideos.videoId, davisVideos.videoId),
+    )
+    .leftJoin(
+      davisSponsors,
+      eq(davisSponsors.sponsorId, davisSponsorToVideos.sponsorId),
+    )
     .where(eq(davisVideos.videoId, videoId))
 
 export namespace ShareVideoService {
@@ -134,7 +146,8 @@ export namespace ShareVideoService {
     const sponsors = rows
       .filter((r) => r.sponsorId && r.sponsorName)
       .reduce((seen, r) => {
-        if (!seen.has(r.sponsorId!)) seen.set(r.sponsorId!, { name: r.sponsorName! })
+        if (!seen.has(r.sponsorId!))
+          seen.set(r.sponsorId!, { name: r.sponsorName! })
         return seen
       }, new Map<string, { name: string }>())
 

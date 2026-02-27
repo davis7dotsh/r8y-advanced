@@ -1,4 +1,4 @@
-import { Result, TaggedError } from "better-result";
+import { Data, Effect } from "effect";
 import { createAiEnrichmentHelpers, type BamlClientLike } from "@r8y/yt-sync";
 import { b as bamlClient } from "../../../baml_client";
 import { THEO_CHANNEL_INFO } from "../../THEO_CHANNEL_INFO";
@@ -22,13 +22,13 @@ const logWarn = (
 };
 
 export namespace AiEnrichmentService {
-  export class MissingOpencodeApiKeyError extends TaggedError("MissingOpencodeApiKeyError")<{
+  export class MissingOpencodeApiKeyError extends Data.TaggedError("MissingOpencodeApiKeyError")<{
     message: string;
-  }>() {}
+  }> {}
 
-  export class AiRequestError extends TaggedError("AiRequestError")<{
+  export class AiRequestError extends Data.TaggedError("AiRequestError")<{
     message: string;
-  }>() {}
+  }> {}
 
   const helpers = createAiEnrichmentHelpers({
     defaultClient: bamlClient,
@@ -43,7 +43,7 @@ export namespace AiEnrichmentService {
       }),
   });
 
-  export const extractSponsor = async (args: {
+  export const extractSponsor = (args: {
     logger?: Logger;
     client?: BamlClientLike;
     input: {
@@ -54,42 +54,51 @@ export namespace AiEnrichmentService {
   }) => {
     const { logger, input } = args;
 
-    logInfo(logger, "extractSponsor:start", {
-      videoTitle: input.videoTitle,
-      via: "baml:GetSponsor",
-    });
-
-    const sponsorResult = await helpers.extractSponsor({
-      client: args.client,
-      input: {
-        videoDescription: input.videoDescription,
-        sponsorPrompt: input.sponsorPrompt,
-        noSponsorKey: THEO_CHANNEL_INFO.noSponsorKey,
-      },
-    });
-
-    if (sponsorResult.status === "error") {
-      const step =
-        sponsorResult.error instanceof MissingOpencodeApiKeyError
-          ? "extractSponsor:missing-api-key"
-          : "extractSponsor:failed";
-      logWarn(logger, step, {
-        videoTitle: input.videoTitle,
-        error: sponsorResult.error.message,
+    return Effect.gen(function* () {
+      yield* Effect.sync(() => {
+        logInfo(logger, "extractSponsor:start", {
+          videoTitle: input.videoTitle,
+          via: "baml:GetSponsor",
+        });
       });
-      return sponsorResult;
-    }
 
-    logInfo(logger, "extractSponsor:success", {
-      videoTitle: input.videoTitle,
-      hasSponsor: sponsorResult.value.hasSponsor,
-      sponsorName: sponsorResult.value.sponsorName,
+      const sponsor = yield* helpers
+        .extractSponsor({
+          client: args.client,
+          input: {
+            videoDescription: input.videoDescription,
+            sponsorPrompt: input.sponsorPrompt,
+            noSponsorKey: THEO_CHANNEL_INFO.noSponsorKey,
+          },
+        })
+        .pipe(
+          Effect.tapError((error) =>
+            Effect.sync(() => {
+              const step =
+                error instanceof MissingOpencodeApiKeyError
+                  ? "extractSponsor:missing-api-key"
+                  : "extractSponsor:failed";
+              logWarn(logger, step, {
+                videoTitle: input.videoTitle,
+                error: error.message,
+              });
+            }),
+          ),
+        );
+
+      yield* Effect.sync(() => {
+        logInfo(logger, "extractSponsor:success", {
+          videoTitle: input.videoTitle,
+          hasSponsor: sponsor.hasSponsor,
+          sponsorName: sponsor.sponsorName,
+        });
+      });
+
+      return sponsor;
     });
-
-    return Result.ok(sponsorResult.value);
   };
 
-  export const classifyComment = async (args: {
+  export const classifyComment = (args: {
     logger?: Logger;
     client?: BamlClientLike;
     input: {
@@ -101,40 +110,49 @@ export namespace AiEnrichmentService {
   }) => {
     const { logger, input } = args;
 
-    logInfo(logger, "classifyComment:start", {
-      videoTitle: input.videoTitle,
-      commentAuthor: input.commentAuthor,
-      via: "baml:ParseComment",
-    });
-
-    const parseResult = await helpers.classifyComment({
-      client: args.client,
-      input: {
-        videoTitle: input.videoTitle,
-        videoDescription: input.videoDescription,
-        commentAuthor: input.commentAuthor,
-        commentText: input.commentText,
-      },
-    });
-
-    if (parseResult.status === "error") {
-      const step =
-        parseResult.error instanceof MissingOpencodeApiKeyError
-          ? "classifyComment:missing-api-key"
-          : "classifyComment:failed";
-      logWarn(logger, step, {
-        videoTitle: input.videoTitle,
-        commentAuthor: input.commentAuthor,
-        error: parseResult.error.message,
+    return Effect.gen(function* () {
+      yield* Effect.sync(() => {
+        logInfo(logger, "classifyComment:start", {
+          videoTitle: input.videoTitle,
+          commentAuthor: input.commentAuthor,
+          via: "baml:ParseComment",
+        });
       });
-      return parseResult;
-    }
 
-    logInfo(logger, "classifyComment:success", {
-      videoTitle: input.videoTitle,
-      commentAuthor: input.commentAuthor,
+      const parsed = yield* helpers
+        .classifyComment({
+          client: args.client,
+          input: {
+            videoTitle: input.videoTitle,
+            videoDescription: input.videoDescription,
+            commentAuthor: input.commentAuthor,
+            commentText: input.commentText,
+          },
+        })
+        .pipe(
+          Effect.tapError((error) =>
+            Effect.sync(() => {
+              const step =
+                error instanceof MissingOpencodeApiKeyError
+                  ? "classifyComment:missing-api-key"
+                  : "classifyComment:failed";
+              logWarn(logger, step, {
+                videoTitle: input.videoTitle,
+                commentAuthor: input.commentAuthor,
+                error: error.message,
+              });
+            }),
+          ),
+        );
+
+      yield* Effect.sync(() => {
+        logInfo(logger, "classifyComment:success", {
+          videoTitle: input.videoTitle,
+          commentAuthor: input.commentAuthor,
+        });
+      });
+
+      return parsed;
     });
-
-    return Result.ok(parseResult.value);
   };
 }

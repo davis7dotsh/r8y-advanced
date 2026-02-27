@@ -37,6 +37,7 @@
   let query = $state('')
   let debouncedQuery = $state('')
   let isLoading = $state(false)
+  let errorMessage = $state('')
   let activeIndex = $state(-1)
   let results = $state<SearchResults>(emptyResults)
   let searchInput = $state<HTMLInputElement | null>(null)
@@ -76,6 +77,7 @@
     onOpenChange(false)
     query = ''
     debouncedQuery = ''
+    errorMessage = ''
     activeIndex = -1
     results = emptyResults
   }
@@ -120,6 +122,7 @@
 
     if (!open || !channel || q.length < 2) {
       isLoading = false
+      errorMessage = ''
       results = emptyResults
       activeIndex = -1
       return
@@ -127,6 +130,7 @@
 
     let cancelled = false
     isLoading = true
+    errorMessage = ''
 
     const searchFn = channel === 'davis' ? getDavisSearchSuggestions : getTheoSearchSuggestions
 
@@ -138,11 +142,23 @@
 
         if (result.status === 'ok') {
           results = result.data
+          errorMessage = ''
           activeIndex = -1
           return
         }
 
+        errorMessage = result.error.message || 'Unable to load search results.'
         results = emptyResults
+        activeIndex = -1
+      })
+      .catch(() => {
+        if (cancelled) {
+          return
+        }
+
+        errorMessage = 'Unable to load search results.'
+        results = emptyResults
+        activeIndex = -1
       })
       .finally(() => {
         if (!cancelled) {
@@ -231,6 +247,8 @@
           </div>
         {:else if isLoading}
           <div class="px-4 py-3 text-sm text-neutral-400">Searching...</div>
+        {:else if errorMessage}
+          <div class="px-4 py-3 text-sm text-red-500 dark:text-red-400">{errorMessage}</div>
         {:else if flattened.length === 0}
           <div class="px-4 py-3 text-sm text-neutral-400">No results found.</div>
         {:else}

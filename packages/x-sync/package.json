@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@xdevplatform/xdk": "^0.4.0",
-    "better-result": "^2.7.0"
+    "effect": "4.0.0-beta.19"
   },
   "peerDependencies": {
     "typescript": "^5"

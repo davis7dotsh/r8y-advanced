@@ -1,3 +1,4 @@
+import { Effect } from "effect";
 import { VisualizerService } from "../src/services/visualizer";
 
 const port = Number.parseInt(process.env.VISUALIZER_PORT ?? "3032", 10);
@@ -426,7 +427,15 @@ const server = Bun.serve({
     }
 
     if (url.pathname === "/api/videos") {
-      const result = await VisualizerService.listVideos({ logger: console });
+      const result = await VisualizerService.listVideos({
+        logger: console,
+      }).pipe(
+        Effect.match({
+          onFailure: (error) => ({ status: "error" as const, error }),
+          onSuccess: (value) => ({ status: "ok" as const, value }),
+        }),
+        Effect.runPromise,
+      );
 
       if (result.status === "error") {
         return jsonResponse(500, { error: result.error.message });
@@ -443,7 +452,13 @@ const server = Bun.serve({
       const videoId = decodeURIComponent(commentsMatch[1]);
       const result = await VisualizerService.getVideoComments(videoId, {
         logger: console,
-      });
+      }).pipe(
+        Effect.match({
+          onFailure: (error) => ({ status: "error" as const, error }),
+          onSuccess: (value) => ({ status: "ok" as const, value }),
+        }),
+        Effect.runPromise,
+      );
 
       if (result.status === "error") {
         if (result.error._tag === "VideoNotFoundError") {

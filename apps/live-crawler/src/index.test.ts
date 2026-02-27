@@ -1,6 +1,7 @@
 import { beforeAll, expect, test } from "bun:test";
 import { BEN_CHANNEL_INFO } from "@r8y/davis-sync/channel-info";
 import { THEO_CHANNEL_INFO } from "@r8y/theo-data/channel-info";
+import { Effect } from "effect";
 
 beforeAll(() => {
   process.env.DATABASE_URL ??= "postgres://local:test@localhost:5432/local";
@@ -62,7 +63,9 @@ test("crawlChannels skips unknown ids", async () => {
     error: () => undefined,
   };
 
-  const result = await crawlChannels(logger, ["unknown-channel-id"]);
+  const result = await crawlChannels(logger, ["unknown-channel-id"]).pipe(
+    Effect.runPromise,
+  );
 
   expect(result).toEqual([
     {

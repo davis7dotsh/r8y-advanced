@@ -2,6 +2,7 @@ import { BEN_CHANNEL_INFO } from "@r8y/davis-sync/channel-info";
 import { CrawlService as DavisCrawlService } from "@r8y/davis-sync/crawl";
 import { THEO_CHANNEL_INFO } from "@r8y/theo-data/channel-info";
 import { CrawlService as TheoCrawlService } from "@r8y/theo-data/crawl";
+import { Effect, Fiber, Runtime, Schedule } from "effect";
 
 type Logger = Pick<Console, "info" | "warn" | "error">;
 type LogLevel = "info" | "warn" | "error" | "silent";
@@ -15,6 +16,17 @@ const LOG_LEVEL_WEIGHT: Record<LogLevel, number> = {
   error: 2,
   silent: 3,
 };
+
+const settle = <A, E, R>(effect: Effect.Effect<A, E, R>) =>
+  effect.pipe(
+    Effect.match({
+      onFailure: (error) => ({
+        status: "error" as const,
+        error,
+      }),
+      onSuccess: (value) => ({ status: "ok" as const, value }),
+    }),
+  );
 
 const readPositiveInt = (value: string | undefined, fallback: number) => {
   if (!value) {
@@ -83,100 +95,136 @@ const createLogger = (logger: Logger, minLevel: LogLevel): Logger => {
 const resolveCrawler = (channelId: string) =>
   CHANNEL_CRAWLERS[channelId as keyof typeof CHANNEL_CRAWLERS];
 
-const crawlSingleChannel = async (logger: Logger, channelId: string) => {
-  const crawler = resolveCrawler(channelId);
-  if (!crawler) {
-    logger.warn("[live-crawler] unknown channel id, skipping", {
-      channelId,
+const crawlSingleChannel = (logger: Logger, channelId: string) =>
+  Effect.gen(function* () {
+    const crawler = resolveCrawler(channelId);
+    if (!crawler) {
+      yield* Effect.sync(() => {
+        logger.warn("[live-crawler] unknown channel id, skipping", {
+          channelId,
+        });
+      });
+
+      return {
+        channelId,
+        status: "skipped" as const,
+        message: "Unknown channel id",
+      };
+    }
+
+    const startedAt = Date.now();
+    const result = yield* settle(
+      crawler.crawlRss(
+        { logger },
+        {
+          channelId,
+        },
+      ),
+    );
+
+    if (result.status === "error") {
+      yield* Effect.sync(() => {
+        logger.error("[live-crawler] channel crawl failed", {
+          channelId,
+          error: result.error.message,
+          durationMs: Date.now() - startedAt,
+        });
+      });
+
+      return {
+        channelId,
+        status: "error" as const,
+        message: result.error.message,
+      };
+    }
+
+    yield* Effect.sync(() => {
+      logger.info("[live-crawler] channel crawl completed", {
+        channelId,
+        successCount: result.value.successCount,
+        failureCount: result.value.failureCount,
+        durationMs: Date.now() - startedAt,
+      });
     });
 
     return {
       channelId,
-      status: "skipped" as const,
-      message: "Unknown channel id",
+      status: "ok" as const,
+      successCount: result.value.successCount,
+      failureCount: result.value.failureCount,
     };
-  }
-
-  const startedAt = Date.now();
-  const result = await crawler.crawlRss(
-    { logger },
-    {
-      channelId,
-    },
-  );
-
-  if (result.status === "error") {
-    logger.error("[live-crawler] channel crawl failed", {
-      channelId,
-      error: result.error.message,
-      durationMs: Date.now() - startedAt,
-    });
-    return {
-      channelId,
-      status: "error" as const,
-      message: result.error.message,
-    };
-  }
-
-  logger.info("[live-crawler] channel crawl completed", {
-    channelId,
-    successCount: result.value.successCount,
-    failureCount: result.value.failureCount,
-    durationMs: Date.now() - startedAt,
   });
 
-  return {
-    channelId,
-    status: "ok" as const,
-    successCount: result.value.successCount,
-    failureCount: result.value.failureCount,
+export const crawlChannels = (logger: Logger, channelIds: string[]) =>
+  Effect.gen(function* () {
+    yield* Effect.sync(() => {
+      logger.info("[live-crawler] crawl tick start", {
+        channelIds,
+        channelCount: channelIds.length,
+      });
+    });
+
+    const results = yield* Effect.forEach(
+      channelIds,
+      (channelId) => crawlSingleChannel(logger, channelId),
+      {
+        concurrency: channelIds.length > 0 ? channelIds.length : 1,
+      },
+    );
+
+    const failedChannels = results.filter((entry) => entry.status === "error");
+
+    yield* Effect.sync(() => {
+      logger.info("[live-crawler] crawl tick complete", {
+        channelCount: channelIds.length,
+        failedChannelCount: failedChannels.length,
+      });
+    });
+
+    return results;
+  });
+
+export const startCrawler = (logger: Logger = console) =>
+  Effect.gen(function* () {
+    const filteredLogger = createLogger(logger, readLogLevel());
+    const channelIds = readChannelIds();
+    const intervalMs = readIntervalMs();
+
+    yield* Effect.sync(() => {
+      filteredLogger.info("[live-crawler] starting", {
+        channelIds,
+        intervalMs,
+        logLevel: readLogLevel(),
+        runOnce: shouldRunOnce(),
+      });
+    });
+
+    if (shouldRunOnce()) {
+      yield* crawlChannels(filteredLogger, channelIds);
+      yield* Effect.sync(() => {
+        filteredLogger.info("[live-crawler] run-once mode complete");
+      });
+      return;
+    }
+
+    yield* crawlChannels(filteredLogger, channelIds).pipe(
+      Effect.repeat(Schedule.spaced(`${intervalMs} millis`)),
+    );
+  });
+
+const runMain = Runtime.makeRunMain(({ fiber, teardown }) => {
+  const onSignal = () => {
+    Effect.runFork(Fiber.interrupt(fiber));
   };
-};
 
-export const crawlChannels = async (logger: Logger, channelIds: string[]) => {
-  logger.info("[live-crawler] crawl tick start", {
-    channelIds,
-    channelCount: channelIds.length,
+  process.on("SIGINT", onSignal);
+  process.on("SIGTERM", onSignal);
+
+  fiber.addObserver((exit) => {
+    teardown(exit, (code) => process.exit(code));
   });
-
-  const results = await Promise.all(
-    channelIds.map((channelId) => crawlSingleChannel(logger, channelId)),
-  );
-
-  const failedChannels = results.filter((entry) => entry.status === "error");
-
-  logger.info("[live-crawler] crawl tick complete", {
-    channelCount: channelIds.length,
-    failedChannelCount: failedChannels.length,
-  });
-
-  return results;
-};
-
-export const startCrawler = async (logger: Logger = console) => {
-  const filteredLogger = createLogger(logger, readLogLevel());
-  const channelIds = readChannelIds();
-  const intervalMs = readIntervalMs();
-
-  filteredLogger.info("[live-crawler] starting", {
-    channelIds,
-    intervalMs,
-    logLevel: readLogLevel(),
-    runOnce: shouldRunOnce(),
-  });
-
-  await crawlChannels(filteredLogger, channelIds);
-
-  if (shouldRunOnce()) {
-    filteredLogger.info("[live-crawler] run-once mode complete");
-    return;
-  }
-
-  setInterval(() => {
-    void crawlChannels(filteredLogger, channelIds);
-  }, intervalMs);
-};
+});
 
 if (import.meta.main) {
-  await startCrawler(console);
+  runMain(startCrawler(console));
 }

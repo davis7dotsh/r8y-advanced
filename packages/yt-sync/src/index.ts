@@ -1,4 +1,4 @@
-import { Result } from "better-result";
+import { Effect, Schedule } from "effect";
 import { XMLParser } from "fast-xml-parser";
 
 export type Logger = Pick<Console, "info" | "warn" | "error">;
@@ -44,6 +44,21 @@ const extractVideoIds = (
   ];
 };
 
+const withExponentialRetries = <A, E, R>(
+  effect: Effect.Effect<A, E, R>,
+  args: {
+    times: number;
+    delayMs: number;
+  },
+) =>
+  effect.pipe(
+    Effect.retry(
+      Schedule.exponential(`${args.delayMs} millis`).pipe(
+        Schedule.compose(Schedule.recurs(args.times)),
+      ),
+    ),
+  );
+
 export const parseRssVideoIds = (xml: string) => {
   const parser = new XMLParser({
     ignoreAttributes: false,
@@ -65,7 +80,7 @@ export const parseRssVideoIds = (xml: string) => {
   return parsed.feed?.entry ? extractVideoIds(parsed.feed.entry) : [];
 };
 
-export const fetchRssVideoIds = async <
+export const fetchRssVideoIds = <
   TExternalError extends { message: string },
 >(args: {
   channelId: string;
@@ -75,10 +90,10 @@ export const fetchRssVideoIds = async <
   const feedUrl = `https://www.youtube.com/feeds/videos.xml?channel_id=${args.channelId}`;
   const fetchImpl = args.fetchImpl ?? fetch;
 
-  const feedResult = await Result.tryPromise(
-    {
-      try: async () => {
-        const response = await fetchImpl(feedUrl);
+  return withExponentialRetries(
+    Effect.tryPromise({
+      try: async (signal) => {
+        const response = await fetchImpl(feedUrl, { signal });
         if (!response.ok) {
           throw new Error(`RSS fetch failed with status ${response.status}`);
         }
@@ -91,24 +106,17 @@ export const fetchRssVideoIds = async <
             ? cause.message
             : "Failed to fetch YouTube RSS feed",
         ),
-    },
+    }).pipe(
+      Effect.map((xml) => ({
+        feedUrl,
+        videoIds: parseRssVideoIds(xml),
+      })),
+    ),
     {
-      retry: {
-        times: 2,
-        delayMs: 250,
-        backoff: "exponential",
-      },
+      times: 2,
+      delayMs: 250,
     },
   );
-
-  if (feedResult.status === "error") {
-    return feedResult;
-  }
-
-  return Result.ok({
-    feedUrl,
-    videoIds: parseRssVideoIds(feedResult.value),
-  });
 };
 
 const sanitizeSponsor = (
@@ -154,64 +162,63 @@ export const createAiEnrichmentHelpers = <
   createMissingApiKeyError: (message: string) => TMissingApiKeyError;
   createAiRequestError: (message: string) => TAiRequestError;
 }) => {
-  const resolveClient = (client?: BamlClientLike) => {
+  const resolveClient = (
+    client?: BamlClientLike,
+  ): Effect.Effect<BamlClientLike, TMissingApiKeyError> => {
     if (client) {
-      return Result.ok(client);
+      return Effect.succeed(client);
     }
 
     if (deps.defaultClient && (deps.hasApiKey?.() ?? true)) {
-      return Result.ok(deps.defaultClient);
+      return Effect.succeed(deps.defaultClient);
     }
 
-    return Result.err(
+    return Effect.fail(
       deps.createMissingApiKeyError("OPENCODE_API_KEY is required"),
     );
   };
 
-  const extractSponsor = async (args: {
+  const extractSponsor = (args: {
     client?: BamlClientLike;
     input: {
       videoDescription: string;
       sponsorPrompt: string;
       noSponsorKey: string;
     };
-  }) => {
-    const clientResult = resolveClient(args.client);
-    if (clientResult.status === "error") {
-      return clientResult;
-    }
-
-    const sponsorResult = await Result.tryPromise(
-      {
-        try: () =>
-          clientResult.value.GetSponsor(
-            args.input.sponsorPrompt,
-            args.input.videoDescription,
-          ),
-        catch: (cause) =>
-          deps.createAiRequestError(
-            cause instanceof Error ? cause.message : "Unknown AI request error",
-          ),
-      },
-      {
-        retry: {
-          times: 3,
-          delayMs: 200,
-          backoff: "exponential",
-        },
-      },
+  }): Effect.Effect<
+    {
+      hasSponsor: boolean;
+      sponsorName: string;
+      sponsorKey: string;
+    },
+    TMissingApiKeyError | TAiRequestError
+  > =>
+    resolveClient(args.client).pipe(
+      Effect.flatMap((client) =>
+        withExponentialRetries(
+          Effect.tryPromise({
+            try: () =>
+              client.GetSponsor(
+                args.input.sponsorPrompt,
+                args.input.videoDescription,
+              ),
+            catch: (cause) =>
+              deps.createAiRequestError(
+                cause instanceof Error
+                  ? cause.message
+                  : "Unknown AI request error",
+              ),
+          }),
+          {
+            times: 3,
+            delayMs: 200,
+          },
+        ),
+      ),
+      Effect.map((result) => sanitizeSponsor(result, args.input.noSponsorKey)),
     );
 
-    if (sponsorResult.status === "error") {
-      return sponsorResult;
-    }
-
-    return Result.ok(
-      sanitizeSponsor(sponsorResult.value, args.input.noSponsorKey),
-    );
-  };
-
-  const classifyComment = async (args: {
+  const classifyComment = (args: {
     client?: BamlClientLike;
     input: {
       videoTitle: string;
@@ -219,46 +226,46 @@ export const createAiEnrichmentHelpers = <
       commentAuthor: string;
       commentText: string;
     };
-  }) => {
-    const clientResult = resolveClient(args.client);
-    if (clientResult.status === "error") {
-      return clientResult;
-    }
-
-    const parseResult = await Result.tryPromise(
-      {
-        try: () =>
-          clientResult.value.ParseComment(
-            args.input.videoTitle,
-            args.input.videoDescription,
-            args.input.commentAuthor,
-            args.input.commentText,
-          ),
-        catch: (cause) =>
-          deps.createAiRequestError(
-            cause instanceof Error ? cause.message : "Unknown AI request error",
-          ),
-      },
-      {
-        retry: {
-          times: 3,
-          delayMs: 200,
-          backoff: "exponential",
-        },
-      },
+  }): Effect.Effect<
+    {
+      isEditingMistake: boolean;
+      isSponsorMention: boolean;
+      isQuestion: boolean;
+      isPositiveComment: boolean;
+    },
+    TMissingApiKeyError | TAiRequestError
+  > =>
+    resolveClient(args.client).pipe(
+      Effect.flatMap((client) =>
+        withExponentialRetries(
+          Effect.tryPromise({
+            try: () =>
+              client.ParseComment(
+                args.input.videoTitle,
+                args.input.videoDescription,
+                args.input.commentAuthor,
+                args.input.commentText,
+              ),
+            catch: (cause) =>
+              deps.createAiRequestError(
+                cause instanceof Error
+                  ? cause.message
+                  : "Unknown AI request error",
+              ),
+          }),
+          {
+            times: 3,
+            delayMs: 200,
+          },
+        ),
+      ),
+      Effect.map((result) => ({
+        isEditingMistake: result.isEditingMistake,
+        isSponsorMention: result.isSponsorMention,
+        isQuestion: result.isQuestion,
+        isPositiveComment: result.isPositiveComment,
+      })),
     );
-
-    if (parseResult.status === "error") {
-      return parseResult;
-    }
-
-    return Result.ok({
-      isEditingMistake: parseResult.value.isEditingMistake,
-      isSponsorMention: parseResult.value.isSponsorMention,
-      isQuestion: parseResult.value.isQuestion,
-      isPositiveComment: parseResult.value.isPositiveComment,
-    });
-  };
 
   return {
     extractSponsor,

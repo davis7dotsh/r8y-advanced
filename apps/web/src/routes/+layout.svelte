@@ -12,6 +12,7 @@
 
   let theme = $state<'light' | 'dark'>('light')
   let commandOpen = $state(false)
+  let searchShortcutLabel = $state('⌘K')
 
   const showNavigation = $derived(
     !page.url.pathname.startsWith('/unlock') && !page.url.pathname.startsWith('/share'),
@@ -41,6 +42,20 @@
   }
 
   onMount(() => {
+    const platform = (
+      (navigator as Navigator & { userAgentData?: { platform?: string } })
+        .userAgentData?.platform ??
+      navigator.platform ??
+      ''
+    ).toLowerCase()
+    const isAppleDevice =
+      platform.includes('mac') ||
+      platform.includes('iphone') ||
+      platform.includes('ipad') ||
+      platform.includes('ipod') ||
+      platform.includes('ios')
+    searchShortcutLabel = isAppleDevice ? '⌘K' : 'Ctrl K'
+
     const persisted = localStorage.getItem('theme')
     const next = persisted === 'dark' ? 'dark' : 'light'
 
@@ -53,7 +68,7 @@
     }
 
     const handler = (event: KeyboardEvent) => {
-      if (event.metaKey && event.key.toLowerCase() === 'k') {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
         event.preventDefault()
         commandOpen = !commandOpen
       }
@@ -101,11 +116,11 @@
           onclick={() => {
             commandOpen = true
           }}
-          class="hidden items-center gap-2 rounded-md border border-border bg-muted/50 px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground sm:flex"
+          class="inline-flex items-center gap-2 rounded-md border border-border bg-muted/50 px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
         >
           <span>Search</span>
           <kbd class="ml-1 rounded border border-border bg-background px-1.5 py-0.5 text-[10px] font-mono">
-            ⌘K
+            {searchShortcutLabel}
           </kbd>
         </button>
 

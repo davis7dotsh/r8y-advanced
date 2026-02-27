@@ -1,4 +1,5 @@
 import { expect, test } from "bun:test";
+import { Effect } from "effect";
 import { AiEnrichmentService } from "./index";
 
 const createClient = (overrides?: {
@@ -43,20 +44,31 @@ const createClient = (overrides?: {
   },
 });
 
+const settle = <A, E>(effect: Effect.Effect<A, E>) =>
+  effect.pipe(
+    Effect.match({
+      onFailure: (error) => ({ status: "error" as const, error }),
+      onSuccess: (value) => ({ status: "ok" as const, value }),
+    }),
+    Effect.runPromise,
+  );
+
 test("extractSponsor normalizes sponsor values and marks as sponsor", async () => {
-  const result = await AiEnrichmentService.extractSponsor({
-    client: createClient({
-      sponsor: {
-        sponsorName: "  ConVex  ",
-        sponsorKey: "  HTTPS://SOYDEV.LINK/CONVEX  ",
+  const result = await settle(
+    AiEnrichmentService.extractSponsor({
+      client: createClient({
+        sponsor: {
+          sponsorName: "  ConVex  ",
+          sponsorKey: "  HTTPS://SOYDEV.LINK/CONVEX  ",
+        },
+      }),
+      input: {
+        videoTitle: "Title",
+        videoDescription: "Desc",
+        sponsorPrompt: "Prompt",
       },
     }),
-    input: {
-      videoTitle: "Title",
-      videoDescription: "Desc",
-      sponsorPrompt: "Prompt",
-    },
-  });
+  );
 
   expect(result.status).toBe("ok");
 
@@ -68,19 +80,21 @@ test("extractSponsor normalizes sponsor values and marks as sponsor", async () =
 });
 
 test("extractSponsor maps no sponsor fallback", async () => {
-  const result = await AiEnrichmentService.extractSponsor({
-    client: createClient({
-      sponsor: {
-        sponsorName: "no sponsor",
-        sponsorKey: "https://t3.gg",
+  const result = await settle(
+    AiEnrichmentService.extractSponsor({
+      client: createClient({
+        sponsor: {
+          sponsorName: "no sponsor",
+          sponsorKey: "https://t3.gg",
+        },
+      }),
+      input: {
+        videoTitle: "Title",
+        videoDescription: "Desc",
+        sponsorPrompt: "Prompt",
       },
     }),
-    input: {
-      videoTitle: "Title",
-      videoDescription: "Desc",
-      sponsorPrompt: "Prompt",
-    },
-  });
+  );
 
   expect(result.status).toBe("ok");
 
@@ -94,22 +108,24 @@ test("extractSponsor maps no sponsor fallback", async () => {
 });
 
 test("classifyComment returns parsed comment booleans", async () => {
-  const result = await AiEnrichmentService.classifyComment({
-    client: createClient({
-      comment: {
-        isEditingMistake: true,
-        isSponsorMention: true,
-        isQuestion: false,
-        isPositiveComment: true,
+  const result = await settle(
+    AiEnrichmentService.classifyComment({
+      client: createClient({
+        comment: {
+          isEditingMistake: true,
+          isSponsorMention: true,
+          isQuestion: false,
+          isPositiveComment: true,
+        },
+      }),
+      input: {
+        videoTitle: "Title",
+        videoDescription: "Desc",
+        commentText: "Thanks sponsor, but timestamp is wrong",
+        commentAuthor: "dev",
       },
     }),
-    input: {
-      videoTitle: "Title",
-      videoDescription: "Desc",
-      commentText: "Thanks sponsor, but timestamp is wrong",
-      commentAuthor: "dev",
-    },
-  });
+  );
 
   expect(result.status).toBe("ok");
 
@@ -124,15 +140,17 @@ test("classifyComment returns parsed comment booleans", async () => {
 });
 
 test("classifyComment maps baml failure to AiRequestError", async () => {
-  const result = await AiEnrichmentService.classifyComment({
-    client: createClient({ throwComment: true }),
-    input: {
-      videoTitle: "Title",
-      videoDescription: "Desc",
-      commentText: "hi",
-      commentAuthor: "dev",
-    },
-  });
+  const result = await settle(
+    AiEnrichmentService.classifyComment({
+      client: createClient({ throwComment: true }),
+      input: {
+        videoTitle: "Title",
+        videoDescription: "Desc",
+        commentText: "hi",
+        commentAuthor: "dev",
+      },
+    }),
+  );
 
   expect(result.status).toBe("error");
 
@@ -146,13 +164,15 @@ test("extractSponsor returns MissingOpencodeApiKeyError without client or env ke
   delete process.env.OPENCODE_API_KEY;
 
   try {
-    const result = await AiEnrichmentService.extractSponsor({
-      input: {
-        videoTitle: "Title",
-        videoDescription: "Desc",
-        sponsorPrompt: "Prompt",
-      },
-    });
+    const result = await settle(
+      AiEnrichmentService.extractSponsor({
+        input: {
+          videoTitle: "Title",
+          videoDescription: "Desc",
+          sponsorPrompt: "Prompt",
+        },
+      }),
+    );
 
     expect(result.status).toBe("error");
 

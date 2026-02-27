@@ -9,7 +9,7 @@
     "test": "bun test"
   },
   "dependencies": {
-    "better-result": "^2.7.0",
+    "effect": "4.0.0-beta.19",
     "fast-xml-parser": "^5.3.6"
   },
   "peerDependencies": {

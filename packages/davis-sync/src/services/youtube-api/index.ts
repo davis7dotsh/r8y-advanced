@@ -1,4 +1,4 @@
-import { Result, TaggedError } from "better-result";
+import { Data, Effect, Schedule } from "effect";
 
 const YOUTUBE_API_BASE_URL = "https://www.googleapis.com/youtube/v3";
 type Logger = Pick<Console, "info" | "warn" | "error">;
@@ -38,17 +38,6 @@ const toIsoDate = (value: unknown) => {
   return Number.isNaN(parsed.getTime()) ? new Date(0) : parsed;
 };
 
-const getYouTubeApiKey = () => {
-  const apiKey = process.env.YT_API_KEY;
-  return apiKey
-    ? Result.ok(apiKey)
-    : Result.err(
-        new YouTubeApiService.MissingYouTubeApiKeyError({
-          message: "YT_API_KEY is required",
-        }),
-      );
-};
-
 const buildYouTubeUrl = (path: string, query: Record<string, string | undefined>) => {
   const params = new URLSearchParams();
 
@@ -60,34 +49,6 @@ const buildYouTubeUrl = (path: string, query: Record<string, string | undefined>
 
   return `${YOUTUBE_API_BASE_URL}${path}?${params.toString()}`;
 };
-
-const fetchJson = async <T>(url: string) =>
-  Result.tryPromise(
-    {
-      try: async () => {
-        const response = await fetch(url);
-
-        if (!response.ok) {
-          const body = await response.text();
-          throw new Error(`YouTube API request failed (${response.status}): ${body}`);
-        }
-
-        return (await response.json()) as T;
-      },
-      catch: (cause) =>
-        new YouTubeApiService.YouTubeApiRequestError({
-          endpoint: url,
-          message: cause instanceof Error ? cause.message : "Unknown YouTube API request error",
-        }),
-    },
-    {
-      retry: {
-        times: 2,
-        delayMs: 300,
-        backoff: "exponential",
-      },
-    },
-  );
 
 const videoResponseSchema = (raw: unknown) => {
   if (!raw || typeof raw !== "object" || !("items" in raw)) {
@@ -157,313 +118,471 @@ const mapPlaylistVideoId = (raw: Record<string, unknown>) => {
   return typeof contentDetails.videoId === "string" ? contentDetails.videoId : "";
 };
 
-export namespace YouTubeApiService {
-  export class MissingYouTubeApiKeyError extends TaggedError("MissingYouTubeApiKeyError")<{
-    message: string;
-  }>() {}
+type VideoSnapshot = ReturnType<typeof mapVideoSnapshot>;
+type CommentSnapshot = ReturnType<typeof mapCommentSnapshot>;
+type TopLevelCommentsResult = {
+  comments: CommentSnapshot[];
+  isLimited: boolean;
+  maxComments: number | null;
+};
+type PlaylistVideoIdsResult = {
+  videoIds: string[];
+  nextPageToken: string | null;
+};
 
-  export class YouTubeApiRequestError extends TaggedError("YouTubeApiRequestError")<{
+export namespace YouTubeApiService {
+  export class MissingYouTubeApiKeyError extends Data.TaggedError("MissingYouTubeApiKeyError")<{
+    message: string;
+  }> {}
+
+  export class YouTubeApiRequestError extends Data.TaggedError("YouTubeApiRequestError")<{
     endpoint: string;
     message: string;
-  }>() {}
+  }> {}
 
-  export class YouTubeVideoNotFoundError extends TaggedError("YouTubeVideoNotFoundError")<{
+  export class YouTubeVideoNotFoundError extends Data.TaggedError("YouTubeVideoNotFoundError")<{
     videoId: string;
     message: string;
-  }>() {}
+  }> {}
 
-  export class YouTubeChannelNotFoundError extends TaggedError("YouTubeChannelNotFoundError")<{
+  export class YouTubeChannelNotFoundError extends Data.TaggedError("YouTubeChannelNotFoundError")<{
     channelId: string;
     message: string;
-  }>() {}
+  }> {}
 
-  export class YouTubePlaylistNotFoundError extends TaggedError("YouTubePlaylistNotFoundError")<{
+  export class YouTubePlaylistNotFoundError extends Data.TaggedError("YouTubePlaylistNotFoundError")<{
     channelId: string;
     message: string;
-  }>() {}
+  }> {}
 
-  export const getVideoById = async (
+  const retryHttp = <A, E, R>(effect: Effect.Effect<A, E, R>) =>
+    effect.pipe(
+      Effect.retry(
+        Schedule.exponential("300 millis").pipe(
+          Schedule.compose(Schedule.recurs(2)),
+        ),
+      ),
+    );
+
+  const getYouTubeApiKey = (): Effect.Effect<string, MissingYouTubeApiKeyError> => {
+    const apiKey = process.env.YT_API_KEY;
+
+    if (apiKey) {
+      return Effect.succeed(apiKey);
+    }
+
+    return Effect.fail(
+      new MissingYouTubeApiKeyError({
+        message: "YT_API_KEY is required",
+      }),
+    );
+  };
+
+  const fetchJson = <T>(url: string): Effect.Effect<T, YouTubeApiRequestError> =>
+    retryHttp(
+      Effect.tryPromise({
+        try: async (signal) => {
+          const response = await fetch(url, { signal });
+
+          if (!response.ok) {
+            const body = await response.text();
+            throw new Error(`YouTube API request failed (${response.status}): ${body}`);
+          }
+
+          return (await response.json()) as T;
+        },
+        catch: (cause) =>
+          new YouTubeApiRequestError({
+            endpoint: url,
+            message: cause instanceof Error ? cause.message : "Unknown YouTube API request error",
+          }),
+      }),
+    );
+
+  export const getVideoById = (
     videoId: string,
     options?: {
       logger?: Logger;
     },
-  ) => {
+  ): Effect.Effect<
+    VideoSnapshot,
+    MissingYouTubeApiKeyError | YouTubeApiRequestError | YouTubeVideoNotFoundError
+  > => {
     const logger = options?.logger;
-    logInfo(logger, "getVideoById:start", { videoId });
 
-    const apiKeyResult = getYouTubeApiKey();
-    if (apiKeyResult.status === "error") {
-      logWarn(logger, "getVideoById:missing-api-key", { videoId });
-      return apiKeyResult;
-    }
-
-    const url = buildYouTubeUrl("/videos", {
-      key: apiKeyResult.value,
-      id: videoId,
-      part: "snippet,statistics",
-      maxResults: "1",
-    });
-
-    const responseResult = await fetchJson<unknown>(url);
-    if (responseResult.status === "error") {
-      logWarn(logger, "getVideoById:request-failed", {
-        videoId,
-        error: responseResult.error.message,
+    return Effect.gen(function* () {
+      yield* Effect.sync(() => {
+        logInfo(logger, "getVideoById:start", { videoId });
       });
-      return responseResult;
-    }
 
-    const [video] = videoResponseSchema(responseResult.value);
-
-    if (!video) {
-      logWarn(logger, "getVideoById:not-found", { videoId });
-      return Result.err(
-        new YouTubeVideoNotFoundError({
-          videoId,
-          message: `Video ${videoId} not found`,
-        }),
+      const apiKey = yield* getYouTubeApiKey().pipe(
+        Effect.tapError(() =>
+          Effect.sync(() => {
+            logWarn(logger, "getVideoById:missing-api-key", { videoId });
+          }),
+        ),
       );
-    }
 
-    logInfo(logger, "getVideoById:success", { videoId });
-    return Result.ok(mapVideoSnapshot(videoId, video));
+      const url = buildYouTubeUrl("/videos", {
+        key: apiKey,
+        id: videoId,
+        part: "snippet,statistics",
+        maxResults: "1",
+      });
+
+      const response = yield* fetchJson<unknown>(url).pipe(
+        Effect.tapError((error) =>
+          Effect.sync(() => {
+            logWarn(logger, "getVideoById:request-failed", {
+              videoId,
+              error: error.message,
+            });
+          }),
+        ),
+      );
+
+      const [video] = videoResponseSchema(response);
+
+      if (!video) {
+        yield* Effect.sync(() => {
+          logWarn(logger, "getVideoById:not-found", { videoId });
+        });
+
+        return yield* Effect.fail(
+          new YouTubeVideoNotFoundError({
+            videoId,
+            message: `Video ${videoId} not found`,
+          }),
+        );
+      }
+
+      yield* Effect.sync(() => {
+        logInfo(logger, "getVideoById:success", { videoId });
+      });
+
+      return mapVideoSnapshot(videoId, video);
+    });
   };
 
-  export const listTopLevelComments = async (
+  export const listTopLevelComments = (
     videoId: string,
     options?: {
       logger?: Logger;
       maxComments?: number;
     },
-  ) => {
+  ): Effect.Effect<
+    TopLevelCommentsResult,
+    MissingYouTubeApiKeyError | YouTubeApiRequestError
+  > => {
     const logger = options?.logger;
-    const maxComments = Number.isFinite(options?.maxComments)
-      ? Math.max(1, Math.floor(options?.maxComments ?? 1))
-      : Number.POSITIVE_INFINITY;
-    const hasLimit = Number.isFinite(maxComments);
-    logInfo(logger, "listTopLevelComments:start", {
-      videoId,
-      maxComments: hasLimit ? maxComments : null,
-    });
 
-    const apiKeyResult = getYouTubeApiKey();
-    if (apiKeyResult.status === "error") {
-      logWarn(logger, "listTopLevelComments:missing-api-key", { videoId });
-      return apiKeyResult;
-    }
+    return Effect.gen(function* () {
+      const maxComments = Number.isFinite(options?.maxComments)
+        ? Math.max(1, Math.floor(options?.maxComments ?? 1))
+        : Number.POSITIVE_INFINITY;
+      const hasLimit = Number.isFinite(maxComments);
 
-    const comments: ReturnType<typeof mapCommentSnapshot>[] = [];
-    let isLimited = false;
-    let nextPageToken: string | undefined;
-    let pageCount = 0;
-
-    while (true) {
-      pageCount += 1;
-      const url = buildYouTubeUrl("/commentThreads", {
-        key: apiKeyResult.value,
-        videoId,
-        part: "snippet",
-        maxResults: "100",
-        order: "relevance",
-        textFormat: "plainText",
-        pageToken: nextPageToken,
+      yield* Effect.sync(() => {
+        logInfo(logger, "listTopLevelComments:start", {
+          videoId,
+          maxComments: hasLimit ? maxComments : null,
+        });
       });
 
-      const responseResult = await fetchJson<unknown>(url);
-      if (responseResult.status === "error") {
-        const message = responseResult.error.message;
-        if (message.includes("commentsDisabled") || message.includes("has disabled comments")) {
-          logInfo(logger, "listTopLevelComments:comments-disabled", { videoId });
-          return Result.ok({
+      const apiKey = yield* getYouTubeApiKey().pipe(
+        Effect.tapError(() =>
+          Effect.sync(() => {
+            logWarn(logger, "listTopLevelComments:missing-api-key", { videoId });
+          }),
+        ),
+      );
+
+      const comments: CommentSnapshot[] = [];
+      let isLimited = false;
+      let nextPageToken: string | undefined;
+      let pageCount = 0;
+
+      while (true) {
+        pageCount += 1;
+
+        const url = buildYouTubeUrl("/commentThreads", {
+          key: apiKey,
+          videoId,
+          part: "snippet",
+          maxResults: "100",
+          order: "relevance",
+          textFormat: "plainText",
+          pageToken: nextPageToken,
+        });
+
+        const response = yield* fetchJson<unknown>(url).pipe(
+          Effect.matchEffect({
+            onFailure: (error) => {
+              if (
+                error.message.includes("commentsDisabled") ||
+                error.message.includes("has disabled comments")
+              ) {
+                return Effect.sync(() => {
+                  logInfo(logger, "listTopLevelComments:comments-disabled", {
+                    videoId,
+                  });
+                }).pipe(
+                  Effect.map(() => ({
+                    kind: "comments-disabled" as const,
+                    payload: null,
+                  })),
+                );
+              }
+
+              return Effect.sync(() => {
+                logWarn(logger, "listTopLevelComments:request-failed", {
+                  videoId,
+                  pageCount,
+                  error: error.message,
+                });
+              }).pipe(
+                Effect.flatMap(() => Effect.fail(error)),
+              );
+            },
+            onSuccess: (payload) =>
+              Effect.succeed({
+                kind: "ok" as const,
+                payload,
+              }),
+          }),
+        );
+
+        if (response.kind === "comments-disabled") {
+          return {
             comments: [],
             isLimited: false,
             maxComments: hasLimit ? maxComments : null,
-          });
+          };
         }
 
-        logWarn(logger, "listTopLevelComments:request-failed", {
-          videoId,
-          pageCount,
-          error: message,
+        const payload = response.payload as {
+          items?: Record<string, unknown>[];
+          nextPageToken?: string;
+        };
+
+        const pageItems = Array.isArray(payload.items) ? payload.items : [];
+        const mapped = pageItems
+          .map(mapCommentSnapshot)
+          .filter((comment) => comment.commentId.length > 0 && comment.videoId === videoId);
+
+        const roomLeft = maxComments - comments.length;
+        const pageComments = roomLeft > 0 ? mapped.slice(0, roomLeft) : [];
+
+        comments.push(...pageComments);
+
+        yield* Effect.sync(() => {
+          logInfo(logger, "listTopLevelComments:page-complete", {
+            videoId,
+            pageCount,
+            pageCommentCount: pageComments.length,
+            accumulatedCommentCount: comments.length,
+          });
         });
-        return responseResult;
+
+        if (hasLimit && comments.length >= maxComments) {
+          isLimited = true;
+          yield* Effect.sync(() => {
+            logInfo(logger, "listTopLevelComments:limit-reached", {
+              videoId,
+              maxComments,
+              pageCount,
+            });
+          });
+          break;
+        }
+
+        nextPageToken =
+          typeof payload.nextPageToken === "string" ? payload.nextPageToken : undefined;
+        if (!nextPageToken) {
+          break;
+        }
       }
 
-      const payload = responseResult.value as {
-        items?: Record<string, unknown>[];
-        nextPageToken?: string;
-      };
-
-      const pageItems = Array.isArray(payload.items) ? payload.items : [];
-      const mapped = pageItems
-        .map(mapCommentSnapshot)
-        .filter((comment) => comment.commentId.length > 0 && comment.videoId === videoId);
-
-      const roomLeft = maxComments - comments.length;
-      const pageComments = roomLeft > 0 ? mapped.slice(0, roomLeft) : [];
-
-      comments.push(...pageComments);
-      logInfo(logger, "listTopLevelComments:page-complete", {
-        videoId,
-        pageCount,
-        pageCommentCount: pageComments.length,
-        accumulatedCommentCount: comments.length,
+      yield* Effect.sync(() => {
+        logInfo(logger, "listTopLevelComments:success", {
+          videoId,
+          totalComments: comments.length,
+          pageCount,
+          maxComments: hasLimit ? maxComments : null,
+          isLimited,
+        });
       });
 
-      if (hasLimit && comments.length >= maxComments) {
-        isLimited = true;
-        logInfo(logger, "listTopLevelComments:limit-reached", {
-          videoId,
-          maxComments,
-          pageCount,
-        });
-        break;
-      }
-
-      nextPageToken = typeof payload.nextPageToken === "string" ? payload.nextPageToken : undefined;
-      if (!nextPageToken) {
-        break;
-      }
-    }
-
-    logInfo(logger, "listTopLevelComments:success", {
-      videoId,
-      totalComments: comments.length,
-      pageCount,
-      maxComments: hasLimit ? maxComments : null,
-      isLimited,
-    });
-    return Result.ok({
-      comments,
-      isLimited,
-      maxComments: hasLimit ? maxComments : null,
+      return {
+        comments,
+        isLimited,
+        maxComments: hasLimit ? maxComments : null,
+      };
     });
   };
 
-  export const getUploadsPlaylistId = async (
+  export const getUploadsPlaylistId = (
     channelId: string,
     options?: {
       logger?: Logger;
     },
-  ) => {
+  ): Effect.Effect<
+    string,
+    | MissingYouTubeApiKeyError
+    | YouTubeApiRequestError
+    | YouTubeChannelNotFoundError
+    | YouTubePlaylistNotFoundError
+  > => {
     const logger = options?.logger;
-    logInfo(logger, "getUploadsPlaylistId:start", { channelId });
 
-    const apiKeyResult = getYouTubeApiKey();
-    if (apiKeyResult.status === "error") {
-      logWarn(logger, "getUploadsPlaylistId:missing-api-key", { channelId });
-      return apiKeyResult;
-    }
-
-    const url = buildYouTubeUrl("/channels", {
-      key: apiKeyResult.value,
-      id: channelId,
-      part: "contentDetails",
-      maxResults: "1",
-    });
-
-    const responseResult = await fetchJson<unknown>(url);
-    if (responseResult.status === "error") {
-      logWarn(logger, "getUploadsPlaylistId:request-failed", {
-        channelId,
-        error: responseResult.error.message,
+    return Effect.gen(function* () {
+      yield* Effect.sync(() => {
+        logInfo(logger, "getUploadsPlaylistId:start", { channelId });
       });
-      return responseResult;
-    }
 
-    const [channel] = videoResponseSchema(responseResult.value);
-    if (!channel) {
-      logWarn(logger, "getUploadsPlaylistId:channel-not-found", { channelId });
-      return Result.err(
-        new YouTubeChannelNotFoundError({
-          channelId,
-          message: `Channel ${channelId} not found`,
-        }),
+      const apiKey = yield* getYouTubeApiKey().pipe(
+        Effect.tapError(() =>
+          Effect.sync(() => {
+            logWarn(logger, "getUploadsPlaylistId:missing-api-key", { channelId });
+          }),
+        ),
       );
-    }
 
-    const contentDetails =
-      (channel.contentDetails as Record<string, unknown> | undefined) ?? {};
-    const relatedPlaylists =
-      (contentDetails.relatedPlaylists as Record<string, unknown> | undefined) ?? {};
-    const uploads = relatedPlaylists.uploads;
+      const url = buildYouTubeUrl("/channels", {
+        key: apiKey,
+        id: channelId,
+        part: "contentDetails",
+        maxResults: "1",
+      });
 
-    if (typeof uploads !== "string" || uploads.length === 0) {
-      logWarn(logger, "getUploadsPlaylistId:uploads-not-found", { channelId });
-      return Result.err(
-        new YouTubePlaylistNotFoundError({
-          channelId,
-          message: `Could not resolve uploads playlist for channel ${channelId}`,
-        }),
+      const response = yield* fetchJson<unknown>(url).pipe(
+        Effect.tapError((error) =>
+          Effect.sync(() => {
+            logWarn(logger, "getUploadsPlaylistId:request-failed", {
+              channelId,
+              error: error.message,
+            });
+          }),
+        ),
       );
-    }
 
-    logInfo(logger, "getUploadsPlaylistId:success", {
-      channelId,
-      playlistId: uploads,
+      const [channel] = videoResponseSchema(response);
+      if (!channel) {
+        yield* Effect.sync(() => {
+          logWarn(logger, "getUploadsPlaylistId:channel-not-found", { channelId });
+        });
+
+        return yield* Effect.fail(
+          new YouTubeChannelNotFoundError({
+            channelId,
+            message: `Channel ${channelId} not found`,
+          }),
+        );
+      }
+
+      const contentDetails =
+        (channel.contentDetails as Record<string, unknown> | undefined) ?? {};
+      const relatedPlaylists =
+        (contentDetails.relatedPlaylists as Record<string, unknown> | undefined) ?? {};
+      const uploads = relatedPlaylists.uploads;
+
+      if (typeof uploads !== "string" || uploads.length === 0) {
+        yield* Effect.sync(() => {
+          logWarn(logger, "getUploadsPlaylistId:uploads-not-found", { channelId });
+        });
+
+        return yield* Effect.fail(
+          new YouTubePlaylistNotFoundError({
+            channelId,
+            message: `Could not resolve uploads playlist for channel ${channelId}`,
+          }),
+        );
+      }
+
+      yield* Effect.sync(() => {
+        logInfo(logger, "getUploadsPlaylistId:success", {
+          channelId,
+          playlistId: uploads,
+        });
+      });
+
+      return uploads;
     });
-    return Result.ok(uploads);
   };
 
-  export const listPlaylistVideoIds = async (
+  export const listPlaylistVideoIds = (
     playlistId: string,
     pageToken?: string,
     options?: {
       logger?: Logger;
     },
-  ) => {
+  ): Effect.Effect<
+    PlaylistVideoIdsResult,
+    MissingYouTubeApiKeyError | YouTubeApiRequestError
+  > => {
     const logger = options?.logger;
-    logInfo(logger, "listPlaylistVideoIds:start", {
-      playlistId,
-      pageToken: pageToken ?? null,
-    });
 
-    const apiKeyResult = getYouTubeApiKey();
-    if (apiKeyResult.status === "error") {
-      logWarn(logger, "listPlaylistVideoIds:missing-api-key", { playlistId });
-      return apiKeyResult;
-    }
-
-    const url = buildYouTubeUrl("/playlistItems", {
-      key: apiKeyResult.value,
-      playlistId,
-      part: "contentDetails",
-      maxResults: "50",
-      pageToken,
-    });
-
-    const responseResult = await fetchJson<unknown>(url);
-    if (responseResult.status === "error") {
-      logWarn(logger, "listPlaylistVideoIds:request-failed", {
-        playlistId,
-        pageToken: pageToken ?? null,
-        error: responseResult.error.message,
+    return Effect.gen(function* () {
+      yield* Effect.sync(() => {
+        logInfo(logger, "listPlaylistVideoIds:start", {
+          playlistId,
+          pageToken: pageToken ?? null,
+        });
       });
-      return responseResult;
-    }
 
-    const payload = responseResult.value as {
-      items?: Record<string, unknown>[];
-      nextPageToken?: string;
-    };
+      const apiKey = yield* getYouTubeApiKey().pipe(
+        Effect.tapError(() =>
+          Effect.sync(() => {
+            logWarn(logger, "listPlaylistVideoIds:missing-api-key", { playlistId });
+          }),
+        ),
+      );
 
-    const videoIds = (Array.isArray(payload.items) ? payload.items : [])
-      .map(mapPlaylistVideoId)
-      .filter((videoId) => videoId.length > 0);
+      const url = buildYouTubeUrl("/playlistItems", {
+        key: apiKey,
+        playlistId,
+        part: "contentDetails",
+        maxResults: "50",
+        pageToken,
+      });
 
-    const nextPageToken =
-      typeof payload.nextPageToken === "string" ? payload.nextPageToken : null;
+      const response = yield* fetchJson<unknown>(url).pipe(
+        Effect.tapError((error) =>
+          Effect.sync(() => {
+            logWarn(logger, "listPlaylistVideoIds:request-failed", {
+              playlistId,
+              pageToken: pageToken ?? null,
+              error: error.message,
+            });
+          }),
+        ),
+      );
 
-    logInfo(logger, "listPlaylistVideoIds:success", {
-      playlistId,
-      pageToken: pageToken ?? null,
-      videoCount: videoIds.length,
-      nextPageToken,
-    });
+      const payload = response as {
+        items?: Record<string, unknown>[];
+        nextPageToken?: string;
+      };
 
-    return Result.ok({
-      videoIds,
-      nextPageToken,
+      const videoIds = (Array.isArray(payload.items) ? payload.items : [])
+        .map(mapPlaylistVideoId)
+        .filter((videoId) => videoId.length > 0);
+
+      const nextPageToken =
+        typeof payload.nextPageToken === "string" ? payload.nextPageToken : null;
+
+      yield* Effect.sync(() => {
+        logInfo(logger, "listPlaylistVideoIds:success", {
+          playlistId,
+          pageToken: pageToken ?? null,
+          videoCount: videoIds.length,
+          nextPageToken,
+        });
+      });
+
+      return {
+        videoIds,
+        nextPageToken,
+      };
     });
   };
 }

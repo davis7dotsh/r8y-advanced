@@ -1,3 +1,4 @@
+import { Effect } from "effect";
 import { CrawlService } from "../src/services/crawl";
 
 const readArg = (name: string) => {
@@ -54,6 +55,12 @@ const result = await CrawlService.backfillChannel(
     limit: parseLimit(),
     concurrency: parseConcurrency(),
   },
+).pipe(
+  Effect.match({
+    onFailure: (error) => ({ status: "error" as const, error }),
+    onSuccess: (value) => ({ status: "ok" as const, value }),
+  }),
+  Effect.runPromise,
 );
 
 if (result.status === "error") {

@@ -1,4 +1,5 @@
 import { expect, test } from "bun:test";
+import { Effect } from "effect";
 import { fetchRssVideoIds, parseRssVideoIds } from "./index";
 
 test("parseRssVideoIds dedupes ids", () => {
@@ -21,10 +22,7 @@ test("fetchRssVideoIds returns video ids", async () => {
         status: 200,
       }),
     externalError: (message) => new Error(message),
-  });
+  }).pipe(Effect.runPromise);
 
-  expect(result.status).toBe("ok");
-  if (result.status === "ok") {
-    expect(result.value.videoIds).toEqual(["v1"]);
-  }
+  expect(result.videoIds).toEqual(["v1"]);
 });

@@ -1,4 +1,4 @@
-import { Result, TaggedError } from "better-result";
+import { Data, Effect } from "effect";
 import { desc, eq } from "drizzle-orm";
 import { db as defaultDb } from "../../db/client";
 import { comments, sponsorToVideos, sponsors, videos } from "../../db/schema";
@@ -28,30 +28,72 @@ const normalizeSponsor = (name: string | null, key: string | null) => ({
   key: key ?? "https://davis7.link",
 });
 
+type VisualizerVideo = {
+  videoId: string;
+  title: string;
+  thumbnailUrl: string;
+  publishedAt: string;
+  commentCount: number;
+  viewCount: number;
+  likeCount: number;
+  sponsor: {
+    name: string;
+    key: string;
+  };
+};
+
+type VideoCommentsPayload = {
+  video: {
+    videoId: string;
+    title: string;
+    thumbnailUrl: string;
+    publishedAt: string;
+    sponsor: {
+      name: string;
+      key: string;
+    };
+  };
+  comments: Array<{
+    commentId: string;
+    author: string;
+    text: string;
+    publishedAt: string;
+    likeCount: number;
+    replyCount: number;
+    isProcessed: boolean;
+    isEditingMistake: boolean | null;
+    isSponsorMention: boolean | null;
+    isQuestion: boolean | null;
+    isPositiveComment: boolean | null;
+  }>;
+};
+
 export namespace VisualizerService {
-  export class InvalidVideoIdError extends TaggedError("InvalidVideoIdError")<{
+  export class InvalidVideoIdError extends Data.TaggedError("InvalidVideoIdError")<{
     message: string;
-  }>() {}
+  }> {}
 
-  export class VisualizerQueryError extends TaggedError("VisualizerQueryError")<{
+  export class VisualizerQueryError extends Data.TaggedError("VisualizerQueryError")<{
     message: string;
-  }>() {}
+  }> {}
 
-  export class VideoNotFoundError extends TaggedError("VideoNotFoundError")<{
+  export class VideoNotFoundError extends Data.TaggedError("VideoNotFoundError")<{
     videoId: string;
     message: string;
-  }>() {}
+  }> {}
 
-  export const listVideos = async (deps?: {
+  export const listVideos = (deps?: {
     db?: typeof defaultDb;
     logger?: Logger;
-  }) => {
+  }): Effect.Effect<VisualizerVideo[], VisualizerQueryError> => {
     const db = deps?.db ?? defaultDb;
 
-    logInfo(deps?.logger, "listVideos:start");
+    return Effect.gen(function* () {
+      yield* Effect.sync(() => {
+        logInfo(deps?.logger, "listVideos:start");
+      });
 
-    const queryResult = await Result.tryPromise(
-      {
+      const rows = yield* Effect.tryPromise({
         try: () =>
           db
             .select({
@@ -73,64 +115,64 @@ export namespace VisualizerService {
           new VisualizerQueryError({
             message: cause instanceof Error ? cause.message : "Failed to load videos",
           }),
-      },
-    );
-
-    if (queryResult.status === "error") {
-      logWarn(deps?.logger, "listVideos:failed", {
-        error: queryResult.error.message,
-      });
-      return queryResult;
-    }
-
-    const dedupedVideos = Array.from(
-      queryResult.value
-        .reduce((acc, row) => {
-          if (!acc.has(row.videoId)) {
-            acc.set(row.videoId, {
-              videoId: row.videoId,
-              title: row.title,
-              thumbnailUrl: row.thumbnailUrl,
-              publishedAt: toIso(row.publishedAt),
-              commentCount: row.commentCount,
-              viewCount: row.viewCount,
-              likeCount: row.likeCount,
-              sponsor: normalizeSponsor(row.sponsorName, row.sponsorKey),
+      }).pipe(
+        Effect.tapError((error) =>
+          Effect.sync(() => {
+            logWarn(deps?.logger, "listVideos:failed", {
+              error: error.message,
             });
-          }
+          }),
+        ),
+      );
 
-          return acc;
-        }, new Map<string, {
-          videoId: string;
-          title: string;
-          thumbnailUrl: string;
-          publishedAt: string;
-          commentCount: number;
-          viewCount: number;
-          likeCount: number;
-          sponsor: { name: string; key: string };
-        }>())
-        .values(),
-    );
+      const dedupedVideos = Array.from(
+        rows
+          .reduce(
+            (acc, row) => {
+              if (!acc.has(row.videoId)) {
+                acc.set(row.videoId, {
+                  videoId: row.videoId,
+                  title: row.title,
+                  thumbnailUrl: row.thumbnailUrl,
+                  publishedAt: toIso(row.publishedAt),
+                  commentCount: row.commentCount,
+                  viewCount: row.viewCount,
+                  likeCount: row.likeCount,
+                  sponsor: normalizeSponsor(row.sponsorName, row.sponsorKey),
+                });
+              }
 
-    logInfo(deps?.logger, "listVideos:success", {
-      videoCount: dedupedVideos.length,
+              return acc;
+            },
+            new Map<string, VisualizerVideo>(),
+          )
+          .values(),
+      );
+
+      yield* Effect.sync(() => {
+        logInfo(deps?.logger, "listVideos:success", {
+          videoCount: dedupedVideos.length,
+        });
+      });
+
+      return dedupedVideos;
     });
-
-    return Result.ok(dedupedVideos);
   };
 
-  export const getVideoComments = async (
+  export const getVideoComments = (
     videoId: string,
     deps?: {
       db?: typeof defaultDb;
       logger?: Logger;
     },
-  ) => {
+  ): Effect.Effect<
+    VideoCommentsPayload,
+    InvalidVideoIdError | VisualizerQueryError | VideoNotFoundError
+  > => {
     const normalizedVideoId = videoId.trim();
 
     if (!normalizedVideoId) {
-      return Result.err(
+      return Effect.fail(
         new InvalidVideoIdError({
           message: "videoId is required",
         }),
@@ -139,12 +181,14 @@ export namespace VisualizerService {
 
     const db = deps?.db ?? defaultDb;
 
-    logInfo(deps?.logger, "getVideoComments:start", {
-      videoId: normalizedVideoId,
-    });
+    return Effect.gen(function* () {
+      yield* Effect.sync(() => {
+        logInfo(deps?.logger, "getVideoComments:start", {
+          videoId: normalizedVideoId,
+        });
+      });
 
-    const videoResult = await Result.tryPromise(
-      {
+      const videoRows = yield* Effect.tryPromise({
         try: () =>
           db
             .select({
@@ -164,26 +208,29 @@ export namespace VisualizerService {
           new VisualizerQueryError({
             message: cause instanceof Error ? cause.message : "Failed to load video",
           }),
-      },
-    );
-
-    if (videoResult.status === "error") {
-      return videoResult;
-    }
-
-    const row = videoResult.value[0];
-
-    if (!row) {
-      return Result.err(
-        new VideoNotFoundError({
-          videoId: normalizedVideoId,
-          message: `Video ${normalizedVideoId} not found`,
-        }),
+      }).pipe(
+        Effect.tapError((error) =>
+          Effect.sync(() => {
+            logWarn(deps?.logger, "getVideoComments:video-load-failed", {
+              videoId: normalizedVideoId,
+              error: error.message,
+            });
+          }),
+        ),
       );
-    }
 
-    const commentResult = await Result.tryPromise(
-      {
+      const row = videoRows[0];
+
+      if (!row) {
+        return yield* Effect.fail(
+          new VideoNotFoundError({
+            videoId: normalizedVideoId,
+            message: `Video ${normalizedVideoId} not found`,
+          }),
+        );
+      }
+
+      const commentRows = yield* Effect.tryPromise({
         try: () =>
           db
             .select({
@@ -206,36 +253,39 @@ export namespace VisualizerService {
           new VisualizerQueryError({
             message: cause instanceof Error ? cause.message : "Failed to load comments",
           }),
-      },
-    );
+      }).pipe(
+        Effect.tapError((error) =>
+          Effect.sync(() => {
+            logWarn(deps?.logger, "getVideoComments:failed", {
+              videoId: normalizedVideoId,
+              error: error.message,
+            });
+          }),
+        ),
+      );
 
-    if (commentResult.status === "error") {
-      logWarn(deps?.logger, "getVideoComments:failed", {
-        videoId: normalizedVideoId,
-        error: commentResult.error.message,
+      const payload: VideoCommentsPayload = {
+        video: {
+          videoId: row.videoId,
+          title: row.title,
+          thumbnailUrl: row.thumbnailUrl,
+          publishedAt: toIso(row.publishedAt),
+          sponsor: normalizeSponsor(row.sponsorName, row.sponsorKey),
+        },
+        comments: commentRows.map((comment) => ({
+          ...comment,
+          publishedAt: toIso(comment.publishedAt),
+        })),
+      };
+
+      yield* Effect.sync(() => {
+        logInfo(deps?.logger, "getVideoComments:success", {
+          videoId: normalizedVideoId,
+          commentCount: payload.comments.length,
+        });
       });
-      return commentResult;
-    }
 
-    const payload = {
-      video: {
-        videoId: row.videoId,
-        title: row.title,
-        thumbnailUrl: row.thumbnailUrl,
-        publishedAt: toIso(row.publishedAt),
-        sponsor: normalizeSponsor(row.sponsorName, row.sponsorKey),
-      },
-      comments: commentResult.value.map((comment) => ({
-        ...comment,
-        publishedAt: toIso(comment.publishedAt),
-      })),
-    };
-
-    logInfo(deps?.logger, "getVideoComments:success", {
-      videoId: normalizedVideoId,
-      commentCount: payload.comments.length,
+      return payload;
     });
-
-    return Result.ok(payload);
   };
 }

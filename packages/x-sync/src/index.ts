@@ -1,5 +1,5 @@
 import { Client } from "@xdevplatform/xdk";
-import { Result } from "better-result";
+import { Effect, Schedule } from "effect";
 
 const X_POST_HOSTS = new Set([
   "x.com",
@@ -25,6 +25,15 @@ const readMetric = (
 
   return typeof matched === "number" ? Math.floor(matched) : null;
 };
+
+const withRetries = <A, E, R>(effect: Effect.Effect<A, E, R>) =>
+  effect.pipe(
+    Effect.retry(
+      Schedule.exponential("250 millis").pipe(
+        Schedule.compose(Schedule.recurs(2)),
+      ),
+    ),
+  );
 
 export const parseXPostUrl = (rawUrl: string) => {
   const value = rawUrl.trim();
@@ -54,7 +63,7 @@ export const parseXPostUrl = (rawUrl: string) => {
     : null;
 };
 
-export const fetchXPostMetrics = async <
+export const fetchXPostMetrics = <
   TExternalError extends { message: string },
 >(args: {
   postId: string;
@@ -63,8 +72,8 @@ export const fetchXPostMetrics = async <
 }) => {
   const client = new Client({ bearerToken: args.bearerToken });
 
-  const xPostResult = await Result.tryPromise(
-    {
+  return withRetries(
+    Effect.tryPromise({
       try: () =>
         client.posts.getById(args.postId, {
           tweetFields: ["public_metrics"],
@@ -75,36 +84,27 @@ export const fetchXPostMetrics = async <
             ? cause.message
             : "Failed while requesting X post metrics",
         ),
-    },
-    {
-      retry: {
-        times: 2,
-        delayMs: 250,
-        backoff: "exponential",
-      },
-    },
+    }).pipe(
+      Effect.map((xPost) => {
+        const publicMetrics = asRecord(xPost.data?.publicMetrics);
+
+        return {
+          xViews: readMetric(publicMetrics, [
+            "impression_count",
+            "impressionCount",
+            "view_count",
+            "viewCount",
+          ]),
+          xLikes: readMetric(publicMetrics, ["like_count", "likeCount"]),
+          xReposts: readMetric(publicMetrics, [
+            "retweet_count",
+            "retweetCount",
+            "repost_count",
+            "repostCount",
+          ]),
+          xComments: readMetric(publicMetrics, ["reply_count", "replyCount"]),
+        };
+      }),
+    ),
   );
-
-  if (xPostResult.status === "error") {
-    return xPostResult;
-  }
-
-  const publicMetrics = asRecord(xPostResult.value.data?.publicMetrics);
-
-  return Result.ok({
-    xViews: readMetric(publicMetrics, [
-      "impression_count",
-      "impressionCount",
-      "view_count",
-      "viewCount",
-    ]),
-    xLikes: readMetric(publicMetrics, ["like_count", "likeCount"]),
-    xReposts: readMetric(publicMetrics, [
-      "retweet_count",
-      "retweetCount",
-      "repost_count",
-      "repostCount",
-    ]),
-    xComments: readMetric(publicMetrics, ["reply_count", "replyCount"]),
-  });
 };

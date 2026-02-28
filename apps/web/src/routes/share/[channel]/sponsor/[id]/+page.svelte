@@ -8,7 +8,15 @@
   const params = $derived(page.params as Record<string, string>)
   const channel = $derived(params.channel ?? '')
   const id = $derived(params.id ?? '')
-  const channelLabel = $derived(channel === 'davis' ? 'Davis' : channel === 'theo' ? 'Theo' : channel)
+  const channelLabel = $derived(
+    channel === 'davis'
+      ? 'Davis'
+      : channel === 'theo'
+        ? 'Theo'
+        : channel === 'micky'
+          ? 'Micky'
+          : channel,
+  )
   const currentPage = $derived(Number(page.url.searchParams.get('page')) || 1)
 
   const sponsorQuery = $derived(getShareSponsor({ channel, slug: id, page: currentPage }))

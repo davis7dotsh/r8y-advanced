@@ -1,5 +1,7 @@
 import { BEN_CHANNEL_INFO } from "@r8y/davis-sync/channel-info";
 import { CrawlService as DavisCrawlService } from "@r8y/davis-sync/crawl";
+import { MICKY_CHANNEL_INFO } from "@r8y/micky-data/channel-info";
+import { CrawlService as MickyCrawlService } from "@r8y/micky-data/crawl";
 import { THEO_CHANNEL_INFO } from "@r8y/theo-data/channel-info";
 import { CrawlService as TheoCrawlService } from "@r8y/theo-data/crawl";
 import { Effect, Fiber, Runtime, Schedule } from "effect";
@@ -40,11 +42,13 @@ const readPositiveInt = (value: string | undefined, fallback: number) => {
 const CHANNEL_CRAWLERS = {
   [THEO_CHANNEL_INFO.channelId]: TheoCrawlService,
   [BEN_CHANNEL_INFO.channelId]: DavisCrawlService,
+  [MICKY_CHANNEL_INFO.channelId]: MickyCrawlService,
 } as const;
 
 const DEFAULT_CHANNEL_IDS = [
   THEO_CHANNEL_INFO.channelId,
   BEN_CHANNEL_INFO.channelId,
+  MICKY_CHANNEL_INFO.channelId,
 ];
 
 export const readChannelIds = (raw = process.env.CRAWLER_CHANNEL_IDS) => {

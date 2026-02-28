@@ -28,6 +28,7 @@
   },
   "dependencies": {
     "@r8y/davis-sync": "workspace:*",
+    "@r8y/micky-data": "workspace:*",
     "@r8y/theo-data": "workspace:*",
     "@tailwindcss/vite": "^4.2.1",
     "@xdevplatform/xdk": "^0.4.0",

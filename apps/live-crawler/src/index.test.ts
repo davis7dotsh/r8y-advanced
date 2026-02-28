@@ -1,5 +1,6 @@
 import { beforeAll, expect, test } from "bun:test";
 import { BEN_CHANNEL_INFO } from "@r8y/davis-sync/channel-info";
+import { MICKY_CHANNEL_INFO } from "@r8y/micky-data/channel-info";
 import { THEO_CHANNEL_INFO } from "@r8y/theo-data/channel-info";
 import { Effect } from "effect";
 
@@ -9,11 +10,12 @@ beforeAll(() => {
 
 const loadModule = () => import("./index");
 
-test("readChannelIds falls back to Theo + Ben channel ids", async () => {
+test("readChannelIds falls back to Theo + Ben + Micky channel ids", async () => {
   const { readChannelIds } = await loadModule();
   expect(readChannelIds("")).toEqual([
     THEO_CHANNEL_INFO.channelId,
     BEN_CHANNEL_INFO.channelId,
+    MICKY_CHANNEL_INFO.channelId,
   ]);
 });
 

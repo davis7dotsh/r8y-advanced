@@ -6,12 +6,18 @@ import {
   sponsorToVideos as theoSponsorToVideos,
 } from '@r8y/theo-data/schema'
 import {
+  videos as mickyVideos,
+  sponsors as mickySponsors,
+  sponsorToVideos as mickySponsorToVideos,
+} from '@r8y/micky-data/schema'
+import {
   videos as davisVideos,
   sponsors as davisSponsors,
   sponsorToVideos as davisSponsorToVideos,
 } from '@r8y/davis-sync/schema'
 import { db as theoDb } from '@/db/client.server'
 import { davisDb } from '@/db/davis.client.server'
+import { mickyDb } from '@/db/micky.client.server'
 
 const VIDEO_PAGE_SIZE = 50
 
@@ -102,10 +108,12 @@ const toPagination = (input: { page: number; pageSize: number; total: number }) 
   totalPages: Math.max(1, Math.ceil(input.total / input.pageSize)),
 })
 
-const getChannelTables = (channel: 'theo' | 'davis') =>
+const getChannelTables = (channel: 'theo' | 'davis' | 'micky') =>
   channel === 'theo'
     ? { db: theoDb, videos: theoVideos, sponsors: theoSponsors, sponsorToVideos: theoSponsorToVideos }
-    : { db: davisDb, videos: davisVideos, sponsors: davisSponsors, sponsorToVideos: davisSponsorToVideos }
+    : channel === 'davis'
+      ? { db: davisDb, videos: davisVideos, sponsors: davisSponsors, sponsorToVideos: davisSponsorToVideos }
+      : { db: mickyDb, videos: mickyVideos, sponsors: mickySponsors, sponsorToVideos: mickySponsorToVideos }
 
 export namespace ShareSponsorService {
   export class InvalidChannelError extends TaggedError('InvalidChannelError')<{
@@ -134,7 +142,7 @@ export namespace ShareSponsorService {
     const normalizedPage = normalizePage(page)
     const pageSize = VIDEO_PAGE_SIZE
 
-    if (channel !== 'theo' && channel !== 'davis') {
+    if (channel !== 'theo' && channel !== 'davis' && channel !== 'micky') {
       return Result.err(new InvalidChannelError({ message: `Unknown channel: ${channel}` }))
     }
 

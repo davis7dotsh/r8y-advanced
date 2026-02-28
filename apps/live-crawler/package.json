@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@r8y/davis-sync": "workspace:*",
+    "@r8y/micky-data": "workspace:*",
     "@r8y/theo-data": "workspace:*",
     "effect": "4.0.0-beta.19"
   },

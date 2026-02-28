@@ -8,7 +8,7 @@
   import { toHref } from '@/utils/url'
 
   const search = $derived(parseDavisListSearch(Object.fromEntries(page.url.searchParams)))
-  const payload = $derived(await getDavisVideos(search))
+  const videosQuery = $derived(getDavisVideos(search))
 
   const formatDate = (iso: string) => {
     const d = new Date(iso)
@@ -16,11 +16,36 @@
   }
 </script>
 
-{#if payload.status === 'error'}
-  <ErrorState title="Unable to load Davis videos" message={payload.error.message} />
+{#if videosQuery.error}
+  <ErrorState title="Unable to load Davis videos" message={videosQuery.error.message ?? 'Unknown error'} />
+{:else if !videosQuery.ready}
+  <section
+    class="space-y-6 border border-border bg-card p-5"
+    aria-live="polite"
+    aria-busy="true"
+  >
+    <div class="space-y-2">
+      <div class="h-4 w-52 animate-pulse bg-muted"></div>
+      <div class="h-3 w-40 animate-pulse bg-muted/60"></div>
+    </div>
+
+    <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
+      {#each Array(8) as _}
+        <article class="overflow-hidden border border-border bg-card">
+          <div class="aspect-video w-full animate-pulse bg-muted"></div>
+          <div class="space-y-2 p-4">
+            <div class="h-3.5 w-5/6 animate-pulse bg-muted"></div>
+            <div class="h-3.5 w-2/3 animate-pulse bg-muted/60"></div>
+          </div>
+        </article>
+      {/each}
+    </div>
+  </section>
+{:else if videosQuery.current.status === 'error'}
+  <ErrorState title="Unable to load Davis videos" message={videosQuery.current.error.message} />
 {:else}
-  {@const items = payload.data.items}
-  {@const pagination = payload.data.pagination}
+  {@const items = videosQuery.current.data.items}
+  {@const pagination = videosQuery.current.data.pagination}
 
   <section class="space-y-0">
     <div class="flex flex-wrap items-center justify-between gap-3 py-3">

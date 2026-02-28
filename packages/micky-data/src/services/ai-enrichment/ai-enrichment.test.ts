@@ -102,7 +102,7 @@ test("extractSponsor maps no sponsor fallback", async () => {
     expect(result.value).toEqual({
       hasSponsor: false,
       sponsorName: "no sponsor",
-      sponsorKey: "https://t3.gg",
+      sponsorKey: "https://rasmic.link",
     });
   }
 });

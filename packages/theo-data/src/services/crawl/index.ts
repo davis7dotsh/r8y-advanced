@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { Data, Effect } from "effect";
 import { and, desc, eq, inArray, ne } from "drizzle-orm";
+import { resolveWebhookUrl, sendVideoEmbed } from "@r8y/discord-notify";
 import { fetchXPostMetrics, parseXPostUrl } from "@r8y/x-sync";
 import { fetchRssVideoIds } from "@r8y/yt-sync";
 import { THEO_CHANNEL_INFO } from "../../THEO_CHANNEL_INFO";
@@ -728,6 +729,41 @@ export namespace CrawlService {
               notificationsInserted,
             });
           });
+
+          const hasNewDiscordNotification = notificationResult.value.some((n) =>
+            n.notificationId.startsWith("discord_video_live:"),
+          );
+          const webhookUrl = resolveWebhookUrl();
+
+          if (hasNewDiscordNotification && webhookUrl) {
+            const discordResult = yield* settle(
+              sendVideoEmbed({
+                webhookUrl,
+                video: {
+                  videoId,
+                  title: video.title,
+                  thumbnailUrl: video.thumbnailUrl,
+                  channelName: THEO_CHANNEL_INFO.name,
+                  publishedAt: video.publishedAt,
+                },
+                externalError: (message) => new CrawlExternalError({ message }),
+              }),
+            );
+
+            if (discordResult.status === "error") {
+              logStageFailure(stageFailures, "discord-webhook", discordResult.error.message);
+              yield* Effect.sync(() => {
+                logWarn(logger, "crawlVideo", "discord webhook failed; continuing", {
+                  videoId,
+                  error: discordResult.error.message,
+                });
+              });
+            } else {
+              yield* Effect.sync(() => {
+                logInfo(logger, "crawlVideo", "discord webhook sent", { videoId });
+              });
+            }
+          }
         }
       } else {
         yield* Effect.sync(() => {

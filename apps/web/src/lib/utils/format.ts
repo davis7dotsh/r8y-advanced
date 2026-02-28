@@ -13,5 +13,27 @@ export const daysSince = (iso: string | null) => {
     return 'N/A'
   }
 
-  return `${Math.floor((Date.now() - new Date(iso).getTime()) / 86400000)} days ago`
+  const publishedAt = new Date(iso).getTime()
+
+  if (Number.isNaN(publishedAt)) {
+    return 'N/A'
+  }
+
+  const elapsed = Math.max(0, Date.now() - publishedAt)
+  const minute = 60_000
+  const hour = 60 * minute
+  const day = 24 * hour
+
+  if (elapsed < hour) {
+    const minutes = Math.floor(elapsed / minute)
+    return `${minutes} minute${minutes === 1 ? '' : 's'} ago`
+  }
+
+  if (elapsed < day) {
+    const hours = Math.floor(elapsed / hour)
+    return `${hours} hour${hours === 1 ? '' : 's'} ago`
+  }
+
+  const days = Math.floor(elapsed / day)
+  return `${days} day${days === 1 ? '' : 's'} ago`
 }

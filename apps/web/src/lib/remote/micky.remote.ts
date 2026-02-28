@@ -167,7 +167,10 @@ export const getMickySearchSuggestions = query(
 
     const { MickySearchService } =
       await import('@/services/micky/micky-search.server')
-    const result = await MickySearchService.suggest({}, { q })
+    const result = await MickySearchService.suggest(
+      {},
+      { q },
+    )
 
     if (result.status === 'error') {
       return {

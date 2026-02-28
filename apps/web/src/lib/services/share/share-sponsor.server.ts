@@ -101,11 +101,7 @@ const asIsoDate = (value: Date | string) =>
 
 const toOffset = (page: number, pageSize: number) => (page - 1) * pageSize
 
-const toPagination = (input: {
-  page: number
-  pageSize: number
-  total: number
-}) => ({
+const toPagination = (input: { page: number; pageSize: number; total: number }) => ({
   page: input.page,
   pageSize: input.pageSize,
   total: input.total,
@@ -114,40 +110,21 @@ const toPagination = (input: {
 
 const getChannelTables = (channel: 'theo' | 'davis' | 'micky') =>
   channel === 'theo'
-    ? {
-        db: theoDb,
-        videos: theoVideos,
-        sponsors: theoSponsors,
-        sponsorToVideos: theoSponsorToVideos,
-      }
+    ? { db: theoDb, videos: theoVideos, sponsors: theoSponsors, sponsorToVideos: theoSponsorToVideos }
     : channel === 'davis'
-      ? {
-          db: davisDb,
-          videos: davisVideos,
-          sponsors: davisSponsors,
-          sponsorToVideos: davisSponsorToVideos,
-        }
-      : {
-          db: mickyDb,
-          videos: mickyVideos,
-          sponsors: mickySponsors,
-          sponsorToVideos: mickySponsorToVideos,
-        }
+      ? { db: davisDb, videos: davisVideos, sponsors: davisSponsors, sponsorToVideos: davisSponsorToVideos }
+      : { db: mickyDb, videos: mickyVideos, sponsors: mickySponsors, sponsorToVideos: mickySponsorToVideos }
 
 export namespace ShareSponsorService {
   export class InvalidChannelError extends TaggedError('InvalidChannelError')<{
     message: string
   }>() {}
 
-  export class InvalidSponsorInputError extends TaggedError(
-    'InvalidSponsorInputError',
-  )<{
+  export class InvalidSponsorInputError extends TaggedError('InvalidSponsorInputError')<{
     message: string
   }>() {}
 
-  export class SponsorNotFoundError extends TaggedError(
-    'SponsorNotFoundError',
-  )<{
+  export class SponsorNotFoundError extends TaggedError('SponsorNotFoundError')<{
     slug: string
     message: string
   }>() {}
@@ -166,15 +143,11 @@ export namespace ShareSponsorService {
     const pageSize = VIDEO_PAGE_SIZE
 
     if (channel !== 'theo' && channel !== 'davis' && channel !== 'micky') {
-      return Result.err(
-        new InvalidChannelError({ message: `Unknown channel: ${channel}` }),
-      )
+      return Result.err(new InvalidChannelError({ message: `Unknown channel: ${channel}` }))
     }
 
     if (!normalizedSlug) {
-      return Result.err(
-        new InvalidSponsorInputError({ message: 'sponsor slug is required' }),
-      )
+      return Result.err(new InvalidSponsorInputError({ message: 'sponsor slug is required' }))
     }
 
     const slugSuffix = (normalizedSlug.split('--').pop() ?? '')
@@ -182,12 +155,7 @@ export namespace ShareSponsorService {
       .slice(-4)
 
     if (!slugSuffix) {
-      return Result.err(
-        new SponsorNotFoundError({
-          slug: normalizedSlug,
-          message: `Sponsor ${normalizedSlug} not found`,
-        }),
-      )
+      return Result.err(new SponsorNotFoundError({ slug: normalizedSlug, message: `Sponsor ${normalizedSlug} not found` }))
     }
 
     const { db, videos, sponsors, sponsorToVideos } = getChannelTables(channel)
@@ -195,20 +163,11 @@ export namespace ShareSponsorService {
     const candidatesResult = await Result.tryPromise({
       try: () =>
         db
-          .select({
-            sponsorId: sponsors.sponsorId,
-            name: sponsors.name,
-            createdAt: sponsors.createdAt,
-          })
+          .select({ sponsorId: sponsors.sponsorId, name: sponsors.name, createdAt: sponsors.createdAt })
           .from(sponsors)
-          .where(
-            sql`lower(regexp_replace(${sponsors.sponsorId}, '[^a-z0-9]', '', 'g')) like ${'%' + slugSuffix}`,
-          ),
+          .where(sql`lower(regexp_replace(${sponsors.sponsorId}, '[^a-z0-9]', '', 'g')) like ${'%' + slugSuffix}`),
       catch: (cause) =>
-        new SponsorQueryError({
-          message:
-            cause instanceof Error ? cause.message : 'Failed to load sponsors',
-        }),
+        new SponsorQueryError({ message: cause instanceof Error ? cause.message : 'Failed to load sponsors' }),
     })
 
     if (candidatesResult.status === 'error') return candidatesResult
@@ -218,98 +177,66 @@ export namespace ShareSponsorService {
     )
 
     if (!sponsor) {
-      return Result.err(
-        new SponsorNotFoundError({
-          slug: normalizedSlug,
-          message: `Sponsor ${normalizedSlug} not found`,
-        }),
-      )
+      return Result.err(new SponsorNotFoundError({ slug: normalizedSlug, message: `Sponsor ${normalizedSlug} not found` }))
     }
 
-    const [countResult, videosResult, statsResult, topVideoResult] =
-      await Promise.all([
-        Result.tryPromise({
-          try: () =>
-            db
-              .select({ total: sql<number>`count(*)` })
-              .from(sponsorToVideos)
-              .where(eq(sponsorToVideos.sponsorId, sponsor.sponsorId)),
-          catch: (cause) =>
-            new SponsorQueryError({
-              message:
-                cause instanceof Error
-                  ? cause.message
-                  : 'Failed to count videos',
-            }),
-        }),
-        Result.tryPromise({
-          try: () =>
-            db
-              .select({
-                videoId: videos.videoId,
-                title: videos.title,
-                thumbnailUrl: videos.thumbnailUrl,
-                publishedAt: videos.publishedAt,
-                viewCount: videos.viewCount,
-                likeCount: videos.likeCount,
-                commentCount: videos.commentCount,
-                xUrl: videos.xUrl,
-                xViews: videos.xViews,
-              })
-              .from(sponsorToVideos)
-              .innerJoin(videos, eq(videos.videoId, sponsorToVideos.videoId))
-              .where(eq(sponsorToVideos.sponsorId, sponsor.sponsorId))
-              .orderBy(desc(videos.publishedAt))
-              .limit(pageSize)
-              .offset(toOffset(normalizedPage, pageSize)),
-          catch: (cause) =>
-            new SponsorQueryError({
-              message:
-                cause instanceof Error
-                  ? cause.message
-                  : 'Failed to load videos',
-            }),
-        }),
-        Result.tryPromise({
-          try: () =>
-            db
-              .select({
-                totalViews: sql<number>`coalesce(sum(${videos.viewCount}), 0)`,
-                averageViews: sql<number>`coalesce(avg(${videos.viewCount}), 0)`,
-                lastPublishedAt: sql<Date | null>`max(${videos.publishedAt})`,
-                totalXViews: sql<number>`coalesce(sum(${videos.xViews}), 0)`,
-              })
-              .from(sponsorToVideos)
-              .innerJoin(videos, eq(videos.videoId, sponsorToVideos.videoId))
-              .where(eq(sponsorToVideos.sponsorId, sponsor.sponsorId)),
-          catch: (cause) =>
-            new SponsorQueryError({
-              message:
-                cause instanceof Error ? cause.message : 'Failed to load stats',
-            }),
-        }),
-        Result.tryPromise({
-          try: () =>
-            db
-              .select({
-                videoId: videos.videoId,
-                title: videos.title,
-                viewCount: videos.viewCount,
-              })
-              .from(sponsorToVideos)
-              .innerJoin(videos, eq(videos.videoId, sponsorToVideos.videoId))
-              .where(eq(sponsorToVideos.sponsorId, sponsor.sponsorId))
-              .orderBy(desc(videos.viewCount), desc(videos.publishedAt))
-              .limit(1),
-          catch: (cause) =>
-            new SponsorQueryError({
-              message:
-                cause instanceof Error
-                  ? cause.message
-                  : 'Failed to load top video',
-            }),
-        }),
-      ])
+    const [countResult, videosResult, statsResult, topVideoResult] = await Promise.all([
+      Result.tryPromise({
+        try: () =>
+          db.select({ total: sql<number>`count(*)` })
+            .from(sponsorToVideos)
+            .where(eq(sponsorToVideos.sponsorId, sponsor.sponsorId)),
+        catch: (cause) =>
+          new SponsorQueryError({ message: cause instanceof Error ? cause.message : 'Failed to count videos' }),
+      }),
+      Result.tryPromise({
+        try: () =>
+          db.select({
+            videoId: videos.videoId,
+            title: videos.title,
+            thumbnailUrl: videos.thumbnailUrl,
+            publishedAt: videos.publishedAt,
+            viewCount: videos.viewCount,
+            likeCount: videos.likeCount,
+            commentCount: videos.commentCount,
+            xUrl: videos.xUrl,
+            xViews: videos.xViews,
+          })
+            .from(sponsorToVideos)
+            .innerJoin(videos, eq(videos.videoId, sponsorToVideos.videoId))
+            .where(eq(sponsorToVideos.sponsorId, sponsor.sponsorId))
+            .orderBy(desc(videos.publishedAt))
+            .limit(pageSize)
+            .offset(toOffset(normalizedPage, pageSize)),
+        catch: (cause) =>
+          new SponsorQueryError({ message: cause instanceof Error ? cause.message : 'Failed to load videos' }),
+      }),
+      Result.tryPromise({
+        try: () =>
+          db.select({
+            totalViews: sql<number>`coalesce(sum(${videos.viewCount}), 0)`,
+            averageViews: sql<number>`coalesce(avg(${videos.viewCount}), 0)`,
+            lastPublishedAt: sql<Date | null>`max(${videos.publishedAt})`,
+            totalXViews: sql<number>`coalesce(sum(${videos.xViews}), 0)`,
+          })
+            .from(sponsorToVideos)
+            .innerJoin(videos, eq(videos.videoId, sponsorToVideos.videoId))
+            .where(eq(sponsorToVideos.sponsorId, sponsor.sponsorId)),
+        catch: (cause) =>
+          new SponsorQueryError({ message: cause instanceof Error ? cause.message : 'Failed to load stats' }),
+      }),
+      Result.tryPromise({
+        try: () =>
+          db.select({ videoId: videos.videoId, title: videos.title, viewCount: videos.viewCount })
+            .from(sponsorToVideos)
+            .innerJoin(videos, eq(videos.videoId, sponsorToVideos.videoId))
+            .where(eq(sponsorToVideos.sponsorId, sponsor.sponsorId))
+            .orderBy(desc(videos.viewCount), desc(videos.publishedAt))
+            .limit(1),
+        catch: (cause) =>
+          new SponsorQueryError({ message: cause instanceof Error ? cause.message : 'Failed to load top video' }),
+      }),
+    ])
 
     if (countResult.status === 'error') return countResult
     if (videosResult.status === 'error') return videosResult
@@ -329,16 +256,10 @@ export namespace ShareSponsorService {
       stats: {
         totalViews: asNumber(statsRow?.totalViews),
         averageViews: Math.round(asNumber(statsRow?.averageViews)),
-        lastPublishedAt: statsRow?.lastPublishedAt
-          ? asIsoDate(statsRow.lastPublishedAt)
-          : null,
+        lastPublishedAt: statsRow?.lastPublishedAt ? asIsoDate(statsRow.lastPublishedAt) : null,
         totalXViews: asNumber(statsRow?.totalXViews),
         bestPerformingVideo: topVideo
-          ? {
-              videoId: topVideo.videoId,
-              title: topVideo.title,
-              viewCount: asNumber(topVideo.viewCount),
-            }
+          ? { videoId: topVideo.videoId, title: topVideo.title, viewCount: asNumber(topVideo.viewCount) }
           : null,
       },
       videos: {

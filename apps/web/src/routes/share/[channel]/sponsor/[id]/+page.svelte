@@ -138,6 +138,7 @@
 
                 <p class="mt-1 text-xs text-neutral-400">
                   {new Date(video.publishedAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
+                  ({daysSince(video.publishedAt)})
                 </p>
 
                 <div class="mt-3 flex items-center gap-3.5 text-xs text-neutral-500 dark:text-neutral-400">

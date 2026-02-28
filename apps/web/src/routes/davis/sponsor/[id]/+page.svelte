@@ -5,7 +5,7 @@
   import { parseDavisSponsorSearch } from '@/features/davis/davis-search-params'
   import { getDavisSponsorDetails } from '@/remote/davis.remote'
   import { daysSince, formatCompactNumber } from '@/utils/format'
-  import { toHref } from '@/utils/url'
+  import { toHref, toVercelImageHref } from '@/utils/url'
 
   const search = $derived(parseDavisSponsorSearch(Object.fromEntries(page.url.searchParams)))
   const id = $derived(page.params.id ?? '')
@@ -111,7 +111,7 @@
           <article class="overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-sm transition-shadow hover:shadow-md dark:border-neutral-700 dark:bg-neutral-900">
             <a href={toHref(`/davis/video/${encodeURIComponent(video.videoId)}`, { commentsPage: 1 })} class="block overflow-hidden">
               <img
-                src={video.thumbnailUrl}
+                src={toVercelImageHref(video.thumbnailUrl, { width: 640 })}
                 alt={video.title}
                 class="aspect-video w-full object-cover transition duration-200 hover:scale-[1.02]"
                 loading="lazy"

@@ -5,7 +5,7 @@
   import { parseTheoListSearch } from '@/features/theo/theo-search-params'
   import { getTheoVideos } from '@/remote/theo.remote'
   import { formatCompactNumber } from '@/utils/format'
-  import { toHref } from '@/utils/url'
+  import { toHref, toVercelImageHref } from '@/utils/url'
 
   const search = $derived(parseTheoListSearch(Object.fromEntries(page.url.searchParams)))
 </script>
@@ -76,7 +76,7 @@
           <article class="overflow-hidden rounded-xl border bg-card text-card-foreground shadow-sm transition-shadow hover:shadow-md">
             <a href={toHref(`/theo/video/${encodeURIComponent(video.videoId)}`, { commentsPage: 1 })} class="block overflow-hidden">
               <img
-                src={video.thumbnailUrl}
+                src={toVercelImageHref(video.thumbnailUrl, { width: 640 })}
                 alt={video.title}
                 class="aspect-video w-full object-cover transition duration-200 hover:scale-[1.02]"
                 loading="lazy"

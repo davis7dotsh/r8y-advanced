@@ -2,7 +2,7 @@
   import { page } from '$app/state'
   import { getShareSponsor } from '@/remote/share.remote'
   import { formatCompactNumber, daysSince } from '@/utils/format'
-  import { toHref } from '@/utils/url'
+  import { toHref, toVercelImageHref } from '@/utils/url'
   import PaginationControls from '@/components/PaginationControls.svelte'
 
   const params = $derived(page.params as Record<string, string>)
@@ -119,7 +119,7 @@
                 class="block overflow-hidden"
               >
                 <img
-                  src={video.thumbnailUrl}
+                  src={toVercelImageHref(video.thumbnailUrl, { width: 640 })}
                   alt={video.title}
                   class="aspect-video w-full object-cover transition duration-200 hover:scale-[1.02]"
                   loading="lazy"

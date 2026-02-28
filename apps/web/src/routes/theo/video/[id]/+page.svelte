@@ -10,7 +10,7 @@
   } from '@/features/theo/theo-search-params'
   import { getTheoVideoDetails, linkTheoVideoToXPost } from '@/remote/theo.remote'
   import { formatMetric } from '@/utils/format'
-  import { toHref } from '@/utils/url'
+  import { toHref, toVercelImageHref } from '@/utils/url'
 
   const FILTER_OPTIONS: { value: CommentsFilter; label: string }[] = [
     { value: 'all', label: 'All' },
@@ -128,7 +128,11 @@
 
   <section class="space-y-6">
     <article class="grid gap-6 rounded-xl border border-neutral-200 bg-white p-5 lg:grid-cols-[320px_1fr] dark:border-neutral-700 dark:bg-neutral-900">
-      <img src={video.thumbnailUrl} alt={video.title} class="aspect-video w-full rounded-lg object-cover" />
+      <img
+        src={toVercelImageHref(video.thumbnailUrl, { width: 1280 })}
+        alt={video.title}
+        class="aspect-video w-full rounded-lg object-cover"
+      />
 
       <div class="space-y-4">
         <div>

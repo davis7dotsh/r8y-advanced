@@ -85,9 +85,13 @@
             {#if items[0].sponsors.length > 0}
               <div class="mt-3 flex flex-wrap gap-1.5">
                 {#each items[0].sponsors as sponsor}
-                  <span class="bg-[#D62828] px-2 py-0.5 text-[0.6rem] font-semibold uppercase tracking-[0.1em] text-white dark:bg-red-700">
+                  <a
+                    href={toHref(`/theo/sponsor/${encodeURIComponent(sponsor.slug)}`, { page: 1 })}
+                    class="bg-[#D62828] px-2 py-0.5 text-[0.6rem] font-semibold uppercase tracking-[0.1em] text-white transition-opacity hover:opacity-80 dark:bg-red-700"
+                    onclick={(e) => e.stopPropagation()}
+                  >
                     {sponsor.name}
-                  </span>
+                  </a>
                 {/each}
               </div>
             {/if}
@@ -126,9 +130,13 @@
           {#if video.sponsors.length > 0}
             <div class="mt-1.5 flex flex-wrap gap-1">
               {#each video.sponsors as sponsor}
-                <span class="bg-red-50 px-1.5 py-0.5 text-[0.5rem] font-semibold uppercase tracking-[0.08em] text-[#D62828] dark:bg-red-950 dark:text-red-400">
+                <a
+                  href={toHref(`/theo/sponsor/${encodeURIComponent(sponsor.slug)}`, { page: 1 })}
+                  class="bg-red-50 px-1.5 py-0.5 text-[0.5rem] font-semibold uppercase tracking-[0.08em] text-[#D62828] transition-opacity hover:opacity-70 dark:bg-red-950 dark:text-red-400"
+                  onclick={(e) => e.stopPropagation()}
+                >
                   {sponsor.name}
-                </span>
+                </a>
               {/each}
             </div>
           {/if}

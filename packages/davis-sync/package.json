@@ -39,6 +39,7 @@
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.44",
     "@boundaryml/baml": "^0.219.0",
+    "@r8y/discord-notify": "workspace:*",
     "@r8y/x-sync": "workspace:*",
     "@r8y/yt-sync": "workspace:*",
     "@xdevplatform/xdk": "^0.4.0",

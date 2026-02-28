@@ -59,6 +59,7 @@
       "dependencies": {
         "@ai-sdk/anthropic": "^3.0.44",
         "@boundaryml/baml": "^0.219.0",
+        "@r8y/discord-notify": "workspace:*",
         "@r8y/x-sync": "workspace:*",
         "@r8y/yt-sync": "workspace:*",
         "@xdevplatform/xdk": "^0.4.0",
@@ -78,11 +79,24 @@
         "typescript": "^5",
       },
     },
+    "packages/discord-notify": {
+      "name": "@r8y/discord-notify",
+      "dependencies": {
+        "effect": "4.0.0-beta.19",
+      },
+      "devDependencies": {
+        "@types/bun": "latest",
+      },
+      "peerDependencies": {
+        "typescript": "^5",
+      },
+    },
     "packages/theo-data": {
       "name": "@r8y/theo-data",
       "dependencies": {
         "@ai-sdk/anthropic": "^3.0.44",
         "@boundaryml/baml": "^0.219.0",
+        "@r8y/discord-notify": "workspace:*",
         "@r8y/x-sync": "workspace:*",
         "@r8y/yt-sync": "workspace:*",
         "@xdevplatform/xdk": "^0.4.0",
@@ -258,6 +272,8 @@
     "@polka/url": ["@polka/url@1.0.0-next.29", "", {}, "sha512-wwQAWhWSuHaag8c4q/KN/vCoeOJYshAIvMQwD4GpSb3OiZklFfvAgmj0VCBBImRpuF/aFgIRzllXlVX93Jevww=="],
 
     "@r8y/davis-sync": ["@r8y/davis-sync@workspace:packages/davis-sync"],
+
+    "@r8y/discord-notify": ["@r8y/discord-notify@workspace:packages/discord-notify"],
 
     "@r8y/live-crawler": ["@r8y/live-crawler@workspace:apps/live-crawler"],
 

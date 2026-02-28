@@ -1,4 +1,5 @@
 import { dev } from '$app/environment'
+import { PUBLIC_VERCEL_IMAGE_OPTIMIZER } from '$env/static/public'
 
 export const toHref = (
   pathname: string,
@@ -46,6 +47,23 @@ export const toVercelImageHref = (
   },
 ) => {
   if (dev || !sourceUrl) {
+    return sourceUrl
+  }
+
+  const optimizeByPublicFlag =
+    PUBLIC_VERCEL_IMAGE_OPTIMIZER === '1' ||
+    PUBLIC_VERCEL_IMAGE_OPTIMIZER === 'true'
+  const optimizeByServerRuntime =
+    typeof process !== 'undefined' && process.env?.VERCEL === '1'
+  const optimizeByBrowserHost =
+    typeof window !== 'undefined' &&
+    window.location.hostname.endsWith('.vercel.app')
+
+  if (
+    !optimizeByPublicFlag &&
+    !optimizeByServerRuntime &&
+    !optimizeByBrowserHost
+  ) {
     return sourceUrl
   }
 

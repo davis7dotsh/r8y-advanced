@@ -65,7 +65,7 @@
             {#each video.sponsors as sponsor}
               <a
                 href={`/share/${encodeURIComponent(channel)}/sponsor/${encodeURIComponent(sponsor.slug)}`}
-                class="rounded-full border border-violet-200 bg-violet-50 px-2.5 py-0.5 text-xs font-medium text-violet-800 transition-colors hover:bg-violet-100 dark:border-violet-700 dark:bg-violet-900/40 dark:text-violet-300 dark:hover:bg-violet-900/60"
+                class="border border-[#D62828]/20 bg-red-50 px-2.5 py-0.5 text-xs font-medium text-[#D62828] transition-colors hover:bg-red-100 dark:border-red-700 dark:bg-red-900/40 dark:text-red-300 dark:hover:bg-red-900/60"
               >
                 {sponsor.name}
               </a>

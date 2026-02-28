@@ -85,10 +85,7 @@ export namespace TheoSearchService {
   ) => {
     const query = normalizeQuery(input.q)
 
-    console.log('[TheoSearchService.suggest] input', { rawQ: input.q, normalizedQuery: query })
-
     if (!query || query.length < 2) {
-      console.log('[TheoSearchService.suggest] query too short, returning empty')
       return Result.ok({
         videos: [],
         sponsors: [],
@@ -113,8 +110,6 @@ export namespace TheoSearchService {
               : 'Failed to load search suggestions',
         }),
     })
-
-    console.log('[TheoSearchService.suggest] db result', result)
 
     return result
   }

@@ -1,7 +1,7 @@
 <script lang="ts">
   import '../app.css'
   import { goto } from '$app/navigation'
-  import { page } from '$app/state'
+  import { navigating, page } from '$app/state'
   import { onMount } from 'svelte'
   import GlobalCommand from '@/components/GlobalCommand.svelte'
   import { clearAuthStorage } from '@/features/auth/auth'
@@ -83,6 +83,13 @@
   <title>R8Y Theo Explorer</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 </svelte:head>
+
+{#if navigating.to}
+  <div class="fixed right-4 top-3 z-50 inline-flex items-center gap-1 rounded-full border border-violet-200 bg-violet-50 px-2 py-1 text-[10px] font-medium uppercase tracking-wide text-violet-700 shadow-sm dark:border-violet-700 dark:bg-violet-900/50 dark:text-violet-300">
+    <span class="size-1.5 animate-pulse rounded-full bg-violet-500"></span>
+    Loading
+  </div>
+{/if}
 
 {#if showNavigation}
   <nav class="border-b border-border bg-background px-4 sm:px-6 lg:px-8">

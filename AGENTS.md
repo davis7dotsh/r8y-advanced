@@ -4,23 +4,20 @@
 
 r8y is a Bun + Turborepo monorepo (YouTube channel analytics dashboard). See `CLAUDE.md` for coding conventions and `README.md` for deployment details.
 
+### Secrets
+
+The following secrets are injected as environment variables: `DATABASE_URL`, `APP_SECRET_PASSCODE`, `YT_API_KEY`, `X_API_KEY`, `OPENCODE_API_KEY`. Do **not** override `DATABASE_URL` — the injected value points to a remote PostgreSQL instance with production data. The remote DB requires SSL (`sslmode=verify-full`); use `PGSSLROOTCERT=system` if connecting with `psql` locally.
+
 ### Services
 
 | Service | How to run | Notes |
 |---|---|---|
-| **Web dashboard** (`apps/web`) | `DATABASE_URL=... APP_SECRET_PASSCODE=... bun run dev:web` | SvelteKit on port 5173. Requires `DATABASE_URL`. Set `APP_SECRET_PASSCODE` for auth (any string). |
-| **Live crawler** (`apps/live-crawler`) | `DATABASE_URL=... bun run dev:crawler` | Optional. Needs `YT_API_KEY` + `DATABASE_URL`. |
+| **Web dashboard** (`apps/web`) | `bun run dev:web` | SvelteKit on port 5173. Uses injected `DATABASE_URL` and `APP_SECRET_PASSCODE`. |
+| **Live crawler** (`apps/live-crawler`) | `bun run dev:crawler` | Optional. Uses injected `YT_API_KEY` + `DATABASE_URL`. |
 
 ### Database
 
-PostgreSQL is required. After starting Postgres, create a database and push both schemas:
-
-```
-bun run --cwd packages/theo-data db:push
-bun run --cwd packages/davis-sync db:push
-```
-
-The `pg_trgm` extension must be enabled on the database (`CREATE EXTENSION IF NOT EXISTS pg_trgm;`).
+The injected `DATABASE_URL` already points to a provisioned remote PostgreSQL database with data (403 Theo videos, 16 Davis videos). No local Postgres setup is needed for normal development.
 
 ### Running checks, tests, and format
 

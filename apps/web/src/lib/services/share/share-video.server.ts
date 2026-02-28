@@ -13,6 +13,25 @@ import {
 import { db as theoDb } from '@/db/client.server'
 import { davisDb } from '@/db/davis.client.server'
 
+const toSponsorSlug = (name: string, sponsorId: string) => {
+  const slugBase = name
+    .toLowerCase()
+    .normalize('NFKD')
+    .replace(/[^a-z0-9\s-]/g, '')
+    .trim()
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+
+  const safeBase = slugBase.length > 0 ? slugBase : 'sponsor'
+  const suffix = sponsorId
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '')
+    .slice(-4)
+    .padStart(4, '0')
+
+  return `${safeBase}--${suffix}`
+}
+
 export type ShareVideoData = {
   videoId: string
   title: string
@@ -21,7 +40,7 @@ export type ShareVideoData = {
   viewCount: number
   likeCount: number
   commentCount: number
-  sponsors: { name: string }[]
+  sponsors: { name: string; slug: string }[]
   xPost: {
     url: string
     views: number | null
@@ -147,9 +166,12 @@ export namespace ShareVideoService {
       .filter((r) => r.sponsorId && r.sponsorName)
       .reduce((seen, r) => {
         if (!seen.has(r.sponsorId!))
-          seen.set(r.sponsorId!, { name: r.sponsorName! })
+          seen.set(r.sponsorId!, {
+            name: r.sponsorName!,
+            slug: toSponsorSlug(r.sponsorName!, r.sponsorId!),
+          })
         return seen
-      }, new Map<string, { name: string }>())
+      }, new Map<string, { name: string; slug: string }>())
 
     return Result.ok<ShareVideoData>({
       videoId: first.videoId,

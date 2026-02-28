@@ -62,9 +62,12 @@
               {new Date(video.publishedAt).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}
             </p>
             {#each video.sponsors as sponsor}
-              <span class="rounded-full border border-violet-200 bg-violet-50 px-2.5 py-0.5 text-xs font-medium text-violet-800 dark:border-violet-700 dark:bg-violet-900/40 dark:text-violet-300">
+              <a
+                href={`/share/${encodeURIComponent(channel)}/sponsor/${encodeURIComponent(sponsor.slug)}`}
+                class="rounded-full border border-violet-200 bg-violet-50 px-2.5 py-0.5 text-xs font-medium text-violet-800 transition-colors hover:bg-violet-100 dark:border-violet-700 dark:bg-violet-900/40 dark:text-violet-300 dark:hover:bg-violet-900/60"
+              >
                 {sponsor.name}
-              </span>
+              </a>
             {/each}
           </div>
         </div>

@@ -1,5 +1,6 @@
 import { query } from '$app/server'
 import type { ShareVideoData } from '@/services/share/share-video.server'
+import type { ShareSponsorData } from '@/services/share/share-sponsor.server'
 
 type ServerError = {
   tag: string
@@ -41,4 +42,29 @@ export const getShareVideo = query('unchecked', async (input: unknown) => {
   } satisfies ServerPayload<ShareVideoData>
 })
 
+export const getShareSponsor = query('unchecked', async (input: unknown) => {
+  const value = toObject(input)
+  const { ShareSponsorService } =
+    await import('@/services/share/share-sponsor.server')
+
+  const channel = typeof value.channel === 'string' ? value.channel : ''
+  const slug = typeof value.slug === 'string' ? value.slug : ''
+  const page = typeof value.page === 'number' ? value.page : undefined
+
+  const result = await ShareSponsorService.getSponsor(channel, slug, page)
+
+  if (result.status === 'error') {
+    return {
+      status: 'error',
+      error: toError(result.error),
+    } satisfies ServerPayload<ShareSponsorData>
+  }
+
+  return {
+    status: 'ok',
+    data: result.value,
+  } satisfies ServerPayload<ShareSponsorData>
+})
+
 export type ShareVideoPayload = Awaited<ReturnType<typeof getShareVideo>>
+export type ShareSponsorPayload = Awaited<ReturnType<typeof getShareSponsor>>

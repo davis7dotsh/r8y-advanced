@@ -85,8 +85,8 @@
 </svelte:head>
 
 {#if navigating.to}
-  <div class="fixed right-4 top-3 z-50 inline-flex items-center gap-1 rounded-full border border-violet-200 bg-violet-50 px-2 py-1 text-[10px] font-medium uppercase tracking-wide text-violet-700 shadow-sm dark:border-violet-700 dark:bg-violet-900/50 dark:text-violet-300">
-    <span class="size-1.5 animate-pulse rounded-full bg-violet-500"></span>
+  <div class="fixed right-4 top-3 z-50 inline-flex items-center gap-1.5 border border-border bg-background px-2.5 py-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+    <span class="size-1.5 animate-pulse bg-muted-foreground"></span>
     Loading
   </div>
 {/if}

@@ -14,6 +14,7 @@
       "name": "@r8y/live-crawler",
       "dependencies": {
         "@r8y/davis-sync": "workspace:*",
+        "@r8y/micky-data": "workspace:*",
         "@r8y/theo-data": "workspace:*",
         "effect": "4.0.0-beta.19",
       },
@@ -28,6 +29,7 @@
       "version": "0.0.1",
       "dependencies": {
         "@r8y/davis-sync": "workspace:*",
+        "@r8y/micky-data": "workspace:*",
         "@r8y/theo-data": "workspace:*",
         "@tailwindcss/vite": "^4.2.1",
         "@xdevplatform/xdk": "^0.4.0",
@@ -73,6 +75,29 @@
         "drizzle-orm": "^0.45.1",
         "pg": "^8.18.0",
         "prettier": "^3.8.1",
+      },
+      "peerDependencies": {
+        "typescript": "^5",
+      },
+    },
+    "packages/micky-data": {
+      "name": "@r8y/micky-data",
+      "dependencies": {
+        "@ai-sdk/anthropic": "^3.0.44",
+        "@boundaryml/baml": "^0.219.0",
+        "@r8y/x-sync": "workspace:*",
+        "@r8y/yt-sync": "workspace:*",
+        "@xdevplatform/xdk": "^0.4.0",
+        "ai": "^6.0.86",
+        "effect": "4.0.0-beta.19",
+        "fast-xml-parser": "^5.3.6",
+        "zod": "^4.3.6",
+      },
+      "devDependencies": {
+        "@types/bun": "latest",
+        "drizzle-kit": "^0.31.9",
+        "drizzle-orm": "^0.45.1",
+        "pg": "^8.18.0",
       },
       "peerDependencies": {
         "typescript": "^5",
@@ -260,6 +285,8 @@
     "@r8y/davis-sync": ["@r8y/davis-sync@workspace:packages/davis-sync"],
 
     "@r8y/live-crawler": ["@r8y/live-crawler@workspace:apps/live-crawler"],
+
+    "@r8y/micky-data": ["@r8y/micky-data@workspace:packages/micky-data"],
 
     "@r8y/theo-data": ["@r8y/theo-data@workspace:packages/theo-data"],
 

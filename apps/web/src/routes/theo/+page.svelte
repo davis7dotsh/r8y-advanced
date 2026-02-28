@@ -9,28 +9,33 @@
 
   const search = $derived(parseTheoListSearch(Object.fromEntries(page.url.searchParams)))
   const videosQuery = $derived(getTheoVideos(search))
+
+  const formatDate = (iso: string) => {
+    const d = new Date(iso)
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: '2-digit' })
+  }
 </script>
 
 {#if videosQuery.error}
   <ErrorState title="Unable to load Theo videos" message={videosQuery.error.message ?? 'Unknown error'} />
 {:else if !videosQuery.ready}
   <section
-    class="space-y-6 rounded-xl border border-neutral-200 bg-white p-5 dark:border-neutral-700 dark:bg-neutral-900"
+    class="space-y-6 border border-border bg-card p-5"
     aria-live="polite"
     aria-busy="true"
   >
     <div class="space-y-2">
-      <div class="h-4 w-52 animate-pulse rounded bg-neutral-200 dark:bg-neutral-700"></div>
-      <div class="h-3 w-40 animate-pulse rounded bg-neutral-100 dark:bg-neutral-800"></div>
+      <div class="h-4 w-52 animate-pulse bg-muted"></div>
+      <div class="h-3 w-40 animate-pulse bg-muted/60"></div>
     </div>
 
-    <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
-      {#each Array(6) as _}
-        <article class="overflow-hidden rounded-xl border border-neutral-200 bg-white dark:border-neutral-700 dark:bg-neutral-900">
-          <div class="aspect-video w-full animate-pulse bg-neutral-200 dark:bg-neutral-800"></div>
+    <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
+      {#each Array(8) as _}
+        <article class="overflow-hidden border border-border bg-card">
+          <div class="aspect-video w-full animate-pulse bg-muted"></div>
           <div class="space-y-2 p-4">
-            <div class="h-3.5 w-5/6 animate-pulse rounded bg-neutral-200 dark:bg-neutral-700"></div>
-            <div class="h-3.5 w-2/3 animate-pulse rounded bg-neutral-100 dark:bg-neutral-800"></div>
+            <div class="h-3.5 w-5/6 animate-pulse bg-muted"></div>
+            <div class="h-3.5 w-2/3 animate-pulse bg-muted/60"></div>
           </div>
         </article>
       {/each}
@@ -42,17 +47,15 @@
   {@const items = videosQuery.current.data.items}
   {@const pagination = videosQuery.current.data.pagination}
 
-  <section class="space-y-6">
-    <div class="flex flex-wrap items-center justify-between gap-3">
-      <p class="text-sm text-muted-foreground">
-        Showing
+  <section class="space-y-0">
+    <div class="flex flex-wrap items-center justify-between gap-3 py-3">
+      <p class="text-xs text-muted-foreground">
         <span class="font-medium text-foreground">{items.length}</span>
         of
         <span class="font-medium text-foreground">{pagination.total}</span>
         videos
         {#if search.q}
-          for
-          <span class="font-medium text-violet-600">"{search.q}"</span>
+          <span class="ml-1 font-serif text-sm italic text-[#D62828] dark:text-red-400">"{search.q}"</span>
         {/if}
       </p>
 
@@ -63,61 +66,98 @@
       />
     </div>
 
-    <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
-      {#each items as video}
-        <article class="overflow-hidden rounded-xl border bg-card text-card-foreground shadow-sm transition-shadow hover:shadow-md">
-          <a href={toHref(`/theo/video/${encodeURIComponent(video.videoId)}`, { commentsPage: 1 })} class="block overflow-hidden">
+    <div class="border-b border-border"></div>
+
+    {#if items.length > 0}
+      <div class="py-5">
+        <a href={toHref(`/theo/video/${encodeURIComponent(items[0].videoId)}`, { commentsPage: 1 })} class="group grid grid-cols-1 gap-5 text-inherit no-underline sm:grid-cols-2">
+          <div class="overflow-hidden">
             <img
-              src={video.thumbnailUrl}
-              alt={video.title}
-              class="aspect-video w-full object-cover transition duration-200 hover:scale-[1.02]"
-              loading="lazy"
+              src={items[0].thumbnailUrl}
+              alt=""
+              class="aspect-video w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
             />
-          </a>
-
-          <div class="p-4 pt-3.5">
-            <a
-              href={toHref(`/theo/video/${encodeURIComponent(video.videoId)}`, { commentsPage: 1 })}
-              class="block truncate text-sm font-medium transition-colors hover:text-violet-600"
-            >
-              {video.title}
-            </a>
-
-            <div class="mt-1.5 flex flex-wrap gap-1">
-              {#if video.sponsors.length > 0}
-                {#each video.sponsors as sponsor}
+          </div>
+          <div class="flex flex-col justify-center py-1">
+            <h2 class="font-serif text-2xl font-semibold leading-snug transition-colors group-hover:text-[#D62828] dark:group-hover:text-red-400">
+              {items[0].title}
+            </h2>
+            {#if items[0].sponsors.length > 0}
+              <div class="mt-3 flex flex-wrap gap-1.5">
+                {#each items[0].sponsors as sponsor}
                   <a
                     href={toHref(`/theo/sponsor/${encodeURIComponent(sponsor.slug)}`, { page: 1 })}
-                    class="rounded bg-violet-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-violet-700 transition-colors hover:bg-violet-200 dark:bg-violet-900/40 dark:text-violet-400 dark:hover:bg-violet-900/60"
+                    class="bg-[#D62828] px-2 py-0.5 text-[0.6rem] font-semibold uppercase tracking-[0.1em] text-white transition-opacity hover:opacity-80 dark:bg-red-700"
+                    onclick={(e) => e.stopPropagation()}
                   >
                     {sponsor.name}
                   </a>
                 {/each}
+              </div>
+            {/if}
+            <div class="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
+              <span class="font-semibold text-foreground">{formatCompactNumber(items[0].viewCount + (items[0].xPost?.views ?? 0))} views</span>
+              <span class="text-border">|</span>
+              <span class="text-red-500">{formatCompactNumber(items[0].viewCount)} YT</span>
+              {#if items[0].xPost?.views != null}
+                <span class="text-border">|</span>
+                <span class="text-sky-500">{formatCompactNumber(items[0].xPost.views)} X</span>
               {/if}
+              <span class="text-border">|</span>
+              <span>{formatCompactNumber(items[0].likeCount)} likes</span>
             </div>
-
-            <div class="mt-4 flex items-center gap-3.5 text-xs text-muted-foreground">
-              <span class="flex items-center gap-1">
-                <span class="font-medium text-foreground">
-                  {formatCompactNumber(video.viewCount + (video.xPost?.views ?? 0))}
-                </span>
+            {#if items[0].publishedAt}
+              <span class="mt-2 text-[0.65rem] uppercase tracking-[0.08em] text-muted-foreground">
+                {formatDate(items[0].publishedAt)}
               </span>
-              <span class="flex items-center gap-1 text-red-500">
-                <span class="font-medium">{formatCompactNumber(video.viewCount)}</span>
-              </span>
-              {#if video.xPost?.views != null}
-                <span class="flex items-center gap-1 text-sky-500">
-                  <span class="text-[10px] font-bold leading-none">X</span>
-                  <span class="font-medium">{formatCompactNumber(video.xPost.views)}</span>
-                </span>
-              {/if}
-              <span class="flex items-center gap-1">
-                <span class="font-medium text-foreground">{formatCompactNumber(video.likeCount)}</span>
-              </span>
-            </div>
+            {/if}
           </div>
-        </article>
+        </a>
+      </div>
+
+      <div class="border-b border-foreground shadow-[0_3px_0_var(--background),0_4px_0_var(--foreground)]"></div>
+    {/if}
+
+    <div class="grid grid-cols-2 gap-4 py-5 sm:grid-cols-3 md:grid-cols-4">
+      {#each items.slice(1) as video}
+        <a href={toHref(`/theo/video/${encodeURIComponent(video.videoId)}`, { commentsPage: 1 })} class="group text-inherit no-underline">
+          <div class="overflow-hidden">
+            <img src={video.thumbnailUrl} alt="" class="aspect-video w-full object-cover" loading="lazy" />
+          </div>
+          <h3 class="mt-2 line-clamp-2 font-serif text-sm font-semibold leading-snug transition-colors group-hover:text-[#D62828] dark:group-hover:text-red-400">
+            {video.title}
+          </h3>
+          {#if video.sponsors.length > 0}
+            <div class="mt-1.5 flex flex-wrap gap-1">
+              {#each video.sponsors as sponsor}
+                <a
+                  href={toHref(`/theo/sponsor/${encodeURIComponent(sponsor.slug)}`, { page: 1 })}
+                  class="bg-red-50 px-1.5 py-0.5 text-[0.5rem] font-semibold uppercase tracking-[0.08em] text-[#D62828] transition-opacity hover:opacity-70 dark:bg-red-950 dark:text-red-400"
+                  onclick={(e) => e.stopPropagation()}
+                >
+                  {sponsor.name}
+                </a>
+              {/each}
+            </div>
+          {/if}
+          <div class="mt-1.5 flex gap-2 text-[0.65rem] text-muted-foreground">
+            <span class="font-semibold text-foreground/70">{formatCompactNumber(video.viewCount + (video.xPost?.views ?? 0))}</span>
+            <span class="text-red-500">{formatCompactNumber(video.viewCount)}</span>
+            {#if video.xPost?.views != null}
+              <span class="text-sky-500">{formatCompactNumber(video.xPost.views)}</span>
+            {/if}
+          </div>
+        </a>
       {/each}
+    </div>
+
+    <div class="border-b border-border"></div>
+    <div class="flex justify-center pt-5">
+      <PaginationControls
+        page={pagination.page}
+        totalPages={pagination.totalPages}
+        getHref={(p) => toHref('/theo', { page: p, q: search.q })}
+      />
     </div>
   </section>
 {/if}

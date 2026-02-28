@@ -1,5 +1,5 @@
 import { dev } from '$app/environment'
-import { PUBLIC_VERCEL_IMAGE_OPTIMIZER } from '$env/static/public'
+import { env as publicEnv } from '$env/dynamic/public'
 
 export const toHref = (
   pathname: string,
@@ -51,8 +51,8 @@ export const toVercelImageHref = (
   }
 
   const optimizeByPublicFlag =
-    PUBLIC_VERCEL_IMAGE_OPTIMIZER === '1' ||
-    PUBLIC_VERCEL_IMAGE_OPTIMIZER === 'true'
+    publicEnv.PUBLIC_VERCEL_IMAGE_OPTIMIZER === '1' ||
+    publicEnv.PUBLIC_VERCEL_IMAGE_OPTIMIZER === 'true'
   const optimizeByServerRuntime =
     typeof process !== 'undefined' && process.env?.VERCEL === '1'
   const optimizeByBrowserHost =

@@ -2,6 +2,7 @@
   import { page } from '$app/state'
   import { getShareVideo } from '@/remote/share.remote'
   import { formatMetric } from '@/utils/format'
+  import { toVercelImageHref } from '@/utils/url'
 
   const params = $derived(page.params as Record<string, string>)
   const channel = $derived(params.channel ?? '')
@@ -46,7 +47,7 @@
           class="group block"
         >
           <img
-            src={video.thumbnailUrl}
+            src={toVercelImageHref(video.thumbnailUrl, { width: 1200 })}
             alt={video.title}
             class="aspect-video w-full rounded-xl object-cover shadow-sm transition-opacity group-hover:opacity-90"
           />

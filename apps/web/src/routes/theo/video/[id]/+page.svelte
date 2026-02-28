@@ -10,7 +10,7 @@
   } from '@/features/theo/theo-search-params'
   import { getTheoVideoDetails, linkTheoVideoToXPost } from '@/remote/theo.remote'
   import { formatMetric } from '@/utils/format'
-  import { toHref } from '@/utils/url'
+  import { toHref, toVercelImageHref } from '@/utils/url'
 
   const FILTER_OPTIONS: { value: CommentsFilter; label: string }[] = [
     { value: 'all', label: 'All' },
@@ -108,15 +108,15 @@
   <ErrorState title="Unable to load video details" message={videoQuery.error.message ?? 'Unknown error'} />
 {:else if !videoQuery.ready}
   <section
-    class="space-y-3 border border-border bg-card p-5"
+    class="space-y-3 rounded-xl border border-neutral-200 bg-white p-5 dark:border-neutral-700 dark:bg-neutral-900"
     aria-live="polite"
     aria-busy="true"
   >
-    <p class="text-sm text-muted-foreground">Loading...</p>
+    <p class="text-sm text-neutral-500">Loading...</p>
     <div class="space-y-2.5">
-      <div class="h-4 w-2/3 animate-pulse bg-muted"></div>
-      <div class="h-4 w-full animate-pulse bg-muted"></div>
-      <div class="h-4 w-5/6 animate-pulse bg-muted"></div>
+      <div class="h-4 w-2/3 animate-pulse rounded bg-neutral-200 dark:bg-neutral-700"></div>
+      <div class="h-4 w-full animate-pulse rounded bg-neutral-100 dark:bg-neutral-800"></div>
+      <div class="h-4 w-5/6 animate-pulse rounded bg-neutral-100 dark:bg-neutral-800"></div>
     </div>
   </section>
 {:else if videoQuery.current.status === 'error'}
@@ -127,18 +127,22 @@
   {@const comments = data.comments}
 
   <section class="space-y-6">
-    <article class="grid gap-6 border border-border bg-card p-5 lg:grid-cols-[320px_1fr]">
-      <img src={video.thumbnailUrl} alt={video.title} class="aspect-video w-full object-cover" />
+    <article class="grid gap-6 rounded-xl border border-neutral-200 bg-white p-5 lg:grid-cols-[320px_1fr] dark:border-neutral-700 dark:bg-neutral-900">
+      <img
+        src={toVercelImageHref(video.thumbnailUrl, { width: 1280 })}
+        alt={video.title}
+        class="aspect-video w-full rounded-lg object-cover"
+      />
 
       <div class="space-y-4">
         <div>
           <div class="flex items-start justify-between gap-3">
-            <h2 class="font-serif text-xl font-bold tracking-tight text-foreground sm:text-2xl">
+            <h2 class="text-xl font-bold tracking-tight text-neutral-900 sm:text-2xl dark:text-neutral-100">
               <a
                 href={`https://www.youtube.com/watch?v=${video.videoId}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                class="hover:text-[#D62828] hover:underline dark:hover:text-red-400"
+                class="hover:text-red-600 hover:underline"
               >
                 {video.title}
               </a>
@@ -148,7 +152,7 @@
               target="_blank"
               rel="noopener noreferrer"
               title="Share"
-              class="mt-1 shrink-0 p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+              class="mt-1 shrink-0 rounded-md p-1.5 text-neutral-400 transition-colors hover:bg-neutral-100 hover:text-neutral-700 dark:hover:bg-neutral-800 dark:hover:text-neutral-300"
             >
               <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
@@ -157,7 +161,7 @@
               </svg>
             </a>
           </div>
-          <p class="mt-1 text-sm text-muted-foreground">Published {new Date(video.publishedAt).toLocaleString()}</p>
+          <p class="mt-1 text-sm text-neutral-400">Published {new Date(video.publishedAt).toLocaleString()}</p>
         </div>
 
         <VideoMetrics
@@ -168,13 +172,13 @@
         />
 
         <form
-          class="space-y-2 border border-border p-3"
+          class="space-y-2 rounded-lg border border-neutral-200 p-3 dark:border-neutral-700"
           onsubmit={async (event) => {
             event.preventDefault()
             await syncXPost(xPostUrlInput)
           }}
         >
-          <label for="theo-x-post-url" class="block text-sm font-medium text-foreground">
+          <label for="theo-x-post-url" class="block text-sm font-medium text-neutral-700 dark:text-neutral-300">
             Link X Post
           </label>
           <div class="flex flex-wrap items-center gap-2">
@@ -183,12 +187,12 @@
               type="url"
               bind:value={xPostUrlInput}
               placeholder="https://x.com/.../status/123"
-              class="min-w-[220px] flex-1 border border-border bg-background px-3 py-2 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:border-foreground focus:ring-1 focus:ring-foreground/20"
+              class="min-w-[220px] flex-1 rounded-lg border border-neutral-300 px-3 py-2 text-sm text-neutral-900 outline-none placeholder:text-neutral-400 focus:border-neutral-400 focus:ring-2 focus:ring-neutral-200 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder:text-neutral-500 dark:focus:border-neutral-500 dark:focus:ring-neutral-700"
             />
             <button
               type="submit"
               disabled={linkTheoVideoToXPost.pending > 0}
-              class="border border-foreground bg-foreground px-3 py-2 text-sm font-medium text-background transition-colors hover:bg-foreground/80 disabled:cursor-not-allowed disabled:opacity-60"
+              class="rounded-lg border border-neutral-800 bg-neutral-900 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-neutral-700 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {linkTheoVideoToXPost.pending > 0 ? 'Saving...' : 'Save'}
             </button>
@@ -197,7 +201,7 @@
                 type="button"
                 disabled={linkTheoVideoToXPost.pending > 0}
                 onclick={() => syncXPost(video.xPost?.url ?? '')}
-                class="border border-sky-400 bg-sky-50 px-3 py-2 text-sm font-medium text-sky-900 transition-colors hover:bg-sky-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-sky-700 dark:bg-sky-900/40 dark:text-sky-300 dark:hover:bg-sky-900/60"
+                class="rounded-lg border border-sky-300 bg-sky-100 px-3 py-2 text-sm font-medium text-sky-900 transition-colors hover:bg-sky-200 disabled:cursor-not-allowed disabled:opacity-60 dark:border-sky-700 dark:bg-sky-900/40 dark:text-sky-300 dark:hover:bg-sky-900/60"
               >
                 {linkTheoVideoToXPost.pending > 0 ? 'Refreshing...' : 'Refresh data'}
               </button>
@@ -209,7 +213,7 @@
         </form>
 
         {#if video.xPost}
-          <div class="border border-sky-200 bg-sky-50 p-3 dark:border-sky-800 dark:bg-sky-950">
+          <div class="rounded-lg border border-sky-200 bg-sky-50 p-3 dark:border-sky-800 dark:bg-sky-950">
             <p class="text-xs font-semibold uppercase tracking-wide text-sky-700 dark:text-sky-400">Linked X Post</p>
             <a
               href={video.xPost.url}
@@ -233,26 +237,26 @@
             {#each video.sponsors as sponsor}
               <a
                 href={toHref(`/theo/sponsor/${encodeURIComponent(sponsor.slug)}`, { page: 1 })}
-                class="border border-[#D62828]/20 bg-red-50 px-2.5 py-0.5 text-xs font-medium text-[#D62828] transition-colors hover:bg-red-100 dark:border-red-700 dark:bg-red-900/40 dark:text-red-300 dark:hover:bg-red-900/60"
+                class="rounded-full border border-violet-200 bg-violet-50 px-2.5 py-0.5 text-xs font-medium text-violet-800 transition-colors hover:bg-violet-100 dark:border-violet-700 dark:bg-violet-900/40 dark:text-violet-300 dark:hover:bg-violet-900/60"
               >
                 {sponsor.name}
               </a>
             {/each}
           {:else}
-            <span class="border border-border px-2.5 py-0.5 text-xs text-muted-foreground">
+            <span class="rounded-full border border-neutral-200 px-2.5 py-0.5 text-xs text-neutral-400 dark:border-neutral-700">
               No sponsor
             </span>
           {/if}
         </div>
 
-        <p class="whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">
+        <p class="whitespace-pre-wrap text-sm leading-relaxed text-neutral-600 dark:text-neutral-400">
           {#each linkified as part}
             {#if part.type === 'link'}
               <a
                 href={part.value}
                 target="_blank"
                 rel="noopener noreferrer"
-                class="break-all text-[#D62828] hover:underline dark:text-red-400"
+                class="break-all text-blue-600 hover:underline"
               >
                 {part.value}
               </a>
@@ -264,12 +268,12 @@
       </div>
     </article>
 
-    <section class="border border-border bg-card p-5">
+    <section class="rounded-xl border border-neutral-200 bg-white p-5 dark:border-neutral-700 dark:bg-neutral-900">
       <div class="mb-4 space-y-3">
         <div class="flex flex-wrap items-center justify-between gap-3">
-          <h3 class="font-serif text-lg font-semibold text-foreground">Comments</h3>
+          <h3 class="text-base font-semibold text-neutral-900 dark:text-neutral-100">Comments</h3>
 
-          <div class="flex items-center gap-1 border border-border p-0.5">
+          <div class="flex items-center gap-1 rounded-lg border border-neutral-200 p-0.5 dark:border-neutral-700">
             {#each SORT_OPTIONS as option}
               <a
                 href={toHref(`/theo/video/${encodeURIComponent(id)}`, {
@@ -277,10 +281,10 @@
                   commentsSort: option.value,
                   commentsFilter: search.commentsFilter,
                 })}
-                class={`px-3 py-1 text-xs font-medium transition-colors ${
+                class={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${
                   search.commentsSort === option.value
-                    ? 'bg-foreground text-background'
-                    : 'text-muted-foreground hover:text-foreground'
+                    ? 'bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900'
+                    : 'text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-200'
                 }`}
               >
                 {option.label}
@@ -297,10 +301,10 @@
                 commentsSort: search.commentsSort,
                 commentsFilter: option.value,
               })}
-              class={`border px-2.5 py-0.5 text-xs font-medium transition-colors ${
+              class={`rounded-full border px-2.5 py-0.5 text-xs font-medium transition-colors ${
                 search.commentsFilter === option.value
-                  ? 'border-foreground bg-foreground text-background'
-                  : 'border-border text-muted-foreground hover:border-foreground/30 hover:text-foreground'
+                  ? 'border-neutral-800 bg-neutral-800 text-white dark:border-neutral-200 dark:bg-neutral-200 dark:text-neutral-900'
+                  : 'border-neutral-200 text-neutral-500 hover:border-neutral-300 hover:text-neutral-700 dark:border-neutral-700 dark:hover:border-neutral-500 dark:hover:text-neutral-300'
               }`}
             >
               {option.label}
@@ -323,17 +327,17 @@
 
       <div class="space-y-2">
         {#each comments.items as comment}
-          <article class="border border-border bg-muted/50 p-3.5">
-            <div class="mb-1.5 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-              <span class="font-medium text-foreground">{comment.author}</span>
-              <span class="text-border">&middot;</span>
+          <article class="rounded-lg border border-neutral-100 bg-neutral-50 p-3.5 dark:border-neutral-700 dark:bg-neutral-800">
+            <div class="mb-1.5 flex flex-wrap items-center gap-2 text-xs text-neutral-400">
+              <span class="font-medium text-neutral-700 dark:text-neutral-300">{comment.author}</span>
+              <span class="text-neutral-300 dark:text-neutral-600">&middot;</span>
               <span>{new Date(comment.publishedAt).toLocaleString()}</span>
-              <span class="text-border">&middot;</span>
+              <span class="text-neutral-300 dark:text-neutral-600">&middot;</span>
               <span>{comment.likeCount.toLocaleString()} likes</span>
-              <span class="text-border">&middot;</span>
+              <span class="text-neutral-300 dark:text-neutral-600">&middot;</span>
               <span>{comment.replyCount.toLocaleString()} replies</span>
             </div>
-            <p class="whitespace-pre-wrap text-sm leading-relaxed text-foreground/80">{comment.text}</p>
+            <p class="whitespace-pre-wrap text-sm leading-relaxed text-neutral-700 dark:text-neutral-300">{comment.text}</p>
           </article>
         {/each}
       </div>

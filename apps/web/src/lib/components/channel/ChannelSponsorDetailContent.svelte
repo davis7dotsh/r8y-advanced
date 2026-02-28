@@ -16,7 +16,7 @@
             totalViews: number
             averageViews: number
             totalXViews: number
-            lastPublishedAt: string
+            lastPublishedAt: string | null
             bestPerformingVideo: {
               viewCount: number
               title: string
@@ -74,7 +74,7 @@
     externalVideoLinks = false,
     showBottomVideoPagination = false,
   } = $props<{
-    load: Promise<SponsorPayload>
+    load: unknown
     sponsorLabel: string
     videoHref: (videoId: string) => string
     videoPageHref: (page: number) => string
@@ -82,6 +82,8 @@
     externalVideoLinks?: boolean
     showBottomVideoPagination?: boolean
   }>()
+
+  const sponsorLoad = $derived(load as Promise<SponsorPayload>)
 </script>
 
 <svelte:boundary>
@@ -107,7 +109,7 @@
     />
   {/snippet}
 
-  {@const payload = await load}
+  {@const payload = await sponsorLoad}
   {#if payload.status === 'error'}
     <ErrorState title="Unable to load sponsor details" message={payload.error.message} />
   {:else}

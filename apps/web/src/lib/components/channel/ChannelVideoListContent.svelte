@@ -43,7 +43,7 @@
     videoHref,
     sponsorHref,
   } = $props<{
-    load: Promise<ListPayload>
+    load: unknown
     search: {
       q?: string
     }
@@ -52,6 +52,8 @@
     videoHref: (videoId: string) => string
     sponsorHref: (slug: string) => string
   }>()
+
+  const listLoad = $derived(load as Promise<ListPayload>)
 </script>
 
 <svelte:boundary>
@@ -87,7 +89,7 @@
     />
   {/snippet}
 
-  {@const payload = await load}
+  {@const payload = await listLoad}
   {#if payload.status === 'error'}
     <ErrorState title={errorTitle} message={payload.error.message} />
   {:else}
@@ -124,7 +126,7 @@
             likeCount={video.likeCount}
             xViews={video.xPost?.views ?? null}
             videoHref={videoHref(video.videoId)}
-            sponsorLinks={video.sponsors.map((sponsor) => ({
+            sponsorLinks={video.sponsors.map((sponsor: { slug: string; name: string }) => ({
               href: sponsorHref(sponsor.slug),
               name: sponsor.name,
             }))}

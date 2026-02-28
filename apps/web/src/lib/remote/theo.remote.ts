@@ -167,10 +167,7 @@ export const getTheoSearchSuggestions = query(
 
     const { TheoSearchService } =
       await import('@/services/theo/theo-search.server')
-    const result = await TheoSearchService.suggest(
-      {},
-      { q },
-    )
+    const result = await TheoSearchService.suggest({}, { q })
 
     if (result.status === 'error') {
       return {

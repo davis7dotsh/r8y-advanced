@@ -89,7 +89,7 @@
       commentsSort: string
       commentsFilter: string
     }
-    videoQuery: VideoDetailsQuery
+    videoQuery: unknown
     shareHref: string
     sponsorHref: (slug: string) => string
     detailHref: (params: {
@@ -102,16 +102,18 @@
     saveXPost: (xPostUrl: string) => Promise<string | null>
   }>()
 
+  const query = $derived(videoQuery as VideoDetailsQuery)
+
   let xPostUrlInput = $state('')
   let xPostSaveError = $state<string | null>(null)
 
   const linkified = $derived.by(() => {
-    if (!videoQuery.ready || videoQuery.error || videoQuery.current.status !== 'ok') {
+    if (!query.ready || query.error || query.current.status !== 'ok') {
       return [] as Array<{ type: 'text' | 'link'; value: string }>
     }
 
     const parts: Array<{ type: 'text' | 'link'; value: string }> = []
-    const text = videoQuery.current.data.video.description
+    const text = query.current.data.video.description
     let lastIndex = 0
     let match: RegExpExecArray | null
 
@@ -144,11 +146,11 @@
   })
 
   $effect(() => {
-    if (!videoQuery.ready || videoQuery.error || videoQuery.current.status !== 'ok') {
+    if (!query.ready || query.error || query.current.status !== 'ok') {
       return
     }
 
-    xPostUrlInput = videoQuery.current.data.video.xPost?.url ?? ''
+    xPostUrlInput = query.current.data.video.xPost?.url ?? ''
     xPostSaveError = null
   })
 
@@ -158,9 +160,9 @@
   }
 </script>
 
-{#if videoQuery.error}
-  <ErrorState title="Unable to load video details" message={videoQuery.error.message ?? 'Unknown error'} />
-{:else if !videoQuery.ready}
+{#if query.error}
+  <ErrorState title="Unable to load video details" message={query.error.message ?? 'Unknown error'} />
+{:else if !query.ready}
   <section
     class="space-y-3 rounded-xl border border-neutral-200 bg-white p-5 dark:border-neutral-700 dark:bg-neutral-900"
     aria-live="polite"
@@ -173,10 +175,10 @@
       <div class="h-4 w-5/6 animate-pulse rounded bg-neutral-100 dark:bg-neutral-800"></div>
     </div>
   </section>
-{:else if videoQuery.current.status === 'error'}
-  <ErrorState title="Unable to load video details" message={videoQuery.current.error.message} />
+{:else if query.current.status === 'error'}
+  <ErrorState title="Unable to load video details" message={query.current.error.message} />
 {:else}
-  {@const data = videoQuery.current.data}
+  {@const data = query.current.data}
   {@const video = data.video}
   {@const comments = data.comments}
 

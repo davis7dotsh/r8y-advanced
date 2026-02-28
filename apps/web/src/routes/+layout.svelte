@@ -147,9 +147,4 @@
 
 {@render children()}
 
-<GlobalCommand
-  open={commandOpen}
-  onOpenChange={(next) => {
-    commandOpen = next
-  }}
-/>
+<GlobalCommand bind:open={commandOpen} />

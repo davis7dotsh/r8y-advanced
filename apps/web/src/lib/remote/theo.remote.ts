@@ -163,14 +163,17 @@ export const getTheoSearchSuggestions = query(
   'unchecked',
   async (input: unknown) => {
     const value = toObject(input)
+    const q = typeof value.q === 'string' ? value.q : ''
+    console.log('[getTheoSearchSuggestions] input', { raw: input, parsedQ: q })
+
     const { TheoSearchService } =
       await import('@/services/theo/theo-search.server')
     const result = await TheoSearchService.suggest(
       {},
-      {
-        q: typeof value.q === 'string' ? value.q : '',
-      },
+      { q },
     )
+
+    console.log('[getTheoSearchSuggestions] result', result)
 
     if (result.status === 'error') {
       return {

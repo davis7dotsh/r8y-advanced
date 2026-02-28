@@ -1,13 +1,21 @@
 <script lang="ts">
   import { page } from '$app/state'
   import { getShareVideo } from '@/remote/share.remote'
-  import { formatMetric } from '@/utils/format'
+  import { daysSince, formatMetric } from '@/utils/format'
   import { toVercelImageHref } from '@/utils/url'
 
   const params = $derived(page.params as Record<string, string>)
   const channel = $derived(params.channel ?? '')
   const id = $derived(params.id ?? '')
-  const channelLabel = $derived(channel === 'davis' ? 'Davis' : channel === 'theo' ? 'Theo' : channel)
+  const channelLabel = $derived(
+    channel === 'davis'
+      ? 'Davis'
+      : channel === 'theo'
+        ? 'Theo'
+        : channel === 'micky'
+          ? 'Micky'
+          : channel,
+  )
 
   const videoQuery = $derived(getShareVideo({ channel, videoId: id }))
 </script>
@@ -61,6 +69,7 @@
           <div class="flex flex-wrap items-center gap-2">
             <p class="text-sm text-neutral-400">
               {new Date(video.publishedAt).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}
+              • Posted {daysSince(video.publishedAt)}
             </p>
             {#each video.sponsors as sponsor}
               <a

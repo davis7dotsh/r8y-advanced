@@ -19,4 +19,4 @@ bun run start
 - `CRAWLER_RUN_ONCE` (optional, set `true` for one-off execution)
 - `CRAWLER_LOG_LEVEL` (optional, one of `info`, `warn`, `error`, `silent`; default `warn`)
 
-Default channels are Theo (`UCbRP3c757lWg9M-U7TyEkXA`) and Ben (`UCFvPgPdb_emE_bpMZq6hmJQ`).
+Default channels are Theo (`UCbRP3c757lWg9M-U7TyEkXA`), Ben (`UCFvPgPdb_emE_bpMZq6hmJQ`), and Micky (`UCBX__dPYqDFqAN4QcWbnUbw`).

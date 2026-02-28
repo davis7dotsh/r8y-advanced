@@ -1,11 +1,12 @@
 # r8y
 
-Channel management system for Theo (t3) and Ben Davis.
+Channel management system for Theo (t3), Ben Davis, and Micky.
 
 ## CHANNEL IDS
 
 - Theo: UCbRP3c757lWg9M-U7TyEkXA
 - Ben Davis: UCFvPgPdb_emE_bpMZq6hmJQ
+- Micky: UCBX__dPYqDFqAN4QcWbnUbw
 
 ## Deploy
 

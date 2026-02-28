@@ -11,9 +11,9 @@ test("resolveWebhookUrl returns null for empty/undefined", () => {
 });
 
 test("resolveWebhookUrl trims and returns value", () => {
-  expect(resolveWebhookUrl("  https://discord.com/api/webhooks/123/abc  ")).toBe(
-    "https://discord.com/api/webhooks/123/abc",
-  );
+  expect(
+    resolveWebhookUrl("  https://discord.com/api/webhooks/123/abc  "),
+  ).toBe("https://discord.com/api/webhooks/123/abc");
 });
 
 test("sendVideoEmbed fails for invalid webhook url", async () => {

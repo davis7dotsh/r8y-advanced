@@ -1,6 +1,8 @@
 import { Data, Effect, Schedule } from "effect";
 
-export class DiscordWebhookError extends Data.TaggedError("DiscordWebhookError")<{
+export class DiscordWebhookError extends Data.TaggedError(
+  "DiscordWebhookError",
+)<{
   message: string;
 }> {}
 
@@ -27,7 +29,9 @@ const buildVideoEmbed = (video: VideoEmbedInput) => ({
   ],
 });
 
-export const sendVideoEmbed = <TExternalError extends { message: string }>(args: {
+export const sendVideoEmbed = <
+  TExternalError extends { message: string },
+>(args: {
   webhookUrl: string;
   video: VideoEmbedInput;
   externalError: (message: string) => TExternalError;
@@ -48,11 +52,15 @@ export const sendVideoEmbed = <TExternalError extends { message: string }>(args:
     },
     catch: (cause) =>
       args.externalError(
-        cause instanceof Error ? cause.message : "Failed to send Discord webhook",
+        cause instanceof Error
+          ? cause.message
+          : "Failed to send Discord webhook",
       ),
   }).pipe(
     Effect.retry(
-      Schedule.exponential("500 millis").pipe(Schedule.compose(Schedule.recurs(2))),
+      Schedule.exponential("500 millis").pipe(
+        Schedule.compose(Schedule.recurs(2)),
+      ),
     ),
   );
 

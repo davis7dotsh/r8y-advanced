@@ -115,6 +115,16 @@
         >
           Theo
         </a>
+        <a
+          href={toHref('/micky', { page: 1 })}
+          class={`text-sm tracking-wide transition-colors hover:text-foreground ${
+            page.url.pathname.startsWith('/micky')
+              ? 'font-semibold text-foreground'
+              : 'font-medium text-muted-foreground'
+          }`}
+        >
+          Micky
+        </a>
       </div>
 
       <div class="flex items-center gap-2">

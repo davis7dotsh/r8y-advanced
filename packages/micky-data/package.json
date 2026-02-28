@@ -1,0 +1,49 @@
+{
+  "name": "@r8y/micky-data",
+  "scripts": {
+    "start": "bun run src/index.ts",
+    "check": "bunx tsc --noEmit",
+    "format": "bunx prettier --write drizzle.config.ts src/**/*.ts scripts/**/*.ts",
+    "test": "bun test",
+    "baml:gen": "baml-cli generate --from ./baml_src",
+    "crawl:video": "bun run scripts/crawl-video.ts",
+    "crawl:rss": "bun run scripts/crawl-rss.ts",
+    "crawl:backfill": "bun run scripts/crawl-backfill.ts",
+    "visualizer": "bun run scripts/visualizer.ts",
+    "db:ensure-schema": "bun run scripts/ensure-schema.ts",
+    "db:reset-schema": "bun run scripts/reset-schema.ts",
+    "db:ensure-trgm-indexes": "bun run scripts/ensure-trgm-indexes.ts",
+    "db:push": "bun run db:ensure-schema && bunx drizzle-kit push --config drizzle.config.ts && bun run db:ensure-trgm-indexes",
+    "db:push:reset": "bun run db:reset-schema && bunx drizzle-kit push --config drizzle.config.ts",
+    "db:studio": "bunx drizzle-kit studio --config drizzle.config.ts"
+  },
+  "main": "src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./schema": "./src/schema.ts",
+    "./crawl": "./src/services/crawl/index.ts",
+    "./channel-info": "./src/MICKY_CHANNEL_INFO.ts"
+  },
+  "type": "module",
+  "private": true,
+  "devDependencies": {
+    "@types/bun": "latest",
+    "drizzle-kit": "^0.31.9",
+    "drizzle-orm": "^0.45.1",
+    "pg": "^8.18.0"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "@ai-sdk/anthropic": "^3.0.44",
+    "@boundaryml/baml": "^0.219.0",
+    "@r8y/x-sync": "workspace:*",
+    "@r8y/yt-sync": "workspace:*",
+    "@xdevplatform/xdk": "^0.4.0",
+    "ai": "^6.0.86",
+    "effect": "4.0.0-beta.19",
+    "fast-xml-parser": "^5.3.6",
+    "zod": "^4.3.6"
+  }
+}

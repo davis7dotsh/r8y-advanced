@@ -5,6 +5,7 @@
   import PlayIcon from '@lucide/svelte/icons/play'
   import MegaphoneIcon from '@lucide/svelte/icons/megaphone'
   import { getDavisSearchSuggestions } from '@/remote/davis.remote'
+  import { getMickySearchSuggestions } from '@/remote/micky.remote'
   import { getTheoSearchSuggestions } from '@/remote/theo.remote'
   import { toHref } from '@/utils/url'
   import * as Command from '@/components/ui/command/index.js'
@@ -28,6 +29,8 @@
       ? 'davis'
       : page.url.pathname.startsWith('/theo')
         ? 'theo'
+        : page.url.pathname.startsWith('/micky')
+          ? 'micky'
         : null,
   )
 
@@ -36,7 +39,7 @@
     results.videos.length > 0 || results.sponsors.length > 0,
   )
 
-  const openChannel = async (next: 'theo' | 'davis') => {
+  const openChannel = async (next: 'theo' | 'davis' | 'micky') => {
     await goto(toHref(`/${next}`, { page: 1 }))
     open = false
     inputValue = ''
@@ -74,7 +77,12 @@
     let cancelled = false
     isLoading = true
 
-    const searchFn = channel === 'davis' ? getDavisSearchSuggestions : getTheoSearchSuggestions
+    const searchFn =
+      channel === 'davis'
+        ? getDavisSearchSuggestions
+        : channel === 'theo'
+          ? getTheoSearchSuggestions
+          : getMickySearchSuggestions
 
     searchFn({ q })
       .then((result) => {
@@ -130,6 +138,10 @@
         <Command.Item onSelect={() => openChannel('davis')}>
           <ArrowRightIcon />
           <span>Davis's Channel</span>
+        </Command.Item>
+        <Command.Item onSelect={() => openChannel('micky')}>
+          <ArrowRightIcon />
+          <span>Micky's Channel</span>
         </Command.Item>
       </Command.Group>
     {:else if !hasResults && !isLoading}

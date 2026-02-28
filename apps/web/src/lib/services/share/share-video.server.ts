@@ -6,12 +6,18 @@ import {
   sponsorToVideos as theoSponsorToVideos,
 } from '@r8y/theo-data/schema'
 import {
+  videos as mickyVideos,
+  sponsors as mickySponsors,
+  sponsorToVideos as mickySponsorToVideos,
+} from '@r8y/micky-data/schema'
+import {
   videos as davisVideos,
   sponsors as davisSponsors,
   sponsorToVideos as davisSponsorToVideos,
 } from '@r8y/davis-sync/schema'
 import { db as theoDb } from '@/db/client.server'
 import { davisDb } from '@/db/davis.client.server'
+import { mickyDb } from '@/db/micky.client.server'
 
 const toSponsorSlug = (name: string, sponsorId: string) => {
   const slugBase = name
@@ -108,6 +114,35 @@ const loadDavisVideo = (videoId: string) =>
     )
     .where(eq(davisVideos.videoId, videoId))
 
+const loadMickyVideo = (videoId: string) =>
+  mickyDb
+    .select({
+      videoId: mickyVideos.videoId,
+      title: mickyVideos.title,
+      thumbnailUrl: mickyVideos.thumbnailUrl,
+      publishedAt: mickyVideos.publishedAt,
+      viewCount: mickyVideos.viewCount,
+      likeCount: mickyVideos.likeCount,
+      commentCount: mickyVideos.commentCount,
+      xUrl: mickyVideos.xUrl,
+      xViews: mickyVideos.xViews,
+      xLikes: mickyVideos.xLikes,
+      xReposts: mickyVideos.xReposts,
+      xComments: mickyVideos.xComments,
+      sponsorId: mickySponsors.sponsorId,
+      sponsorName: mickySponsors.name,
+    })
+    .from(mickyVideos)
+    .leftJoin(
+      mickySponsorToVideos,
+      eq(mickySponsorToVideos.videoId, mickyVideos.videoId),
+    )
+    .leftJoin(
+      mickySponsors,
+      eq(mickySponsors.sponsorId, mickySponsorToVideos.sponsorId),
+    )
+    .where(eq(mickyVideos.videoId, videoId))
+
 export namespace ShareVideoService {
   export class VideoNotFoundError extends TaggedError('VideoNotFoundError')<{
     videoId: string
@@ -131,13 +166,18 @@ export namespace ShareVideoService {
       )
     }
 
-    if (channel !== 'theo' && channel !== 'davis') {
+    if (channel !== 'theo' && channel !== 'davis' && channel !== 'micky') {
       return Result.err(
         new InvalidChannelError({ message: `Unknown channel: ${channel}` }),
       )
     }
 
-    const loader = channel === 'theo' ? loadTheoVideo : loadDavisVideo
+    const loader =
+      channel === 'theo'
+        ? loadTheoVideo
+        : channel === 'davis'
+          ? loadDavisVideo
+          : loadMickyVideo
 
     const queryResult = await Result.tryPromise({
       try: () => loader(trimmedId),

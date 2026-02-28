@@ -40,9 +40,9 @@
 </script>
 
 <main class="flex min-h-screen items-center justify-center px-4">
-  <div class="w-full max-w-sm rounded-xl border border-neutral-200 bg-white p-6 shadow-sm dark:border-neutral-700 dark:bg-neutral-900">
-    <h1 class="text-lg font-semibold text-neutral-900 dark:text-neutral-100">Enter passcode</h1>
-    <p class="mt-1 text-sm text-neutral-500">This app is protected.</p>
+  <div class="w-full max-w-sm border border-border bg-card p-6 shadow-sm">
+    <h1 class="font-serif text-xl font-semibold text-foreground">Enter passcode</h1>
+    <p class="mt-1 text-sm text-muted-foreground">This app is protected.</p>
 
     <form class="mt-5 space-y-3" onsubmit={submit}>
       <input
@@ -50,7 +50,7 @@
         type="password"
         bind:value={passcode}
         placeholder="Passcode"
-        class="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm outline-none ring-violet-500/30 transition focus:border-violet-500 focus:ring dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder:text-neutral-500"
+        class="w-full border border-border bg-background px-3 py-2 text-sm outline-none transition focus:border-foreground focus:ring-1 focus:ring-foreground/20 placeholder:text-muted-foreground"
       />
 
       {#if errorMessage}
@@ -60,7 +60,7 @@
       <button
         type="submit"
         disabled={isSubmitting}
-        class="w-full rounded-lg bg-neutral-900 px-3 py-2 text-sm font-medium text-white transition hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-neutral-100 dark:text-neutral-900 dark:hover:bg-neutral-200"
+        class="w-full bg-foreground px-3 py-2 text-sm font-medium text-background transition hover:bg-foreground/80 disabled:cursor-not-allowed disabled:opacity-60"
       >
         {isSubmitting ? 'Checking…' : 'Unlock'}
       </button>

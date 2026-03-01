@@ -9,8 +9,11 @@
           avatarUrl: string | null
           handle: string | null
           subscriberCount: number
-          viewCount: number
-          videoCount: number
+          last30Days: {
+            videoCount: number
+            viewCount: number
+            likeCount: number
+          }
         }
       }
     | {
@@ -71,20 +74,28 @@
                     </a>
                     <span class="text-neutral-300 dark:text-neutral-600">&middot;</span>
                   {/if}
+                  {#if stats.data.subscriberCount > 0}
+                    <span>
+                      <span class="font-semibold text-foreground">{formatCompactNumber(stats.data.subscriberCount)}</span>
+                      subs
+                    </span>
+                    <span class="text-neutral-300 dark:text-neutral-600">&middot;</span>
+                  {/if}
                   <span>
-                    <span class="font-semibold text-foreground">{formatCompactNumber(stats.data.subscriberCount)}</span>
-                    subs
+                    <span class="font-semibold text-foreground">{stats.data.last30Days.videoCount}</span>
+                    vids
                   </span>
                   <span class="text-neutral-300 dark:text-neutral-600">&middot;</span>
                   <span>
-                    <span class="font-semibold text-foreground">{formatCompactNumber(stats.data.viewCount)}</span>
-                    total views
+                    <span class="font-semibold text-foreground">{formatCompactNumber(stats.data.last30Days.viewCount)}</span>
+                    views
                   </span>
                   <span class="text-neutral-300 dark:text-neutral-600">&middot;</span>
                   <span>
-                    <span class="font-semibold text-foreground">{formatCompactNumber(stats.data.videoCount)}</span>
-                    videos
+                    <span class="font-semibold text-foreground">{formatCompactNumber(stats.data.last30Days.likeCount)}</span>
+                    likes
                   </span>
+                  <span class="text-neutral-400 dark:text-neutral-500">/ 30d</span>
                 </div>
               {/if}
             {:catch}

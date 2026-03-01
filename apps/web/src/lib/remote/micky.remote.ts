@@ -188,8 +188,10 @@ export const getMickyChannelStats = query('unchecked', async () => {
     '@/services/channel-stats/channel-stats.server'
   )
   const { MICKY_CHANNEL_INFO } = await import('@r8y/micky-data/channel-info')
+  const { videos } = await import('@r8y/micky-data/schema')
+  const { mickyDb } = await import('@/db/micky.client.server')
   const result = await ChannelStatsService.getStats(
-    {},
+    { db: mickyDb, videosTable: videos },
     { channelId: MICKY_CHANNEL_INFO.channelId },
   )
 

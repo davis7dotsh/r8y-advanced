@@ -191,8 +191,10 @@ export const getDavisChannelStats = query('unchecked', async () => {
     '@/services/channel-stats/channel-stats.server'
   )
   const { BEN_CHANNEL_INFO } = await import('@r8y/davis-sync/channel-info')
+  const { videos } = await import('@r8y/davis-sync/schema')
+  const { davisDb } = await import('@/db/davis.client.server')
   const result = await ChannelStatsService.getStats(
-    {},
+    { db: davisDb, videosTable: videos },
     { channelId: BEN_CHANNEL_INFO.channelId },
   )
 

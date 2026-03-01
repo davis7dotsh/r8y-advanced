@@ -188,8 +188,10 @@ export const getTheoChannelStats = query('unchecked', async () => {
     '@/services/channel-stats/channel-stats.server'
   )
   const { THEO_CHANNEL_INFO } = await import('@r8y/theo-data/channel-info')
+  const { videos } = await import('@r8y/theo-data/schema')
+  const { db } = await import('@/db/client.server')
   const result = await ChannelStatsService.getStats(
-    {},
+    { db, videosTable: videos },
     { channelId: THEO_CHANNEL_INFO.channelId },
   )
 

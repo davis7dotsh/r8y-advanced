@@ -62,6 +62,7 @@
               </div>
             {:then stats}
               {#if stats.status === 'ok'}
+                {@const hasPrefix = !!stats.data.handle || stats.data.subscriberCount > 0}
                 <div class="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
                   {#if stats.data.handle}
                     <a
@@ -72,13 +73,17 @@
                     >
                       {stats.data.handle}
                     </a>
-                    <span class="text-neutral-300 dark:text-neutral-600">&middot;</span>
                   {/if}
                   {#if stats.data.subscriberCount > 0}
+                    {#if stats.data.handle}
+                      <span class="text-neutral-300 dark:text-neutral-600">&middot;</span>
+                    {/if}
                     <span>
                       <span class="font-semibold text-foreground">{formatCompactNumber(stats.data.subscriberCount)}</span>
                       subs
                     </span>
+                  {/if}
+                  {#if hasPrefix}
                     <span class="text-neutral-300 dark:text-neutral-600">&middot;</span>
                   {/if}
                   <span>

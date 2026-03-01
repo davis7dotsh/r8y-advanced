@@ -53,6 +53,7 @@ export type ShareVideoData = {
     likes: number | null
     reposts: number | null
     comments: number | null
+    quotes: number | null
   } | null
 }
 
@@ -71,6 +72,7 @@ const loadTheoVideo = (videoId: string) =>
       xLikes: theoVideos.xLikes,
       xReposts: theoVideos.xReposts,
       xComments: theoVideos.xComments,
+      xQuotes: theoVideos.xQuotes,
       sponsorId: theoSponsors.sponsorId,
       sponsorName: theoSponsors.name,
     })
@@ -100,6 +102,7 @@ const loadDavisVideo = (videoId: string) =>
       xLikes: davisVideos.xLikes,
       xReposts: davisVideos.xReposts,
       xComments: davisVideos.xComments,
+      xQuotes: davisVideos.xQuotes,
       sponsorId: davisSponsors.sponsorId,
       sponsorName: davisSponsors.name,
     })
@@ -129,6 +132,7 @@ const loadMickyVideo = (videoId: string) =>
       xLikes: mickyVideos.xLikes,
       xReposts: mickyVideos.xReposts,
       xComments: mickyVideos.xComments,
+      xQuotes: mickyVideos.xQuotes,
       sponsorId: mickySponsors.sponsorId,
       sponsorName: mickySponsors.name,
     })
@@ -232,6 +236,7 @@ export namespace ShareVideoService {
             likes: first.xLikes,
             reposts: first.xReposts,
             comments: first.xComments,
+            quotes: first.xQuotes,
           }
         : null,
     })

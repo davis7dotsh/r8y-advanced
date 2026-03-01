@@ -157,6 +157,10 @@
                       <span class="font-semibold text-neutral-900 dark:text-neutral-100">{formatMetric(video.xPost.comments)}</span>
                       <span class="ml-1 text-neutral-400">replies</span>
                     </span>
+                    <span>
+                      <span class="font-semibold text-neutral-900 dark:text-neutral-100">{formatMetric(video.xPost.quotes)}</span>
+                      <span class="ml-1 text-neutral-400">quotes</span>
+                    </span>
                   </div>
                 </div>
               </div>

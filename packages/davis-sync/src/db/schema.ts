@@ -34,6 +34,7 @@ export const videos = davis.table(
     xLikes: integer("x_likes"),
     xReposts: integer("x_reposts"),
     xComments: integer("x_comments"),
+    xQuotes: integer("x_quotes"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),

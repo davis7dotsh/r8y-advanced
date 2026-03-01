@@ -167,6 +167,7 @@ export namespace CrawlService {
         xLikes: metrics.xLikes,
         xReposts: metrics.xReposts,
         xComments: metrics.xComments,
+        xQuotes: metrics.xQuotes,
       };
 
       yield* Effect.tryPromise({
@@ -179,6 +180,7 @@ export namespace CrawlService {
               xLikes: persisted.xLikes,
               xReposts: persisted.xReposts,
               xComments: persisted.xComments,
+              xQuotes: persisted.xQuotes,
             })
             .where(eq(videos.videoId, input.videoId)),
         catch: (cause) =>

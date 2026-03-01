@@ -35,6 +35,7 @@ const buildVideoSummaries = (
     xLikes?: number | null
     xReposts?: number | null
     xComments?: number | null
+    xQuotes?: number | null
   }>,
 ) =>
   rows.map(
@@ -55,6 +56,7 @@ const buildVideoSummaries = (
               likes: row.xLikes ?? null,
               reposts: row.xReposts ?? null,
               comments: row.xComments ?? null,
+              quotes: row.xQuotes ?? null,
             }
           : null,
       }) satisfies VideoSummary,
@@ -103,6 +105,7 @@ const loadSponsorVideosFromDb = (
       xLikes: videos.xLikes,
       xReposts: videos.xReposts,
       xComments: videos.xComments,
+      xQuotes: videos.xQuotes,
     })
     .from(sponsorToVideos)
     .innerJoin(videos, eq(videos.videoId, sponsorToVideos.videoId))
@@ -226,6 +229,7 @@ export namespace TheoSponsorService {
             xLikes: number | null
             xReposts: number | null
             xComments: number | null
+            xQuotes: number | null
           }>
         >
         loadSponsorStats?: (sponsorId: string) => Promise<
@@ -353,6 +357,7 @@ export namespace TheoSponsorService {
             xLikes: number | null
             xReposts: number | null
             xComments: number | null
+            xQuotes: number | null
           }>
         >)
 

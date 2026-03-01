@@ -41,6 +41,7 @@ const toVideoSummaries = (
     xLikes: number | null
     xReposts: number | null
     xComments: number | null
+    xQuotes: number | null
   }>,
   orderedVideoIds: string[],
 ) => {
@@ -65,6 +66,7 @@ const toVideoSummaries = (
         xLikes: row.xLikes,
         xReposts: row.xReposts,
         xComments: row.xComments,
+        xQuotes: row.xQuotes,
         sponsorsById: new Map<
           string,
           { sponsorId: string; name: string; slug: string }
@@ -97,6 +99,7 @@ const toVideoSummaries = (
         xLikes: number | null
         xReposts: number | null
         xComments: number | null
+        xQuotes: number | null
         sponsorsById: Map<
           string,
           { sponsorId: string; name: string; slug: string }
@@ -119,6 +122,7 @@ const toVideoSummaries = (
         xLikes,
         xReposts,
         xComments,
+        xQuotes,
         ...video
       }) => ({
         ...video,
@@ -130,6 +134,7 @@ const toVideoSummaries = (
               likes: xLikes,
               reposts: xReposts,
               comments: xComments,
+              quotes: xQuotes,
             }
           : null,
       }),
@@ -231,6 +236,7 @@ const loadVideosFromDb = (db: typeof defaultDb, videoIds: string[]) =>
       xLikes: videos.xLikes,
       xReposts: videos.xReposts,
       xComments: videos.xComments,
+      xQuotes: videos.xQuotes,
     })
     .from(videos)
     .leftJoin(sponsorToVideos, eq(sponsorToVideos.videoId, videos.videoId))
@@ -274,6 +280,7 @@ export namespace TheoVideosService {
             xLikes: number | null
             xReposts: number | null
             xComments: number | null
+            xQuotes: number | null
           }>
         >
       }
@@ -355,6 +362,7 @@ export namespace TheoVideosService {
             xLikes: number | null
             xReposts: number | null
             xComments: number | null
+            xQuotes: number | null
           }>
         >)
 

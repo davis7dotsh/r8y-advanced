@@ -103,6 +103,7 @@ export const fetchXPostMetrics = <
             "repostCount",
           ]),
           xComments: readMetric(publicMetrics, ["reply_count", "replyCount"]),
+          xQuotes: readMetric(publicMetrics, ["quote_count", "quoteCount"]),
         };
       }),
     ),

@@ -30,6 +30,7 @@ export type VideoSummary = {
     likes: number | null
     reposts: number | null
     comments: number | null
+    quotes: number | null
   } | null
 }
 
@@ -64,6 +65,7 @@ export type DavisVideoDetails = {
       likes: number | null
       reposts: number | null
       comments: number | null
+      quotes: number | null
     } | null
   }
   comments: {

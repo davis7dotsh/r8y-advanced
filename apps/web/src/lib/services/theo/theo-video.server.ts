@@ -110,6 +110,7 @@ const loadVideoRowsFromDb = (db: typeof defaultDb, videoId: string) =>
       xLikes: videos.xLikes,
       xReposts: videos.xReposts,
       xComments: videos.xComments,
+      xQuotes: videos.xQuotes,
       sponsorId: sponsors.sponsorId,
       sponsorName: sponsors.name,
     })
@@ -211,6 +212,7 @@ export namespace TheoVideoService {
             xLikes: number | null
             xReposts: number | null
             xComments: number | null
+            xQuotes: number | null
             sponsorId: string | null
             sponsorName: string | null
           }>
@@ -280,6 +282,7 @@ export namespace TheoVideoService {
             xLikes: number | null
             xReposts: number | null
             xComments: number | null
+            xQuotes: number | null
             sponsorId: string | null
             sponsorName: string | null
           }>
@@ -420,6 +423,7 @@ export namespace TheoVideoService {
               likes: firstVideo.xLikes,
               reposts: firstVideo.xReposts,
               comments: firstVideo.xComments,
+              quotes: firstVideo.xQuotes,
             }
           : null,
       },
@@ -462,6 +466,7 @@ export namespace TheoVideoService {
           xLikes: number | null
           xReposts: number | null
           xComments: number | null
+          xQuotes: number | null
         }) => Promise<Array<{ videoId: string }>>
       }
     },
@@ -508,6 +513,7 @@ export namespace TheoVideoService {
         xLikes: number | null
         xReposts: number | null
         xComments: number | null
+        xQuotes: number | null
       }) =>
         db
           .update(videos)
@@ -517,6 +523,7 @@ export namespace TheoVideoService {
             xLikes: updateInput.xLikes,
             xReposts: updateInput.xReposts,
             xComments: updateInput.xComments,
+            xQuotes: updateInput.xQuotes,
           })
           .where(eq(videos.videoId, updateInput.videoId))
           .returning({ videoId: videos.videoId }))
@@ -555,6 +562,7 @@ export namespace TheoVideoService {
         'repostCount',
       ]),
       xComments: readMetric(publicMetrics, ['reply_count', 'replyCount']),
+      xQuotes: readMetric(publicMetrics, ['quote_count', 'quoteCount']),
     }
 
     const updateResult = await Result.tryPromise({
@@ -588,6 +596,7 @@ export namespace TheoVideoService {
         likes: payload.xLikes,
         reposts: payload.xReposts,
         comments: payload.xComments,
+        quotes: payload.xQuotes,
       },
     })
   }

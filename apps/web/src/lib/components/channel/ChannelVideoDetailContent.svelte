@@ -48,6 +48,7 @@
                 likes: number | null
                 reposts: number | null
                 comments: number | null
+                quotes: number | null
               } | null
             }
             comments: {
@@ -284,6 +285,7 @@
               <span>Likes: {formatMetric(video.xPost.likes)}</span>
               <span>Reposts: {formatMetric(video.xPost.reposts)}</span>
               <span>Comments: {formatMetric(video.xPost.comments)}</span>
+              <span>Quotes: {formatMetric(video.xPost.quotes)}</span>
             </div>
           </div>
         {/if}

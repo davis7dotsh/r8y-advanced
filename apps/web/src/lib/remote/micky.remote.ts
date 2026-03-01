@@ -183,6 +183,29 @@ export const getMickySearchSuggestions = query(
   },
 )
 
+export const getMickyChannelStats = query('unchecked', async () => {
+  const { ChannelStatsService } = await import(
+    '@/services/channel-stats/channel-stats.server'
+  )
+  const { MICKY_CHANNEL_INFO } = await import('@r8y/micky-data/channel-info')
+  const result = await ChannelStatsService.getStats(
+    {},
+    { channelId: MICKY_CHANNEL_INFO.channelId },
+  )
+
+  if (result.status === 'error') {
+    return {
+      status: 'error',
+      error: toError(result.error),
+    } as ServerPayload<never>
+  }
+
+  return {
+    status: 'ok',
+    data: result.value,
+  } satisfies ServerPayload<typeof result.value>
+})
+
 export type MickyVideosPayload = Awaited<ReturnType<typeof getMickyVideos>>
 export type MickyVideoPayload = Awaited<ReturnType<typeof getMickyVideoDetails>>
 export type MickySponsorPayload = Awaited<
@@ -193,4 +216,7 @@ export type MickySearchPayload = Awaited<
 >
 export type LinkMickyVideoToXPostPayload = Awaited<
   ReturnType<typeof linkMickyVideoToXPost>
+>
+export type MickyChannelStatsPayload = Awaited<
+  ReturnType<typeof getMickyChannelStats>
 >

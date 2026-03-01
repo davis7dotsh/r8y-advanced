@@ -186,6 +186,31 @@ export const getDavisSearchSuggestions = query(
   },
 )
 
+export const getDavisChannelStats = query('unchecked', async () => {
+  const { ChannelStatsService } = await import(
+    '@/services/channel-stats/channel-stats.server'
+  )
+  const { BEN_CHANNEL_INFO } = await import('@r8y/davis-sync/channel-info')
+  const { videos } = await import('@r8y/davis-sync/schema')
+  const { davisDb } = await import('@/db/davis.client.server')
+  const result = await ChannelStatsService.getStats(
+    { db: davisDb, videosTable: videos },
+    { channelId: BEN_CHANNEL_INFO.channelId },
+  )
+
+  if (result.status === 'error') {
+    return {
+      status: 'error',
+      error: toError(result.error),
+    } as ServerPayload<never>
+  }
+
+  return {
+    status: 'ok',
+    data: result.value,
+  } satisfies ServerPayload<typeof result.value>
+})
+
 export type DavisVideosPayload = Awaited<ReturnType<typeof getDavisVideos>>
 export type DavisVideoPayload = Awaited<ReturnType<typeof getDavisVideoDetails>>
 export type DavisSponsorPayload = Awaited<
@@ -196,4 +221,7 @@ export type DavisSearchPayload = Awaited<
 >
 export type LinkDavisVideoToXPostPayload = Awaited<
   ReturnType<typeof linkDavisVideoToXPost>
+>
+export type DavisChannelStatsPayload = Awaited<
+  ReturnType<typeof getDavisChannelStats>
 >

@@ -183,6 +183,31 @@ export const getTheoSearchSuggestions = query(
   },
 )
 
+export const getTheoChannelStats = query('unchecked', async () => {
+  const { ChannelStatsService } = await import(
+    '@/services/channel-stats/channel-stats.server'
+  )
+  const { THEO_CHANNEL_INFO } = await import('@r8y/theo-data/channel-info')
+  const { videos } = await import('@r8y/theo-data/schema')
+  const { db } = await import('@/db/client.server')
+  const result = await ChannelStatsService.getStats(
+    { db, videosTable: videos },
+    { channelId: THEO_CHANNEL_INFO.channelId },
+  )
+
+  if (result.status === 'error') {
+    return {
+      status: 'error',
+      error: toError(result.error),
+    } as ServerPayload<never>
+  }
+
+  return {
+    status: 'ok',
+    data: result.value,
+  } satisfies ServerPayload<typeof result.value>
+})
+
 export type TheoVideosPayload = Awaited<ReturnType<typeof getTheoVideos>>
 export type TheoVideoPayload = Awaited<ReturnType<typeof getTheoVideoDetails>>
 export type TheoSponsorPayload = Awaited<
@@ -193,4 +218,7 @@ export type TheoSearchPayload = Awaited<
 >
 export type LinkTheoVideoToXPostPayload = Awaited<
   ReturnType<typeof linkTheoVideoToXPost>
+>
+export type TheoChannelStatsPayload = Awaited<
+  ReturnType<typeof getTheoChannelStats>
 >

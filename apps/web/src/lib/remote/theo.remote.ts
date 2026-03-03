@@ -184,9 +184,8 @@ export const getTheoSearchSuggestions = query(
 )
 
 export const getTheoChannelStats = query('unchecked', async () => {
-  const { ChannelStatsService } = await import(
-    '@/services/channel-stats/channel-stats.server'
-  )
+  const { ChannelStatsService } =
+    await import('@/services/channel-stats/channel-stats.server')
   const { THEO_CHANNEL_INFO } = await import('@r8y/theo-data/channel-info')
   const { videos } = await import('@r8y/theo-data/schema')
   const { db } = await import('@/db/client.server')

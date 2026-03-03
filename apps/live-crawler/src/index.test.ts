@@ -30,8 +30,8 @@ test("readChannelIds normalizes comma-separated values", async () => {
 
 test("readIntervalMs returns fallback for invalid input", async () => {
   const { readIntervalMs } = await loadModule();
-  expect(readIntervalMs("abc")).toBe(300000);
-  expect(readIntervalMs("0")).toBe(300000);
+  expect(readIntervalMs("abc")).toBe(900000);
+  expect(readIntervalMs("0")).toBe(900000);
   expect(readIntervalMs("60000")).toBe(60000);
 });
 

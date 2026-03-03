@@ -29,4 +29,4 @@ Channel management system for Theo (t3), Ben Davis, and Micky.
    - `OPENCODE_API_KEY` (recommended)
    - `X_API_KEY` (recommended)
    - `CRAWLER_CHANNEL_IDS` (optional, comma-separated)
-   - `CRAWLER_INTERVAL_MS` (optional, defaults to `300000`)
+   - `CRAWLER_INTERVAL_MS` (optional, defaults to `900000`)

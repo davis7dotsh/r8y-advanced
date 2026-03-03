@@ -9,7 +9,7 @@ import { Effect, Fiber, Runtime, Schedule } from "effect";
 type Logger = Pick<Console, "info" | "warn" | "error">;
 type LogLevel = "info" | "warn" | "error" | "silent";
 
-const DEFAULT_INTERVAL_MS = 5 * 60 * 1000;
+const DEFAULT_INTERVAL_MS = 15 * 60 * 1000;
 const DEFAULT_LOG_LEVEL: LogLevel = "warn";
 const LOG_LEVELS: LogLevel[] = ["info", "warn", "error", "silent"];
 const LOG_LEVEL_WEIGHT: Record<LogLevel, number> = {

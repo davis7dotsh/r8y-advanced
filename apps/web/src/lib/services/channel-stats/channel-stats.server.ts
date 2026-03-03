@@ -55,9 +55,7 @@ export namespace ChannelStatsService {
     message: string
   }>() {}
 
-  export class NotFoundError extends TaggedError(
-    'ChannelStatsNotFoundError',
-  )<{
+  export class NotFoundError extends TaggedError('ChannelStatsNotFoundError')<{
     channelId: string
     message: string
   }>() {}
@@ -117,8 +115,7 @@ export namespace ChannelStatsService {
       )
     }
 
-    const snippet =
-      (item.snippet as Record<string, unknown> | undefined) ?? {}
+    const snippet = (item.snippet as Record<string, unknown> | undefined) ?? {}
     const statistics =
       (item.statistics as Record<string, unknown> | undefined) ?? {}
     const thumbnails =
@@ -126,8 +123,7 @@ export namespace ChannelStatsService {
 
     return Result.ok({
       name: typeof snippet.title === 'string' ? snippet.title : '',
-      handle:
-        typeof snippet.customUrl === 'string' ? snippet.customUrl : null,
+      handle: typeof snippet.customUrl === 'string' ? snippet.customUrl : null,
       avatarUrl: pickThumbnail(thumbnails),
       subscriberCount: parseCount(statistics.subscriberCount),
     })

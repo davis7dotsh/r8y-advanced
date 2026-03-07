@@ -1,4 +1,4 @@
-import { Data, Effect, Schedule } from "effect";
+import { Data, Effect } from "effect";
 
 const YOUTUBE_API_BASE_URL = "https://www.googleapis.com/youtube/v3";
 type Logger = Pick<Console, "info" | "warn" | "error">;
@@ -118,6 +118,102 @@ const mapPlaylistVideoId = (raw: Record<string, unknown>) => {
   return typeof contentDetails.videoId === "string" ? contentDetails.videoId : "";
 };
 
+const isObjectRecord = (value: unknown): value is Record<string, unknown> =>
+  Boolean(value) && typeof value === "object";
+
+const getEndpointLabel = (url: string) => {
+  try {
+    const parsed = new URL(url);
+    return parsed.pathname.replace(/^\/youtube\/v3/, "") || parsed.pathname;
+  } catch {
+    return url;
+  }
+};
+
+const parseYouTubeError = (body: string, status: number) => {
+  try {
+    const parsed = JSON.parse(body) as {
+      error?: {
+        message?: unknown;
+        errors?: Array<{
+          message?: unknown;
+          reason?: unknown;
+        }>;
+      };
+    };
+
+    const error = isObjectRecord(parsed.error) ? parsed.error : undefined;
+    const nestedError = Array.isArray(error?.errors) ? error.errors[0] : undefined;
+    const message =
+      typeof nestedError?.message === "string"
+        ? nestedError.message
+        : typeof error?.message === "string"
+          ? error.message
+          : `Request failed with status ${status}`;
+    const reason = typeof nestedError?.reason === "string" ? nestedError.reason : null;
+
+    return { message, reason };
+  } catch {
+    return {
+      message: body.trim() || `Request failed with status ${status}`,
+      reason: null,
+    };
+  }
+};
+
+const isRetryableYouTubeError = (status: number | null, reason: string | null) =>
+  status !== null &&
+  (status >= 500 || reason === "backendError" || reason === "internalError");
+
+const createRequestError = (args: {
+  endpoint: string;
+  status: number | null;
+  reason: string | null;
+  retryable: boolean;
+  message: string;
+}) =>
+  new YouTubeApiService.YouTubeApiRequestError({
+    endpoint: args.endpoint,
+    status: args.status,
+    reason: args.reason,
+    retryable: args.retryable,
+    message: args.message,
+  });
+
+const toRequestError = (endpoint: string, cause: unknown) => {
+  if (isObjectRecord(cause) && cause._tag === "YouTubeApiRequestError") {
+    return cause as unknown as ReturnType<typeof createRequestError>;
+  }
+
+  return createRequestError({
+    endpoint,
+    status: null,
+    reason: null,
+    retryable: true,
+    message:
+      cause instanceof Error ? cause.message : "Unknown YouTube API request error",
+  });
+};
+
+const createResponseError = (url: string, status: number, body: string) => {
+  const endpoint = getEndpointLabel(url);
+  const { message, reason } = parseYouTubeError(body, status);
+  const retryable = isRetryableYouTubeError(status, reason);
+
+  return createRequestError({
+    endpoint,
+    status,
+    reason,
+    retryable,
+    message:
+      reason === "quotaExceeded"
+        ? `YouTube API quota exceeded for ${endpoint}`
+        : `YouTube API request failed for ${endpoint} (${status}${reason ? ` ${reason}` : ""}): ${message}`,
+  });
+};
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
 type VideoSnapshot = ReturnType<typeof mapVideoSnapshot>;
 type CommentSnapshot = ReturnType<typeof mapCommentSnapshot>;
 type TopLevelCommentsResult = {
@@ -137,6 +233,9 @@ export namespace YouTubeApiService {
 
   export class YouTubeApiRequestError extends Data.TaggedError("YouTubeApiRequestError")<{
     endpoint: string;
+    status: number | null;
+    reason: string | null;
+    retryable: boolean;
     message: string;
   }> {}
 
@@ -155,15 +254,6 @@ export namespace YouTubeApiService {
     message: string;
   }> {}
 
-  const retryHttp = <A, E, R>(effect: Effect.Effect<A, E, R>) =>
-    effect.pipe(
-      Effect.retry(
-        Schedule.exponential("300 millis").pipe(
-          Schedule.compose(Schedule.recurs(2)),
-        ),
-      ),
-    );
-
   const getYouTubeApiKey = (): Effect.Effect<string, MissingYouTubeApiKeyError> => {
     const apiKey = process.env.YT_API_KEY;
 
@@ -179,25 +269,44 @@ export namespace YouTubeApiService {
   };
 
   const fetchJson = <T>(url: string): Effect.Effect<T, YouTubeApiRequestError> =>
-    retryHttp(
-      Effect.tryPromise({
-        try: async (signal) => {
-          const response = await fetch(url, { signal });
+    Effect.tryPromise({
+      try: async (signal) => {
+        const endpoint = getEndpointLabel(url);
 
-          if (!response.ok) {
-            const body = await response.text();
-            throw new Error(`YouTube API request failed (${response.status}): ${body}`);
+        for (let attempt = 0; attempt < 3; attempt += 1) {
+          try {
+            const response = await fetch(url, { signal });
+
+            if (!response.ok) {
+              const body = await response.text();
+              throw createResponseError(url, response.status, body);
+            }
+
+            return (await response.json()) as T;
+          } catch (cause) {
+            const error = toRequestError(endpoint, cause);
+
+            if (!error.retryable || attempt === 2) {
+              throw error;
+            }
+
+            await sleep(300 * 2 ** attempt);
           }
+        }
 
-          return (await response.json()) as T;
-        },
-        catch: (cause) =>
-          new YouTubeApiRequestError({
-            endpoint: url,
-            message: cause instanceof Error ? cause.message : "Unknown YouTube API request error",
-          }),
-      }),
-    );
+        throw createRequestError({
+          endpoint,
+          status: null,
+          reason: null,
+          retryable: false,
+          message: `YouTube API request failed for ${endpoint}`,
+        });
+      },
+      catch: (cause) => toRequestError(getEndpointLabel(url), cause),
+    });
+
+  export const isQuotaExceededError = (error: { reason: string | null; message: string }) =>
+    error.reason === "quotaExceeded" || error.message.toLowerCase().includes("quota exceeded");
 
   export const getVideoById = (
     videoId: string,
@@ -230,16 +339,7 @@ export namespace YouTubeApiService {
         maxResults: "1",
       });
 
-      const response = yield* fetchJson<unknown>(url).pipe(
-        Effect.tapError((error) =>
-          Effect.sync(() => {
-            logWarn(logger, "getVideoById:request-failed", {
-              videoId,
-              error: error.message,
-            });
-          }),
-        ),
-      );
+      const response = yield* fetchJson<unknown>(url);
 
       const [video] = videoResponseSchema(response);
 
@@ -319,7 +419,7 @@ export namespace YouTubeApiService {
           Effect.matchEffect({
             onFailure: (error) => {
               if (
-                error.message.includes("commentsDisabled") ||
+                error.reason === "commentsDisabled" ||
                 error.message.includes("has disabled comments")
               ) {
                 return Effect.sync(() => {
@@ -334,15 +434,7 @@ export namespace YouTubeApiService {
                 );
               }
 
-              return Effect.sync(() => {
-                logWarn(logger, "listTopLevelComments:request-failed", {
-                  videoId,
-                  pageCount,
-                  error: error.message,
-                });
-              }).pipe(
-                Effect.flatMap(() => Effect.fail(error)),
-              );
+              return Effect.fail(error);
             },
             onSuccess: (payload) =>
               Effect.succeed({
@@ -455,16 +547,7 @@ export namespace YouTubeApiService {
         maxResults: "1",
       });
 
-      const response = yield* fetchJson<unknown>(url).pipe(
-        Effect.tapError((error) =>
-          Effect.sync(() => {
-            logWarn(logger, "getUploadsPlaylistId:request-failed", {
-              channelId,
-              error: error.message,
-            });
-          }),
-        ),
-      );
+      const response = yield* fetchJson<unknown>(url);
 
       const [channel] = videoResponseSchema(response);
       if (!channel) {
@@ -546,17 +629,7 @@ export namespace YouTubeApiService {
         pageToken,
       });
 
-      const response = yield* fetchJson<unknown>(url).pipe(
-        Effect.tapError((error) =>
-          Effect.sync(() => {
-            logWarn(logger, "listPlaylistVideoIds:request-failed", {
-              playlistId,
-              pageToken: pageToken ?? null,
-              error: error.message,
-            });
-          }),
-        ),
-      );
+      const response = yield* fetchJson<unknown>(url);
 
       const payload = response as {
         items?: Record<string, unknown>[];

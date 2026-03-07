@@ -28,5 +28,6 @@ Channel management system for Theo (t3), Ben Davis, and Micky.
    - `YT_API_KEY`
    - `OPENCODE_API_KEY` (recommended)
    - `X_API_KEY` (recommended)
-   - `CRAWLER_CHANNEL_IDS` (optional, comma-separated)
-   - `CRAWLER_INTERVAL_MS` (optional, defaults to `900000`)
+   - `CRAWLER_CHANNEL_IDS` (optional, comma-separated; Micky is ignored by the live crawler)
+   - `CRAWLER_INTERVAL_MS` (optional, defaults to `1800000` / 30 minutes)
+   - `CRAWLER_VIDEO_RECRAWL_COOLDOWN_MS` (optional, defaults to `21600000` / 6 hours)

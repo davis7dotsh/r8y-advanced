@@ -1,7 +1,6 @@
 import { BEN_CHANNEL_INFO } from "@r8y/davis-sync/channel-info";
 import { CrawlService as DavisCrawlService } from "@r8y/davis-sync/crawl";
 import { MICKY_CHANNEL_INFO } from "@r8y/micky-data/channel-info";
-import { CrawlService as MickyCrawlService } from "@r8y/micky-data/crawl";
 import { THEO_CHANNEL_INFO } from "@r8y/theo-data/channel-info";
 import { CrawlService as TheoCrawlService } from "@r8y/theo-data/crawl";
 import { Effect, Fiber, Runtime, Schedule } from "effect";
@@ -9,7 +8,7 @@ import { Effect, Fiber, Runtime, Schedule } from "effect";
 type Logger = Pick<Console, "info" | "warn" | "error">;
 type LogLevel = "info" | "warn" | "error" | "silent";
 
-const DEFAULT_INTERVAL_MS = 15 * 60 * 1000;
+const DEFAULT_INTERVAL_MS = 30 * 60 * 1000;
 const DEFAULT_LOG_LEVEL: LogLevel = "warn";
 const LOG_LEVELS: LogLevel[] = ["info", "warn", "error", "silent"];
 const LOG_LEVEL_WEIGHT: Record<LogLevel, number> = {
@@ -42,20 +41,19 @@ const readPositiveInt = (value: string | undefined, fallback: number) => {
 const CHANNEL_CRAWLERS = {
   [THEO_CHANNEL_INFO.channelId]: TheoCrawlService,
   [BEN_CHANNEL_INFO.channelId]: DavisCrawlService,
-  [MICKY_CHANNEL_INFO.channelId]: MickyCrawlService,
 } as const;
 
 const DEFAULT_CHANNEL_IDS = [
   THEO_CHANNEL_INFO.channelId,
   BEN_CHANNEL_INFO.channelId,
-  MICKY_CHANNEL_INFO.channelId,
 ];
 
 export const readChannelIds = (raw = process.env.CRAWLER_CHANNEL_IDS) => {
   const parsed = (raw ?? "")
     .split(",")
     .map((entry) => entry.trim())
-    .filter(Boolean);
+    .filter(Boolean)
+    .filter((channelId) => channelId !== MICKY_CHANNEL_INFO.channelId);
 
   return parsed.length > 0 ? [...new Set(parsed)] : DEFAULT_CHANNEL_IDS;
 };
@@ -172,7 +170,7 @@ export const crawlChannels = (logger: Logger, channelIds: string[]) =>
       channelIds,
       (channelId) => crawlSingleChannel(logger, channelId),
       {
-        concurrency: channelIds.length > 0 ? channelIds.length : 1,
+        concurrency: 1,
       },
     );
 

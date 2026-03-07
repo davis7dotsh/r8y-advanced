@@ -79,6 +79,89 @@ const settle = <A, E, R>(effect: Effect.Effect<A, E, R>) =>
     }),
   );
 
+const RSS_STATE_KEY_PREFIX = "rss";
+const RSS_VIDEO_STATE_WINDOW = 50;
+const DEFAULT_RSS_RECRAWL_COOLDOWN_MS = 6 * 60 * 60 * 1000;
+
+type RssVideoState = {
+  videoId: string;
+  crawledAt: number;
+};
+
+const readPositiveInt = (value: string | undefined, fallback: number) => {
+  if (!value) {
+    return fallback;
+  }
+
+  const parsed = Number.parseInt(value, 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+};
+
+const readRssRecrawlCooldownMs = (
+  raw = process.env.CRAWLER_VIDEO_RECRAWL_COOLDOWN_MS,
+) => readPositiveInt(raw, DEFAULT_RSS_RECRAWL_COOLDOWN_MS);
+
+const toValidTimestamp = (value: unknown) => {
+  if (typeof value === "number" && Number.isFinite(value) && value > 0) {
+    return value;
+  }
+
+  if (typeof value === "string") {
+    const parsed = Date.parse(value);
+    if (Number.isFinite(parsed) && parsed > 0) {
+      return parsed;
+    }
+  }
+
+  return 0;
+};
+
+const readRecentVideos = (meta: Record<string, unknown> | undefined): RssVideoState[] => {
+  if (Array.isArray(meta?.recentVideos)) {
+    return meta.recentVideos.flatMap((entry) => {
+      if (!entry || typeof entry !== "object") {
+        return [];
+      }
+
+      const videoId =
+        typeof (entry as { videoId?: unknown }).videoId === "string"
+          ? (entry as { videoId: string }).videoId.trim()
+          : "";
+
+      if (!videoId) {
+        return [];
+      }
+
+      return [
+        {
+          videoId,
+          crawledAt: toValidTimestamp((entry as { crawledAt?: unknown }).crawledAt),
+        },
+      ];
+    });
+  }
+
+  return Array.isArray(meta?.seenVideoIds)
+    ? meta.seenVideoIds.flatMap((value) =>
+        typeof value === "string" && value.length > 0
+          ? [{ videoId: value, crawledAt: 0 }]
+          : [],
+      )
+    : [];
+};
+
+const shouldRecrawlVideo = (
+  recentVideo: RssVideoState | undefined,
+  nowMs: number,
+  cooldownMs: number,
+) => !recentVideo || recentVideo.crawledAt <= 0 || nowMs - recentVideo.crawledAt >= cooldownMs;
+
+const summarizeVideoFailures = (failures: { videoId: string; message: string }[]) =>
+  failures.slice(0, 3).map(({ videoId, message }) => ({
+    videoId,
+    message,
+  }));
+
 export namespace CrawlService {
   export class InvalidCrawlInputError extends Data.TaggedError("InvalidCrawlInputError")<{
     message: string;
@@ -90,7 +173,21 @@ export namespace CrawlService {
 
   export class CrawlExternalError extends Data.TaggedError("CrawlExternalError")<{
     message: string;
+    reason?: string;
   }> {}
+
+  const toCrawlExternalError = (error: { message: string; reason?: string | null }) =>
+    new CrawlExternalError({
+      message: error.message,
+      reason: typeof error.reason === "string" ? error.reason : undefined,
+    });
+
+  const isQuotaExceededError = (error: { message: string; reason?: string }) =>
+    error.reason === "quotaExceeded" ||
+    YouTubeApiService.isQuotaExceededError({
+      reason: error.reason ?? null,
+      message: error.message,
+    });
 
   const refreshXMetrics = (
     deps: {
@@ -234,20 +331,7 @@ export namespace CrawlService {
       });
 
       const video = yield* YouTubeApiService.getVideoById(videoId, { logger }).pipe(
-        Effect.mapError(
-          (error) =>
-            new CrawlExternalError({
-              message: error.message,
-            }),
-        ),
-        Effect.tapError((error) =>
-          Effect.sync(() => {
-            logError(logger, "crawlVideo", "failed to fetch video metadata", {
-              videoId,
-              error: error.message,
-            });
-          }),
-        ),
+        Effect.mapError(toCrawlExternalError),
       );
 
       yield* Effect.sync(() => {
@@ -261,20 +345,7 @@ export namespace CrawlService {
         logger,
         maxComments: MAX_COMMENTS_PER_VIDEO,
       }).pipe(
-        Effect.mapError(
-          (error) =>
-            new CrawlExternalError({
-              message: error.message,
-            }),
-        ),
-        Effect.tapError((error) =>
-          Effect.sync(() => {
-            logError(logger, "crawlVideo", "failed to fetch comments", {
-              videoId,
-              error: error.message,
-            });
-          }),
-        ),
+        Effect.mapError(toCrawlExternalError),
       );
 
       yield* Effect.sync(() => {
@@ -770,19 +841,50 @@ export namespace CrawlService {
       channelId?: string;
     },
   ) => {
+    const db = deps.db ?? defaultDb;
     const channelId = input?.channelId ?? MICKY_CHANNEL_INFO.channelId;
     const logger = deps.logger;
+    const stateKey = `${RSS_STATE_KEY_PREFIX}:${channelId}`;
+    const recrawlCooldownMs = readRssRecrawlCooldownMs();
 
     return Effect.gen(function* () {
       yield* Effect.sync(() => {
         logInfo(logger, "crawlRss", "start", {
           channelId,
           feedUrl: `https://www.youtube.com/feeds/videos.xml?channel_id=${channelId}`,
+          recrawlCooldownMs,
         });
         logInfo(logger, "crawlRss", "step 1/3 fetch RSS feed", {
           channelId,
         });
       });
+
+      const rssStateResult = yield* settle(
+        StateService.getState({ db, logger }, stateKey).pipe(
+          Effect.mapError(
+            (error) =>
+              new CrawlPersistenceError({
+                message: error.message,
+              }),
+          ),
+        ),
+      );
+
+      if (rssStateResult.status === "error") {
+        yield* Effect.sync(() => {
+          logWarn(logger, "crawlRss", "failed to load rss state; continuing with empty history", {
+            channelId,
+            stateKey,
+            error: rssStateResult.error.message,
+          });
+        });
+      }
+
+      const recentVideos =
+        rssStateResult.status === "ok" ? readRecentVideos(rssStateResult.value?.meta) : [];
+      const recentVideoById = new Map(
+        recentVideos.map((videoState) => [videoState.videoId, videoState]),
+      );
 
       const feed = yield* fetchRssVideoIds({
         channelId,
@@ -801,82 +903,159 @@ export namespace CrawlService {
         ),
       );
 
-      const videoIds = feed.videoIds;
+      const discoveredVideoIds = feed.videoIds;
+      const nowMs = Date.now();
+      const videoIdsToCrawl = discoveredVideoIds.filter((videoId) =>
+        shouldRecrawlVideo(recentVideoById.get(videoId), nowMs, recrawlCooldownMs),
+      );
+      const cooldownSkippedVideoCount = discoveredVideoIds.length - videoIdsToCrawl.length;
 
       yield* Effect.sync(() => {
         logInfo(logger, "crawlRss", "step 2/3 parsed RSS entries", {
           channelId,
-          discoveredVideoCount: videoIds.length,
-          videoIds,
+          discoveredVideoCount: discoveredVideoIds.length,
+          trackedVideoCount: recentVideos.length,
+          eligibleVideoCount: videoIdsToCrawl.length,
+          cooldownSkippedVideoCount,
+          recrawlCooldownMs,
         });
       });
 
-      const crawlResults = yield* Effect.forEach(
-        videoIds,
-        (videoId, index) =>
-          Effect.gen(function* () {
-            yield* Effect.sync(() => {
-              logInfo(logger, "crawlRss", "step 3/3 crawl discovered video", {
-                channelId,
-                index: index + 1,
-                total: videoIds.length,
-                videoId,
-              });
-            });
+      let successCount = 0;
+      const failures: { videoId: string; message: string }[] = [];
+      const attemptedVideoIds: string[] = [];
+      let stoppedByQuota = false;
 
-            const result = yield* settle(
-              crawlVideo(deps, {
-                videoId,
-                sendNotifications: true,
+      for (let index = 0; index < videoIdsToCrawl.length; index += 1) {
+        const videoId = videoIdsToCrawl[index]!;
+        attemptedVideoIds.push(videoId);
+
+        yield* Effect.sync(() => {
+          logInfo(logger, "crawlRss", "step 3/3 crawl discovered video", {
+            channelId,
+            index: index + 1,
+            total: videoIdsToCrawl.length,
+            videoId,
+          });
+        });
+
+        const result = yield* settle(
+          crawlVideo(
+            {
+              db,
+              logger,
+            },
+            {
+              videoId,
+              sendNotifications: true,
+            },
+          ),
+        );
+
+        if (result.status === "error") {
+          failures.push({
+            videoId,
+            message: result.error.message,
+          });
+
+          if (isQuotaExceededError(result.error)) {
+            stoppedByQuota = true;
+            break;
+          }
+
+          continue;
+        }
+
+        successCount += 1;
+        recentVideoById.set(videoId, {
+          videoId,
+          crawledAt: Date.now(),
+        });
+
+        yield* Effect.sync(() => {
+          logInfo(logger, "crawlRss", "video crawl complete", {
+            channelId,
+            videoId,
+            commentsProcessed: result.value.commentsProcessed,
+            notificationsInserted: result.value.notificationsInserted,
+            stageFailureCount: result.value.stageFailures.length,
+          });
+        });
+      }
+
+      const persistedRecentVideos = [...recentVideoById.values()]
+        .sort((left, right) => right.crawledAt - left.crawledAt)
+        .slice(0, RSS_VIDEO_STATE_WINDOW);
+
+      const saveStateResult = yield* settle(
+        StateService.setState(
+          { db, logger },
+          {
+            stateKey,
+            cursor: null,
+            meta: {
+              recentVideos: persistedRecentVideos,
+              seenVideoIds: persistedRecentVideos.map((videoState) => videoState.videoId),
+              recrawlCooldownMs,
+              updatedAt: new Date().toISOString(),
+            },
+          },
+        ).pipe(
+          Effect.mapError(
+            (error) =>
+              new CrawlPersistenceError({
+                message: error.message,
               }),
-            );
-
-            if (result.status === "error") {
-              yield* Effect.sync(() => {
-                logWarn(logger, "crawlRss", "video crawl failed", {
-                  channelId,
-                  videoId,
-                  error: result.error.message,
-                });
-              });
-            } else {
-              yield* Effect.sync(() => {
-                logInfo(logger, "crawlRss", "video crawl complete", {
-                  channelId,
-                  videoId,
-                  commentsProcessed: result.value.commentsProcessed,
-                  notificationsInserted: result.value.notificationsInserted,
-                  stageFailureCount: result.value.stageFailures.length,
-                });
-              });
-            }
-
-            return result;
-          }),
-        {
-          concurrency: 3,
-        },
+          ),
+        ),
       );
 
-      const successes = crawlResults.filter((result) => result.status === "ok");
-      const failures = crawlResults
-        .filter((result) => result.status === "error")
-        .map((result) => result.error.message);
+      if (saveStateResult.status === "error") {
+        yield* Effect.sync(() => {
+          logWarn(logger, "crawlRss", "failed to save rss state; continuing", {
+            channelId,
+            stateKey,
+            error: saveStateResult.error.message,
+          });
+        });
+      }
+
+      const skippedVideoCount = Math.max(0, videoIdsToCrawl.length - attemptedVideoIds.length);
+      const failureMessages = failures.map((failure) => failure.message);
 
       yield* Effect.sync(() => {
+        if (failures.length > 0 || skippedVideoCount > 0) {
+          logWarn(logger, "crawlRss", "completed with failures", {
+            channelId,
+            discoveredVideoCount: discoveredVideoIds.length,
+            eligibleVideoCount: videoIdsToCrawl.length,
+            cooldownSkippedVideoCount,
+            attemptedVideoCount: attemptedVideoIds.length,
+            skippedVideoCount,
+            successCount,
+            failureCount: failures.length,
+            stoppedByQuota,
+            failures: summarizeVideoFailures(failures),
+          });
+          return;
+        }
+
         logInfo(logger, "crawlRss", "completed", {
           channelId,
-          successCount: successes.length,
+          discoveredVideoCount: discoveredVideoIds.length,
+          eligibleVideoCount: videoIdsToCrawl.length,
+          cooldownSkippedVideoCount,
+          successCount,
           failureCount: failures.length,
         });
       });
 
       return {
         channelId,
-        crawledVideoIds: videoIds,
-        successCount: successes.length,
+        crawledVideoIds: attemptedVideoIds,
+        successCount,
         failureCount: failures.length,
-        failures,
+        failures: failureMessages,
       };
     });
   };
@@ -927,12 +1106,7 @@ export namespace CrawlService {
       const playlistId = yield* YouTubeApiService.getUploadsPlaylistId(channelId, {
         logger,
       }).pipe(
-        Effect.mapError(
-          (error) =>
-            new CrawlExternalError({
-              message: error.message,
-            }),
-        ),
+        Effect.mapError(toCrawlExternalError),
         Effect.tapError((error) =>
           Effect.sync(() => {
             logError(logger, "backfillChannel", "failed to resolve uploads playlist", {
@@ -997,12 +1171,7 @@ export namespace CrawlService {
           cursor ?? undefined,
           { logger },
         ).pipe(
-          Effect.mapError(
-            (error) =>
-              new CrawlExternalError({
-                message: error.message,
-              }),
-          ),
+          Effect.mapError(toCrawlExternalError),
           Effect.tapError((error) =>
             Effect.sync(() => {
               logError(logger, "backfillChannel", "failed to fetch playlist page", {

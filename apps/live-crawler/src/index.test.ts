@@ -10,12 +10,11 @@ beforeAll(() => {
 
 const loadModule = () => import("./index");
 
-test("readChannelIds falls back to Theo + Ben + Micky channel ids", async () => {
+test("readChannelIds falls back to Theo + Ben channel ids", async () => {
   const { readChannelIds } = await loadModule();
   expect(readChannelIds("")).toEqual([
     THEO_CHANNEL_INFO.channelId,
     BEN_CHANNEL_INFO.channelId,
-    MICKY_CHANNEL_INFO.channelId,
   ]);
 });
 
@@ -28,10 +27,19 @@ test("readChannelIds normalizes comma-separated values", async () => {
   ]);
 });
 
+test("readChannelIds filters out Micky", async () => {
+  const { readChannelIds } = await loadModule();
+  expect(
+    readChannelIds(
+      ` ${THEO_CHANNEL_INFO.channelId}, ${MICKY_CHANNEL_INFO.channelId}, ${BEN_CHANNEL_INFO.channelId} `,
+    ),
+  ).toEqual([THEO_CHANNEL_INFO.channelId, BEN_CHANNEL_INFO.channelId]);
+});
+
 test("readIntervalMs returns fallback for invalid input", async () => {
   const { readIntervalMs } = await loadModule();
-  expect(readIntervalMs("abc")).toBe(900000);
-  expect(readIntervalMs("0")).toBe(900000);
+  expect(readIntervalMs("abc")).toBe(1800000);
+  expect(readIntervalMs("0")).toBe(1800000);
   expect(readIntervalMs("60000")).toBe(60000);
 });
 

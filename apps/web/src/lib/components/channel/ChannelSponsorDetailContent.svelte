@@ -4,6 +4,9 @@
   import VideoCard from '@/components/channel/VideoCard.svelte'
   import { daysSince } from '@/utils/format'
 
+  const toCommentHref = (videoId: string, commentId: string) =>
+    `https://www.youtube.com/watch?v=${encodeURIComponent(videoId)}&lc=${encodeURIComponent(commentId)}`
+
   type SponsorPayload =
     | {
         status: 'ok'
@@ -42,6 +45,7 @@
           }
           sponsorMentions?: {
             items: Array<{
+              commentId: string
               author: string
               videoId: string
               videoTitle: string
@@ -223,7 +227,14 @@
               {#each mentions.items as comment}
                 <article class="rounded-lg border border-neutral-100 bg-neutral-50 p-3.5 dark:border-neutral-700 dark:bg-neutral-800">
                   <div class="mb-1.5 flex flex-wrap items-center gap-2 text-xs text-neutral-400">
-                    <span class="font-medium text-neutral-700 dark:text-neutral-300">{comment.author}</span>
+                    <a
+                      href={toCommentHref(comment.videoId, comment.commentId)}
+                      target="_blank"
+                      rel="noreferrer"
+                      class="font-medium text-neutral-700 hover:underline dark:text-neutral-300"
+                    >
+                      {comment.author}
+                    </a>
                     <span class="text-neutral-300 dark:text-neutral-600">&middot;</span>
                     <a href={videoHref(comment.videoId)} class="text-violet-600 hover:underline">
                       {comment.videoTitle}

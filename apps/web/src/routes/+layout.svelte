@@ -57,7 +57,9 @@
     searchShortcutLabel = isAppleDevice ? '⌘K' : 'Ctrl K'
 
     const persisted = localStorage.getItem('theme')
-    const next = persisted === 'dark' ? 'dark' : 'light'
+    const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+    const next: 'light' | 'dark' =
+      persisted === 'dark' || persisted === 'light' ? persisted : systemDark ? 'dark' : 'light'
 
     theme = next
 

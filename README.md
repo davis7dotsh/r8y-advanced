@@ -6,7 +6,7 @@ Channel management system for Theo (t3), Ben Davis, and Micky.
 
 - Theo: UCbRP3c757lWg9M-U7TyEkXA
 - Ben Davis: UCFvPgPdb_emE_bpMZq6hmJQ
-- Micky: UCBX__dPYqDFqAN4QcWbnUbw
+- Micky: UCBX\_\_dPYqDFqAN4QcWbnUbw
 
 ## Deploy
 

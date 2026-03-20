@@ -62,7 +62,9 @@ export namespace StateService {
           new StateStorageError({
             stateKey,
             message:
-              cause instanceof Error ? cause.message : "Failed to read crawler state",
+              cause instanceof Error
+                ? cause.message
+                : "Failed to read crawler state",
           }),
       }).pipe(
         Effect.tapError((error) =>
@@ -141,7 +143,9 @@ export namespace StateService {
           new StateStorageError({
             stateKey: input.stateKey,
             message:
-              cause instanceof Error ? cause.message : "Failed to write crawler state",
+              cause instanceof Error
+                ? cause.message
+                : "Failed to write crawler state",
           }),
       }).pipe(
         Effect.tapError((error) =>

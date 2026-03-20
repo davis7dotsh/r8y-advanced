@@ -23,8 +23,10 @@ const MAX_COMMENT_CLASSIFICATIONS_PER_CRAWL = 100;
 const createSponsorId = (sponsorKey: string) =>
   `sponsor_${createHash("sha1").update(sponsorKey).digest("hex").slice(0, 40)}`;
 
-const createNotificationId = (type: "discord_video_live" | "todoist_video_live", videoId: string) =>
-  `${type}:${videoId}`;
+const createNotificationId = (
+  type: "discord_video_live" | "todoist_video_live",
+  videoId: string,
+) => `${type}:${videoId}`;
 
 const logStageFailure = (
   stageFailures: { stage: string; message: string }[],
@@ -116,7 +118,9 @@ const toValidTimestamp = (value: unknown) => {
   return 0;
 };
 
-const readRecentVideos = (meta: Record<string, unknown> | undefined): RssVideoState[] => {
+const readRecentVideos = (
+  meta: Record<string, unknown> | undefined,
+): RssVideoState[] => {
   if (Array.isArray(meta?.recentVideos)) {
     return meta.recentVideos.flatMap((entry) => {
       if (!entry || typeof entry !== "object") {
@@ -135,7 +139,9 @@ const readRecentVideos = (meta: Record<string, unknown> | undefined): RssVideoSt
       return [
         {
           videoId,
-          crawledAt: toValidTimestamp((entry as { crawledAt?: unknown }).crawledAt),
+          crawledAt: toValidTimestamp(
+            (entry as { crawledAt?: unknown }).crawledAt,
+          ),
         },
       ];
     });
@@ -154,29 +160,43 @@ const shouldRecrawlVideo = (
   recentVideo: RssVideoState | undefined,
   nowMs: number,
   cooldownMs: number,
-) => !recentVideo || recentVideo.crawledAt <= 0 || nowMs - recentVideo.crawledAt >= cooldownMs;
+) =>
+  !recentVideo ||
+  recentVideo.crawledAt <= 0 ||
+  nowMs - recentVideo.crawledAt >= cooldownMs;
 
-const summarizeVideoFailures = (failures: { videoId: string; message: string }[]) =>
+const summarizeVideoFailures = (
+  failures: { videoId: string; message: string }[],
+) =>
   failures.slice(0, 3).map(({ videoId, message }) => ({
     videoId,
     message,
   }));
 
 export namespace CrawlService {
-  export class InvalidCrawlInputError extends Data.TaggedError("InvalidCrawlInputError")<{
+  export class InvalidCrawlInputError extends Data.TaggedError(
+    "InvalidCrawlInputError",
+  )<{
     message: string;
   }> {}
 
-  export class CrawlPersistenceError extends Data.TaggedError("CrawlPersistenceError")<{
+  export class CrawlPersistenceError extends Data.TaggedError(
+    "CrawlPersistenceError",
+  )<{
     message: string;
   }> {}
 
-  export class CrawlExternalError extends Data.TaggedError("CrawlExternalError")<{
+  export class CrawlExternalError extends Data.TaggedError(
+    "CrawlExternalError",
+  )<{
     message: string;
     reason?: string;
   }> {}
 
-  const toCrawlExternalError = (error: { message: string; reason?: string | null }) =>
+  const toCrawlExternalError = (error: {
+    message: string;
+    reason?: string | null;
+  }) =>
     new CrawlExternalError({
       message: error.message,
       reason: typeof error.reason === "string" ? error.reason : undefined,
@@ -238,9 +258,14 @@ export namespace CrawlService {
       const bearerToken = process.env.X_API_KEY?.trim();
       if (!bearerToken) {
         yield* Effect.sync(() => {
-          logWarn(logger, "crawlVideo", "x api key missing; skipping x refresh", {
-            videoId: input.videoId,
-          });
+          logWarn(
+            logger,
+            "crawlVideo",
+            "x api key missing; skipping x refresh",
+            {
+              videoId: input.videoId,
+            },
+          );
         });
 
         return {
@@ -281,7 +306,9 @@ export namespace CrawlService {
         catch: (cause) =>
           new CrawlPersistenceError({
             message:
-              cause instanceof Error ? cause.message : "Failed while saving X post metrics",
+              cause instanceof Error
+                ? cause.message
+                : "Failed while saving X post metrics",
           }),
       });
 
@@ -330,9 +357,9 @@ export namespace CrawlService {
         });
       });
 
-      const video = yield* YouTubeApiService.getVideoById(videoId, { logger }).pipe(
-        Effect.mapError(toCrawlExternalError),
-      );
+      const video = yield* YouTubeApiService.getVideoById(videoId, {
+        logger,
+      }).pipe(Effect.mapError(toCrawlExternalError));
 
       yield* Effect.sync(() => {
         logInfo(logger, "crawlVideo", "step 2/7 fetch top-level comments", {
@@ -341,12 +368,13 @@ export namespace CrawlService {
         });
       });
 
-      const commentResult = yield* YouTubeApiService.listTopLevelComments(videoId, {
-        logger,
-        maxComments: MAX_COMMENTS_PER_VIDEO,
-      }).pipe(
-        Effect.mapError(toCrawlExternalError),
-      );
+      const commentResult = yield* YouTubeApiService.listTopLevelComments(
+        videoId,
+        {
+          logger,
+          maxComments: MAX_COMMENTS_PER_VIDEO,
+        },
+      ).pipe(Effect.mapError(toCrawlExternalError));
 
       yield* Effect.sync(() => {
         logInfo(logger, "crawlVideo", "step 3/7 persist video and comments", {
@@ -422,10 +450,16 @@ export namespace CrawlService {
                 publishedAt: remoteComment.publishedAt,
                 likeCount: remoteComment.likeCount,
                 replyCount: remoteComment.replyCount,
-                isEditingMistake: textChanged ? null : existing.isEditingMistake,
-                isSponsorMention: textChanged ? null : existing.isSponsorMention,
+                isEditingMistake: textChanged
+                  ? null
+                  : existing.isEditingMistake,
+                isSponsorMention: textChanged
+                  ? null
+                  : existing.isSponsorMention,
                 isQuestion: textChanged ? null : existing.isQuestion,
-                isPositiveComment: textChanged ? null : existing.isPositiveComment,
+                isPositiveComment: textChanged
+                  ? null
+                  : existing.isPositiveComment,
                 isProcessed: textChanged ? false : existing.isProcessed,
               })
               .where(eq(comments.commentId, remoteComment.commentId));
@@ -454,10 +488,15 @@ export namespace CrawlService {
                 );
             }
           } else {
-            logInfo(logger, "crawlVideo", "comment fetch was capped; skipping stale deletes", {
-              videoId,
-              maxComments: MAX_COMMENTS_PER_VIDEO,
-            });
+            logInfo(
+              logger,
+              "crawlVideo",
+              "comment fetch was capped; skipping stale deletes",
+              {
+                videoId,
+                maxComments: MAX_COMMENTS_PER_VIDEO,
+              },
+            );
           }
 
           return {
@@ -501,9 +540,15 @@ export namespace CrawlService {
         });
       });
 
-      const xRefreshResult = yield* settle(refreshXMetrics({ db, logger }, { videoId }));
+      const xRefreshResult = yield* settle(
+        refreshXMetrics({ db, logger }, { videoId }),
+      );
       if (xRefreshResult.status === "error") {
-        logStageFailure(stageFailures, "x-refresh", xRefreshResult.error.message);
+        logStageFailure(
+          stageFailures,
+          "x-refresh",
+          xRefreshResult.error.message,
+        );
         yield* Effect.sync(() => {
           logWarn(logger, "crawlVideo", "x refresh failed; continuing", {
             videoId,
@@ -515,7 +560,9 @@ export namespace CrawlService {
           logInfo(logger, "crawlVideo", "x refresh stage complete", {
             videoId,
             refreshed: xRefreshResult.value.refreshed,
-            reason: xRefreshResult.value.refreshed ? null : xRefreshResult.value.reason,
+            reason: xRefreshResult.value.refreshed
+              ? null
+              : xRefreshResult.value.reason,
           });
         });
       }
@@ -540,10 +587,15 @@ export namespace CrawlService {
       if (sponsorResult.status === "error") {
         logStageFailure(stageFailures, "sponsor", sponsorResult.error.message);
         yield* Effect.sync(() => {
-          logWarn(logger, "crawlVideo", "sponsor extraction failed; continuing", {
-            videoId,
-            error: sponsorResult.error.message,
-          });
+          logWarn(
+            logger,
+            "crawlVideo",
+            "sponsor extraction failed; continuing",
+            {
+              videoId,
+              error: sponsorResult.error.message,
+            },
+          );
         });
       } else {
         const sponsorPersistResult = yield* settle(
@@ -602,12 +654,21 @@ export namespace CrawlService {
         );
 
         if (sponsorPersistResult.status === "error") {
-          logStageFailure(stageFailures, "sponsor-persist", sponsorPersistResult.error.message);
+          logStageFailure(
+            stageFailures,
+            "sponsor-persist",
+            sponsorPersistResult.error.message,
+          );
           yield* Effect.sync(() => {
-            logWarn(logger, "crawlVideo", "sponsor persistence failed; continuing", {
-              videoId,
-              error: sponsorPersistResult.error.message,
-            });
+            logWarn(
+              logger,
+              "crawlVideo",
+              "sponsor persistence failed; continuing",
+              {
+                videoId,
+                error: sponsorPersistResult.error.message,
+              },
+            );
           });
         } else {
           yield* Effect.sync(() => {
@@ -629,7 +690,10 @@ export namespace CrawlService {
       const pendingComments = yield* Effect.tryPromise({
         try: () =>
           db.query.comments.findMany({
-            where: and(eq(comments.videoId, videoId), eq(comments.isProcessed, false)),
+            where: and(
+              eq(comments.videoId, videoId),
+              eq(comments.isProcessed, false),
+            ),
             orderBy: desc(comments.publishedAt),
             limit: MAX_COMMENT_CLASSIFICATIONS_PER_CRAWL,
           }),
@@ -692,11 +756,16 @@ export namespace CrawlService {
             `${comment.commentId}: ${classificationResult.error.message}`,
           );
           yield* Effect.sync(() => {
-            logWarn(logger, "crawlVideo", "comment classification failed; leaving pending", {
-              videoId,
-              commentId: comment.commentId,
-              error: classificationResult.error.message,
-            });
+            logWarn(
+              logger,
+              "crawlVideo",
+              "comment classification failed; leaving pending",
+              {
+                videoId,
+                commentId: comment.commentId,
+                error: classificationResult.error.message,
+              },
+            );
           });
           continue;
         }
@@ -710,7 +779,8 @@ export namespace CrawlService {
                   isEditingMistake: classificationResult.value.isEditingMistake,
                   isSponsorMention: classificationResult.value.isSponsorMention,
                   isQuestion: classificationResult.value.isQuestion,
-                  isPositiveComment: classificationResult.value.isPositiveComment,
+                  isPositiveComment:
+                    classificationResult.value.isPositiveComment,
                   isProcessed: true,
                 })
                 .where(eq(comments.commentId, comment.commentId)),
@@ -725,13 +795,22 @@ export namespace CrawlService {
         );
 
         if (updateResult.status === "error") {
-          logStageFailure(stageFailures, "comment-persist", updateResult.error.message);
+          logStageFailure(
+            stageFailures,
+            "comment-persist",
+            updateResult.error.message,
+          );
           yield* Effect.sync(() => {
-            logWarn(logger, "crawlVideo", "failed to persist classified comment", {
-              videoId,
-              commentId: comment.commentId,
-              error: updateResult.error.message,
-            });
+            logWarn(
+              logger,
+              "crawlVideo",
+              "failed to persist classified comment",
+              {
+                videoId,
+                commentId: comment.commentId,
+                error: updateResult.error.message,
+              },
+            );
           });
           continue;
         }
@@ -784,7 +863,11 @@ export namespace CrawlService {
         );
 
         if (notificationResult.status === "error") {
-          logStageFailure(stageFailures, "notifications", notificationResult.error.message);
+          logStageFailure(
+            stageFailures,
+            "notifications",
+            notificationResult.error.message,
+          );
           yield* Effect.sync(() => {
             logWarn(logger, "crawlVideo", "failed to persist notifications", {
               videoId,
@@ -872,16 +955,23 @@ export namespace CrawlService {
 
       if (rssStateResult.status === "error") {
         yield* Effect.sync(() => {
-          logWarn(logger, "crawlRss", "failed to load rss state; continuing with empty history", {
-            channelId,
-            stateKey,
-            error: rssStateResult.error.message,
-          });
+          logWarn(
+            logger,
+            "crawlRss",
+            "failed to load rss state; continuing with empty history",
+            {
+              channelId,
+              stateKey,
+              error: rssStateResult.error.message,
+            },
+          );
         });
       }
 
       const recentVideos =
-        rssStateResult.status === "ok" ? readRecentVideos(rssStateResult.value?.meta) : [];
+        rssStateResult.status === "ok"
+          ? readRecentVideos(rssStateResult.value?.meta)
+          : [];
       const recentVideoById = new Map(
         recentVideos.map((videoState) => [videoState.videoId, videoState]),
       );
@@ -906,9 +996,14 @@ export namespace CrawlService {
       const discoveredVideoIds = feed.videoIds;
       const nowMs = Date.now();
       const videoIdsToCrawl = discoveredVideoIds.filter((videoId) =>
-        shouldRecrawlVideo(recentVideoById.get(videoId), nowMs, recrawlCooldownMs),
+        shouldRecrawlVideo(
+          recentVideoById.get(videoId),
+          nowMs,
+          recrawlCooldownMs,
+        ),
       );
-      const cooldownSkippedVideoCount = discoveredVideoIds.length - videoIdsToCrawl.length;
+      const cooldownSkippedVideoCount =
+        discoveredVideoIds.length - videoIdsToCrawl.length;
 
       yield* Effect.sync(() => {
         logInfo(logger, "crawlRss", "step 2/3 parsed RSS entries", {
@@ -995,7 +1090,9 @@ export namespace CrawlService {
             cursor: null,
             meta: {
               recentVideos: persistedRecentVideos,
-              seenVideoIds: persistedRecentVideos.map((videoState) => videoState.videoId),
+              seenVideoIds: persistedRecentVideos.map(
+                (videoState) => videoState.videoId,
+              ),
               recrawlCooldownMs,
               updatedAt: new Date().toISOString(),
             },
@@ -1020,7 +1117,10 @@ export namespace CrawlService {
         });
       }
 
-      const skippedVideoCount = Math.max(0, videoIdsToCrawl.length - attemptedVideoIds.length);
+      const skippedVideoCount = Math.max(
+        0,
+        videoIdsToCrawl.length - attemptedVideoIds.length,
+      );
       const failureMessages = failures.map((failure) => failure.message);
 
       yield* Effect.sync(() => {
@@ -1077,7 +1177,10 @@ export namespace CrawlService {
     const concurrency = Math.max(1, input.concurrency ?? 3);
 
     return Effect.gen(function* () {
-      if (input.limit !== "all" && (!Number.isInteger(input.limit) || input.limit < 1)) {
+      if (
+        input.limit !== "all" &&
+        (!Number.isInteger(input.limit) || input.limit < 1)
+      ) {
         yield* Effect.sync(() => {
           logError(logger, "backfillChannel", "invalid input", {
             channelId,
@@ -1098,21 +1201,34 @@ export namespace CrawlService {
           limit: input.limit,
           concurrency,
         });
-        logInfo(logger, "backfillChannel", "step 1/4 resolve uploads playlist", {
-          channelId,
-        });
+        logInfo(
+          logger,
+          "backfillChannel",
+          "step 1/4 resolve uploads playlist",
+          {
+            channelId,
+          },
+        );
       });
 
-      const playlistId = yield* YouTubeApiService.getUploadsPlaylistId(channelId, {
-        logger,
-      }).pipe(
+      const playlistId = yield* YouTubeApiService.getUploadsPlaylistId(
+        channelId,
+        {
+          logger,
+        },
+      ).pipe(
         Effect.mapError(toCrawlExternalError),
         Effect.tapError((error) =>
           Effect.sync(() => {
-            logError(logger, "backfillChannel", "failed to resolve uploads playlist", {
-              channelId,
-              error: error.message,
-            });
+            logError(
+              logger,
+              "backfillChannel",
+              "failed to resolve uploads playlist",
+              {
+                channelId,
+                error: error.message,
+              },
+            );
           }),
         ),
       );
@@ -1138,18 +1254,24 @@ export namespace CrawlService {
             ),
             Effect.tapError((error) =>
               Effect.sync(() => {
-                logError(logger, "backfillChannel", "failed to load checkpoint", {
-                  channelId,
-                  stateKey,
-                  error: error.message,
-                });
+                logError(
+                  logger,
+                  "backfillChannel",
+                  "failed to load checkpoint",
+                  {
+                    channelId,
+                    stateKey,
+                    error: error.message,
+                  },
+                );
               }),
             ),
           )
         : null;
 
       let cursor = state?.cursor ?? null;
-      let remaining = input.limit === "all" ? Number.POSITIVE_INFINITY : input.limit;
+      let remaining =
+        input.limit === "all" ? Number.POSITIVE_INFINITY : input.limit;
       let crawled = 0;
       const failures: { videoId: string; message: string }[] = [];
       let pageIndex = 0;
@@ -1174,12 +1296,17 @@ export namespace CrawlService {
           Effect.mapError(toCrawlExternalError),
           Effect.tapError((error) =>
             Effect.sync(() => {
-              logError(logger, "backfillChannel", "failed to fetch playlist page", {
-                channelId,
-                pageIndex,
-                cursor,
-                error: error.message,
-              });
+              logError(
+                logger,
+                "backfillChannel",
+                "failed to fetch playlist page",
+                {
+                  channelId,
+                  pageIndex,
+                  cursor,
+                  error: error.message,
+                },
+              );
             }),
           ),
         );
@@ -1310,11 +1437,16 @@ export namespace CrawlService {
             ),
             Effect.tapError((error) =>
               Effect.sync(() => {
-                logError(logger, "backfillChannel", "failed to save checkpoint", {
-                  channelId,
-                  stateKey,
-                  error: error.message,
-                });
+                logError(
+                  logger,
+                  "backfillChannel",
+                  "failed to save checkpoint",
+                  {
+                    channelId,
+                    stateKey,
+                    error: error.message,
+                  },
+                );
               }),
             ),
           );
@@ -1322,10 +1454,15 @@ export namespace CrawlService {
 
         if (!cursor) {
           yield* Effect.sync(() => {
-            logInfo(logger, "backfillChannel", "no further cursor; backfill complete", {
-              channelId,
-              pageIndex,
-            });
+            logInfo(
+              logger,
+              "backfillChannel",
+              "no further cursor; backfill complete",
+              {
+                channelId,
+                pageIndex,
+              },
+            );
           });
           break;
         }

@@ -69,15 +69,21 @@ type VideoCommentsPayload = {
 };
 
 export namespace VisualizerService {
-  export class InvalidVideoIdError extends Data.TaggedError("InvalidVideoIdError")<{
+  export class InvalidVideoIdError extends Data.TaggedError(
+    "InvalidVideoIdError",
+  )<{
     message: string;
   }> {}
 
-  export class VisualizerQueryError extends Data.TaggedError("VisualizerQueryError")<{
+  export class VisualizerQueryError extends Data.TaggedError(
+    "VisualizerQueryError",
+  )<{
     message: string;
   }> {}
 
-  export class VideoNotFoundError extends Data.TaggedError("VideoNotFoundError")<{
+  export class VideoNotFoundError extends Data.TaggedError(
+    "VideoNotFoundError",
+  )<{
     videoId: string;
     message: string;
   }> {}
@@ -108,12 +114,19 @@ export namespace VisualizerService {
               sponsorKey: sponsors.sponsorKey,
             })
             .from(videos)
-            .leftJoin(sponsorToVideos, eq(sponsorToVideos.videoId, videos.videoId))
-            .leftJoin(sponsors, eq(sponsors.sponsorId, sponsorToVideos.sponsorId))
+            .leftJoin(
+              sponsorToVideos,
+              eq(sponsorToVideos.videoId, videos.videoId),
+            )
+            .leftJoin(
+              sponsors,
+              eq(sponsors.sponsorId, sponsorToVideos.sponsorId),
+            )
             .orderBy(desc(videos.publishedAt)),
         catch: (cause) =>
           new VisualizerQueryError({
-            message: cause instanceof Error ? cause.message : "Failed to load videos",
+            message:
+              cause instanceof Error ? cause.message : "Failed to load videos",
           }),
       }).pipe(
         Effect.tapError((error) =>
@@ -127,25 +140,22 @@ export namespace VisualizerService {
 
       const dedupedVideos = Array.from(
         rows
-          .reduce(
-            (acc, row) => {
-              if (!acc.has(row.videoId)) {
-                acc.set(row.videoId, {
-                  videoId: row.videoId,
-                  title: row.title,
-                  thumbnailUrl: row.thumbnailUrl,
-                  publishedAt: toIso(row.publishedAt),
-                  commentCount: row.commentCount,
-                  viewCount: row.viewCount,
-                  likeCount: row.likeCount,
-                  sponsor: normalizeSponsor(row.sponsorName, row.sponsorKey),
-                });
-              }
+          .reduce((acc, row) => {
+            if (!acc.has(row.videoId)) {
+              acc.set(row.videoId, {
+                videoId: row.videoId,
+                title: row.title,
+                thumbnailUrl: row.thumbnailUrl,
+                publishedAt: toIso(row.publishedAt),
+                commentCount: row.commentCount,
+                viewCount: row.viewCount,
+                likeCount: row.likeCount,
+                sponsor: normalizeSponsor(row.sponsorName, row.sponsorKey),
+              });
+            }
 
-              return acc;
-            },
-            new Map<string, VisualizerVideo>(),
-          )
+            return acc;
+          }, new Map<string, VisualizerVideo>())
           .values(),
       );
 
@@ -200,13 +210,20 @@ export namespace VisualizerService {
               sponsorKey: sponsors.sponsorKey,
             })
             .from(videos)
-            .leftJoin(sponsorToVideos, eq(sponsorToVideos.videoId, videos.videoId))
-            .leftJoin(sponsors, eq(sponsors.sponsorId, sponsorToVideos.sponsorId))
+            .leftJoin(
+              sponsorToVideos,
+              eq(sponsorToVideos.videoId, videos.videoId),
+            )
+            .leftJoin(
+              sponsors,
+              eq(sponsors.sponsorId, sponsorToVideos.sponsorId),
+            )
             .where(eq(videos.videoId, normalizedVideoId))
             .limit(1),
         catch: (cause) =>
           new VisualizerQueryError({
-            message: cause instanceof Error ? cause.message : "Failed to load video",
+            message:
+              cause instanceof Error ? cause.message : "Failed to load video",
           }),
       }).pipe(
         Effect.tapError((error) =>
@@ -251,7 +268,10 @@ export namespace VisualizerService {
             .orderBy(desc(comments.publishedAt)),
         catch: (cause) =>
           new VisualizerQueryError({
-            message: cause instanceof Error ? cause.message : "Failed to load comments",
+            message:
+              cause instanceof Error
+                ? cause.message
+                : "Failed to load comments",
           }),
       }).pipe(
         Effect.tapError((error) =>

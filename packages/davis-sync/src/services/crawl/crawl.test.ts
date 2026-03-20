@@ -9,14 +9,13 @@ test("crawlVideo rejects empty videoId", async () => {
       videoId: "",
       sendNotifications: false,
     },
-  )
-    .pipe(
-      Effect.match({
-        onFailure: (error) => ({ status: "error" as const, error }),
-        onSuccess: (value) => ({ status: "ok" as const, value }),
-      }),
-      Effect.runPromise,
-    );
+  ).pipe(
+    Effect.match({
+      onFailure: (error) => ({ status: "error" as const, error }),
+      onSuccess: (value) => ({ status: "ok" as const, value }),
+    }),
+    Effect.runPromise,
+  );
 
   expect(result.status).toBe("error");
 

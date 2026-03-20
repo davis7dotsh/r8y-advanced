@@ -10,7 +10,8 @@
     "db:studio": "bun run --cwd packages/theo-data db:studio",
     "check": "bunx turbo run check",
     "format": "bunx turbo run format",
-    "test": "bunx turbo run test"
+    "test": "bunx turbo run test",
+    "build": "bunx turbo run build"
   },
   "workspaces": [
     "apps/*",

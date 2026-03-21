@@ -17,12 +17,16 @@
           : channel,
   )
   const currentPage = $derived(Number(page.url.searchParams.get('page')) || 1)
-  const sponsorQuery = $derived(getShareSponsor({ channel, slug: id, page: currentPage }))
+  const sponsorQuery = $derived(
+    getShareSponsor({ channel, slug: id, page: currentPage }),
+  )
 </script>
 
 <svelte:head>
   {#if sponsorQuery.ready && sponsorQuery.current.status === 'ok'}
-    <title>{sponsorQuery.current.data.sponsor.name} — {channelLabel} Sponsor</title>
+    <title
+      >{sponsorQuery.current.data.sponsor.name} — {channelLabel} Sponsor</title
+    >
   {:else}
     <title>Sponsor Share</title>
   {/if}
@@ -35,9 +39,12 @@
       sponsorLabel={`${channelLabel} Sponsor`}
       videoHref={(videoId) => `https://www.youtube.com/watch?v=${videoId}`}
       videoPageHref={(page) =>
-        toHref(`/share/${encodeURIComponent(channel)}/sponsor/${encodeURIComponent(id)}`, {
-          page,
-        })}
+        toHref(
+          `/share/${encodeURIComponent(channel)}/sponsor/${encodeURIComponent(id)}`,
+          {
+            page,
+          },
+        )}
       externalVideoLinks={true}
       showBottomVideoPagination={true}
     />

@@ -32,7 +32,9 @@
   }>()
 </script>
 
-<article class="overflow-hidden rounded-xl border bg-card text-card-foreground shadow-sm transition-shadow hover:shadow-md">
+<article
+  class="overflow-hidden rounded-xl border bg-card text-card-foreground shadow-sm transition-shadow hover:shadow-md"
+>
   <a
     href={videoHref}
     target={external ? '_blank' : undefined}
@@ -70,7 +72,7 @@
 
     {#if sponsorLinks.length > 0}
       <div class="mt-1.5 flex flex-wrap gap-1">
-        {#each sponsorLinks as sponsor}
+        {#each sponsorLinks as sponsor (sponsor.href)}
           <a
             href={sponsor.href}
             class="rounded bg-violet-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-violet-700 transition-colors hover:bg-violet-200 dark:bg-violet-900/40 dark:text-violet-400 dark:hover:bg-violet-900/60"
@@ -97,7 +99,9 @@
         </span>
       {/if}
       <span class="flex items-center gap-1">
-        <span class="font-medium text-foreground">{formatCompactNumber(likeCount)}</span>
+        <span class="font-medium text-foreground"
+          >{formatCompactNumber(likeCount)}</span
+        >
       </span>
     </div>
   </div>

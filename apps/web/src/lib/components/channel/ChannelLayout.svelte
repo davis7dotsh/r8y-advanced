@@ -34,7 +34,9 @@
   }>()
 </script>
 
-<main class="mx-auto flex min-h-screen w-full max-w-5xl flex-col px-4 pb-16 pt-6 sm:px-6 lg:px-8">
+<main
+  class="mx-auto flex min-h-screen w-full max-w-5xl flex-col px-4 pb-16 pt-6 sm:px-6 lg:px-8"
+>
   <header class="mb-8">
     <div class="border-b-[3px] border-foreground"></div>
     <div class="flex items-center justify-between py-3">
@@ -52,18 +54,27 @@
         {/if}
 
         <div>
-          <h1 class="font-serif text-4xl font-bold tracking-tight sm:text-5xl">{title}</h1>
+          <h1 class="font-serif text-4xl font-bold tracking-tight sm:text-5xl">
+            {title}
+          </h1>
 
           {#if statsLoad}
             {#await statsLoad}
               <div class="mt-1 flex gap-3">
-                <div class="h-3.5 w-16 animate-pulse rounded bg-neutral-200 dark:bg-neutral-700"></div>
-                <div class="h-3.5 w-20 animate-pulse rounded bg-neutral-200 dark:bg-neutral-700"></div>
+                <div
+                  class="h-3.5 w-16 animate-pulse rounded bg-neutral-200 dark:bg-neutral-700"
+                ></div>
+                <div
+                  class="h-3.5 w-20 animate-pulse rounded bg-neutral-200 dark:bg-neutral-700"
+                ></div>
               </div>
             {:then stats}
               {#if stats.status === 'ok'}
-                {@const hasPrefix = !!stats.data.handle || stats.data.subscriberCount > 0}
-                <div class="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
+                {@const hasPrefix =
+                  !!stats.data.handle || stats.data.subscriberCount > 0}
+                <div
+                  class="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted-foreground"
+                >
                   {#if stats.data.handle}
                     <a
                       href={`https://youtube.com/${stats.data.handle}`}
@@ -76,31 +87,53 @@
                   {/if}
                   {#if stats.data.subscriberCount > 0}
                     {#if stats.data.handle}
-                      <span class="text-neutral-300 dark:text-neutral-600">&middot;</span>
+                      <span class="text-neutral-300 dark:text-neutral-600"
+                        >&middot;</span
+                      >
                     {/if}
                     <span>
-                      <span class="font-semibold text-foreground">{formatCompactNumber(stats.data.subscriberCount)}</span>
+                      <span class="font-semibold text-foreground"
+                        >{formatCompactNumber(stats.data.subscriberCount)}</span
+                      >
                       subs
                     </span>
                   {/if}
                   {#if hasPrefix}
-                    <span class="text-neutral-300 dark:text-neutral-600">&middot;</span>
+                    <span class="text-neutral-300 dark:text-neutral-600"
+                      >&middot;</span
+                    >
                   {/if}
                   <span>
-                    <span class="font-semibold text-foreground">{stats.data.last30Days.videoCount}</span>
+                    <span class="font-semibold text-foreground"
+                      >{stats.data.last30Days.videoCount}</span
+                    >
                     vids
                   </span>
-                  <span class="text-neutral-300 dark:text-neutral-600">&middot;</span>
+                  <span class="text-neutral-300 dark:text-neutral-600"
+                    >&middot;</span
+                  >
                   <span>
-                    <span class="font-semibold text-foreground">{formatCompactNumber(stats.data.last30Days.viewCount)}</span>
+                    <span class="font-semibold text-foreground"
+                      >{formatCompactNumber(
+                        stats.data.last30Days.viewCount,
+                      )}</span
+                    >
                     views
                   </span>
-                  <span class="text-neutral-300 dark:text-neutral-600">&middot;</span>
+                  <span class="text-neutral-300 dark:text-neutral-600"
+                    >&middot;</span
+                  >
                   <span>
-                    <span class="font-semibold text-foreground">{formatCompactNumber(stats.data.last30Days.likeCount)}</span>
+                    <span class="font-semibold text-foreground"
+                      >{formatCompactNumber(
+                        stats.data.last30Days.likeCount,
+                      )}</span
+                    >
                     likes
                   </span>
-                  <span class="text-neutral-400 dark:text-neutral-500">/ 30d</span>
+                  <span class="text-neutral-400 dark:text-neutral-500"
+                    >/ 30d</span
+                  >
                 </div>
               {/if}
             {:catch}

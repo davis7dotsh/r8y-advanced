@@ -2,10 +2,15 @@
   import { page } from '$app/state'
   import ChannelVideoDetailContent from '@/components/channel/ChannelVideoDetailContent.svelte'
   import { parseTheoVideoSearch } from '@/features/theo/theo-search-params'
-  import { getTheoVideoDetails, linkTheoVideoToXPost } from '@/remote/theo.remote'
+  import {
+    getTheoVideoDetails,
+    linkTheoVideoToXPost,
+  } from '@/remote/theo.remote'
   import { toHref } from '@/utils/url'
 
-  const search = $derived(parseTheoVideoSearch(Object.fromEntries(page.url.searchParams)))
+  const search = $derived(
+    parseTheoVideoSearch(Object.fromEntries(page.url.searchParams)),
+  )
   const id = $derived(page.params.id ?? '')
 
   const videoQuery = $derived(
@@ -29,12 +34,14 @@
 
 <ChannelVideoDetailContent
   videoId={id}
-  search={search}
+  {search}
   {videoQuery}
   shareHref={`/share/theo/${encodeURIComponent(id)}`}
-  sponsorHref={(slug) => toHref(`/theo/sponsor/${encodeURIComponent(slug)}`, { page: 1 })}
-  detailHref={(params) => toHref(`/theo/video/${encodeURIComponent(id)}`, params)}
+  sponsorHref={(slug) =>
+    toHref(`/theo/sponsor/${encodeURIComponent(slug)}`, { page: 1 })}
+  detailHref={(params) =>
+    toHref(`/theo/video/${encodeURIComponent(id)}`, params)}
   xPostInputId="theo-x-post-url"
   xPostPending={linkTheoVideoToXPost.pending}
-  saveXPost={saveXPost}
+  {saveXPost}
 />

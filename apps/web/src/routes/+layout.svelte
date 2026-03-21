@@ -2,37 +2,56 @@
   import '../app.css'
   import { goto } from '$app/navigation'
   import { navigating, page } from '$app/state'
-  import { onMount } from 'svelte'
   import GlobalCommand from '@/components/GlobalCommand.svelte'
   import { clearAuthStorage } from '@/features/auth/auth'
   import { signOut } from '@/remote/auth.remote'
   import { toHref } from '@/utils/url'
 
+  const getSearchShortcutLabel = () => {
+    if (typeof navigator === 'undefined') {
+      return '⌘K'
+    }
+
+    const platform = (
+      (navigator as Navigator & { userAgentData?: { platform?: string } })
+        .userAgentData?.platform ??
+      navigator.platform ??
+      ''
+    ).toLowerCase()
+
+    const isAppleDevice =
+      platform.includes('mac') ||
+      platform.includes('iphone') ||
+      platform.includes('ipad') ||
+      platform.includes('ipod') ||
+      platform.includes('ios')
+
+    return isAppleDevice ? '⌘K' : 'Ctrl K'
+  }
+
+  const getInitialTheme = (): 'light' | 'dark' => {
+    if (typeof document !== 'undefined') {
+      return document.documentElement.classList.contains('dark')
+        ? 'dark'
+        : 'light'
+    }
+
+    return 'light'
+  }
+
   let { children } = $props()
 
-  let theme = $state<'light' | 'dark'>('light')
+  let theme = $state<'light' | 'dark'>(getInitialTheme())
   let commandOpen = $state(false)
-  let searchShortcutLabel = $state('⌘K')
+  const searchShortcutLabel = getSearchShortcutLabel()
 
   const showNavigation = $derived(
-    !page.url.pathname.startsWith('/unlock') && !page.url.pathname.startsWith('/share'),
+    !page.url.pathname.startsWith('/unlock') &&
+      !page.url.pathname.startsWith('/share'),
   )
 
   const toggleTheme = () => {
-    const next = theme === 'dark' ? 'light' : 'dark'
-    theme = next
-
-    if (next === 'dark') {
-      document.documentElement.classList.add('dark')
-    } else {
-      document.documentElement.classList.remove('dark')
-    }
-
-    try {
-      localStorage.setItem('theme', next)
-    } catch {
-      // ignore storage errors
-    }
+    theme = theme === 'dark' ? 'light' : 'dark'
   }
 
   const handleSignOut = async () => {
@@ -41,43 +60,33 @@
     await goto('/unlock')
   }
 
-  onMount(() => {
-    const platform = (
-      (navigator as Navigator & { userAgentData?: { platform?: string } })
-        .userAgentData?.platform ??
-      navigator.platform ??
-      ''
-    ).toLowerCase()
-    const isAppleDevice =
-      platform.includes('mac') ||
-      platform.includes('iphone') ||
-      platform.includes('ipad') ||
-      platform.includes('ipod') ||
-      platform.includes('ios')
-    searchShortcutLabel = isAppleDevice ? '⌘K' : 'Ctrl K'
+  const handleGlobalKeydown = (event: KeyboardEvent) => {
+    if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+      event.preventDefault()
+      commandOpen = !commandOpen
+    }
+  }
 
-    const persisted = localStorage.getItem('theme')
-    const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches
-    const next: 'light' | 'dark' =
-      persisted === 'dark' || persisted === 'light' ? persisted : systemDark ? 'dark' : 'light'
+  const handleStorage = (event: StorageEvent) => {
+    if (event.key !== 'theme') {
+      return
+    }
 
-    theme = next
+    theme = event.newValue === 'dark' ? 'dark' : 'light'
+  }
 
-    if (next === 'dark') {
+  $effect(() => {
+    if (theme === 'dark') {
       document.documentElement.classList.add('dark')
     } else {
       document.documentElement.classList.remove('dark')
     }
 
-    const handler = (event: KeyboardEvent) => {
-      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
-        event.preventDefault()
-        commandOpen = !commandOpen
-      }
+    try {
+      localStorage.setItem('theme', theme)
+    } catch {
+      // ignore storage errors
     }
-
-    document.addEventListener('keydown', handler)
-    return () => document.removeEventListener('keydown', handler)
   })
 </script>
 
@@ -86,8 +95,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 </svelte:head>
 
+<svelte:window onkeydown={handleGlobalKeydown} onstorage={handleStorage} />
+
 {#if navigating.to}
-  <div class="fixed right-4 top-3 z-50 inline-flex items-center gap-1.5 border border-border bg-background px-2.5 py-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+  <div
+    class="fixed right-4 top-3 z-50 inline-flex items-center gap-1.5 border border-border bg-background px-2.5 py-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground"
+  >
     <span class="size-1.5 animate-pulse bg-muted-foreground"></span>
     Loading
   </div>
@@ -138,7 +151,9 @@
           class="inline-flex items-center gap-2 border border-border bg-muted/50 px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
         >
           <span>Search</span>
-          <kbd class="ml-1 border border-border bg-background px-1.5 py-0.5 text-[10px] font-mono">
+          <kbd
+            class="ml-1 border border-border bg-background px-1.5 py-0.5 text-[10px] font-mono"
+          >
             {searchShortcutLabel}
           </kbd>
         </button>

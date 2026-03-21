@@ -1,17 +1,18 @@
 <script lang="ts">
   import { page } from '$app/state'
 
-  let {
-    backHref,
-    backLabel,
-  } = $props<{
+  let { backHref, backLabel } = $props<{
     backHref: string
     backLabel: string
   }>()
 </script>
 
 <div class="flex flex-1 flex-col items-center justify-center py-24">
-  <p class="font-serif text-7xl font-bold tracking-tight text-muted-foreground/30">{page.status}</p>
+  <p
+    class="font-serif text-7xl font-bold tracking-tight text-muted-foreground/30"
+  >
+    {page.status}
+  </p>
   <h2 class="mt-4 font-serif text-xl font-semibold tracking-tight">
     {page.status === 404 ? 'Page not found' : 'Something went wrong'}
   </h2>

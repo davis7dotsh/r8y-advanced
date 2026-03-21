@@ -161,7 +161,10 @@
 </script>
 
 {#if query.error}
-  <ErrorState title="Unable to load video details" message={query.error.message ?? 'Unknown error'} />
+  <ErrorState
+    title="Unable to load video details"
+    message={query.error.message ?? 'Unknown error'}
+  />
 {:else if !query.ready}
   <section
     class="space-y-3 rounded-xl border border-neutral-200 bg-white p-5 dark:border-neutral-700 dark:bg-neutral-900"
@@ -170,20 +173,31 @@
   >
     <p class="text-sm text-neutral-500">Loading...</p>
     <div class="space-y-2.5">
-      <div class="h-4 w-2/3 animate-pulse rounded bg-neutral-200 dark:bg-neutral-700"></div>
-      <div class="h-4 w-full animate-pulse rounded bg-neutral-100 dark:bg-neutral-800"></div>
-      <div class="h-4 w-5/6 animate-pulse rounded bg-neutral-100 dark:bg-neutral-800"></div>
+      <div
+        class="h-4 w-2/3 animate-pulse rounded bg-neutral-200 dark:bg-neutral-700"
+      ></div>
+      <div
+        class="h-4 w-full animate-pulse rounded bg-neutral-100 dark:bg-neutral-800"
+      ></div>
+      <div
+        class="h-4 w-5/6 animate-pulse rounded bg-neutral-100 dark:bg-neutral-800"
+      ></div>
     </div>
   </section>
 {:else if query.current.status === 'error'}
-  <ErrorState title="Unable to load video details" message={query.current.error.message} />
+  <ErrorState
+    title="Unable to load video details"
+    message={query.current.error.message}
+  />
 {:else}
   {@const data = query.current.data}
   {@const video = data.video}
   {@const comments = data.comments}
 
   <section class="space-y-6">
-    <article class="grid gap-6 rounded-xl border border-neutral-200 bg-white p-5 lg:grid-cols-[320px_1fr] dark:border-neutral-700 dark:bg-neutral-900">
+    <article
+      class="grid gap-6 rounded-xl border border-neutral-200 bg-white p-5 lg:grid-cols-[320px_1fr] dark:border-neutral-700 dark:bg-neutral-900"
+    >
       <img
         src={toVercelImageHref(video.thumbnailUrl, { width: 1280 })}
         alt={video.title}
@@ -193,7 +207,9 @@
       <div class="space-y-4">
         <div>
           <div class="flex items-start justify-between gap-3">
-            <h2 class="text-xl font-bold tracking-tight text-neutral-900 sm:text-2xl dark:text-neutral-100">
+            <h2
+              class="text-xl font-bold tracking-tight text-neutral-900 sm:text-2xl dark:text-neutral-100"
+            >
               <a
                 href={`https://www.youtube.com/watch?v=${video.videoId}`}
                 target="_blank"
@@ -210,14 +226,24 @@
               title="Share"
               class="mt-1 shrink-0 rounded-md p-1.5 text-neutral-400 transition-colors hover:bg-neutral-100 hover:text-neutral-700 dark:hover:bg-neutral-800 dark:hover:text-neutral-300"
             >
-              <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
-                <polyline points="16 6 12 2 8 6"/>
-                <line x1="12" y1="2" x2="12" y2="15"/>
+              <svg
+                class="size-4"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+                <polyline points="16 6 12 2 8 6" />
+                <line x1="12" y1="2" x2="12" y2="15" />
               </svg>
             </a>
           </div>
-          <p class="mt-1 text-sm text-neutral-400">Published {new Date(video.publishedAt).toLocaleString()}</p>
+          <p class="mt-1 text-sm text-neutral-400">
+            Published {new Date(video.publishedAt).toLocaleString()}
+          </p>
         </div>
 
         <VideoMetrics
@@ -234,7 +260,10 @@
             await submitXPost(xPostUrlInput)
           }}
         >
-          <label for={xPostInputId} class="block text-sm font-medium text-neutral-700 dark:text-neutral-300">
+          <label
+            for={xPostInputId}
+            class="block text-sm font-medium text-neutral-700 dark:text-neutral-300"
+          >
             Link X Post
           </label>
           <div class="flex flex-wrap items-center gap-2">
@@ -269,8 +298,14 @@
         </form>
 
         {#if video.xPost}
-          <div class="rounded-lg border border-sky-200 bg-sky-50 p-3 dark:border-sky-800 dark:bg-sky-950">
-            <p class="text-xs font-semibold uppercase tracking-wide text-sky-700 dark:text-sky-400">Linked X Post</p>
+          <div
+            class="rounded-lg border border-sky-200 bg-sky-50 p-3 dark:border-sky-800 dark:bg-sky-950"
+          >
+            <p
+              class="text-xs font-semibold uppercase tracking-wide text-sky-700 dark:text-sky-400"
+            >
+              Linked X Post
+            </p>
             <a
               href={video.xPost.url}
               target="_blank"
@@ -279,7 +314,9 @@
             >
               {video.xPost.url}
             </a>
-            <div class="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-sm text-sky-900 dark:text-sky-200">
+            <div
+              class="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-sm text-sky-900 dark:text-sky-200"
+            >
               <span>Views: {formatMetric(video.xPost.views)}</span>
               <span>Likes: {formatMetric(video.xPost.likes)}</span>
               <span>Reposts: {formatMetric(video.xPost.reposts)}</span>
@@ -290,7 +327,7 @@
 
         <div class="flex flex-wrap gap-1.5">
           {#if video.sponsors.length > 0}
-            {#each video.sponsors as sponsor}
+            {#each video.sponsors as sponsor (sponsor.slug)}
               <a
                 href={sponsorHref(sponsor.slug)}
                 class="rounded-full border border-violet-200 bg-violet-50 px-2.5 py-0.5 text-xs font-medium text-violet-800 transition-colors hover:bg-violet-100 dark:border-violet-700 dark:bg-violet-900/40 dark:text-violet-300 dark:hover:bg-violet-900/60"
@@ -299,13 +336,17 @@
               </a>
             {/each}
           {:else}
-            <span class="rounded-full border border-neutral-200 px-2.5 py-0.5 text-xs text-neutral-400 dark:border-neutral-700">
+            <span
+              class="rounded-full border border-neutral-200 px-2.5 py-0.5 text-xs text-neutral-400 dark:border-neutral-700"
+            >
               No sponsor
             </span>
           {/if}
         </div>
 
-        <p class="whitespace-pre-wrap text-sm leading-relaxed text-neutral-600 dark:text-neutral-400">
+        <p
+          class="whitespace-pre-wrap text-sm leading-relaxed text-neutral-600 dark:text-neutral-400"
+        >
           {#each linkified as part}
             {#if part.type === 'link'}
               <a
@@ -324,13 +365,21 @@
       </div>
     </article>
 
-    <section class="rounded-xl border border-neutral-200 bg-white p-5 dark:border-neutral-700 dark:bg-neutral-900">
+    <section
+      class="rounded-xl border border-neutral-200 bg-white p-5 dark:border-neutral-700 dark:bg-neutral-900"
+    >
       <div class="mb-4 space-y-3">
         <div class="flex flex-wrap items-center justify-between gap-3">
-          <h3 class="text-base font-semibold text-neutral-900 dark:text-neutral-100">Comments</h3>
+          <h3
+            class="text-base font-semibold text-neutral-900 dark:text-neutral-100"
+          >
+            Comments
+          </h3>
 
-          <div class="flex items-center gap-1 rounded-lg border border-neutral-200 p-0.5 dark:border-neutral-700">
-            {#each SORT_OPTIONS as option}
+          <div
+            class="flex items-center gap-1 rounded-lg border border-neutral-200 p-0.5 dark:border-neutral-700"
+          >
+            {#each SORT_OPTIONS as option (option.value)}
               <a
                 href={detailHref({
                   commentsPage: 1,
@@ -350,7 +399,7 @@
         </div>
 
         <div class="flex flex-wrap gap-1.5">
-          {#each FILTER_OPTIONS as option}
+          {#each FILTER_OPTIONS as option (option.value)}
             <a
               href={detailHref({
                 commentsPage: 1,
@@ -383,17 +432,33 @@
 
       <div class="space-y-2">
         {#each comments.items as comment}
-          <article class="rounded-lg border border-neutral-100 bg-neutral-50 p-3.5 dark:border-neutral-700 dark:bg-neutral-800">
-            <div class="mb-1.5 flex flex-wrap items-center gap-2 text-xs text-neutral-400">
-              <span class="font-medium text-neutral-700 dark:text-neutral-300">{comment.author}</span>
-              <span class="text-neutral-300 dark:text-neutral-600">&middot;</span>
+          <article
+            class="rounded-lg border border-neutral-100 bg-neutral-50 p-3.5 dark:border-neutral-700 dark:bg-neutral-800"
+          >
+            <div
+              class="mb-1.5 flex flex-wrap items-center gap-2 text-xs text-neutral-400"
+            >
+              <span class="font-medium text-neutral-700 dark:text-neutral-300"
+                >{comment.author}</span
+              >
+              <span class="text-neutral-300 dark:text-neutral-600"
+                >&middot;</span
+              >
               <span>{new Date(comment.publishedAt).toLocaleString()}</span>
-              <span class="text-neutral-300 dark:text-neutral-600">&middot;</span>
+              <span class="text-neutral-300 dark:text-neutral-600"
+                >&middot;</span
+              >
               <span>{comment.likeCount.toLocaleString()} likes</span>
-              <span class="text-neutral-300 dark:text-neutral-600">&middot;</span>
+              <span class="text-neutral-300 dark:text-neutral-600"
+                >&middot;</span
+              >
               <span>{comment.replyCount.toLocaleString()} replies</span>
             </div>
-            <p class="whitespace-pre-wrap text-sm leading-relaxed text-neutral-700 dark:text-neutral-300">{comment.text}</p>
+            <p
+              class="whitespace-pre-wrap text-sm leading-relaxed text-neutral-700 dark:text-neutral-300"
+            >
+              {comment.text}
+            </p>
           </article>
         {/each}
       </div>

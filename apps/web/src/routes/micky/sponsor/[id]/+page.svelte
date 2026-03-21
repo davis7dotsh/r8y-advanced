@@ -5,7 +5,9 @@
   import { getMickySponsorDetails } from '@/remote/micky.remote'
   import { toHref } from '@/utils/url'
 
-  const search = $derived(parseMickySponsorSearch(Object.fromEntries(page.url.searchParams)))
+  const search = $derived(
+    parseMickySponsorSearch(Object.fromEntries(page.url.searchParams)),
+  )
   const id = $derived(page.params.id ?? '')
 </script>
 
@@ -16,7 +18,8 @@
     mentionsPage: search.mentionsPage,
   })}
   sponsorLabel="Sponsor"
-  videoHref={(videoId) => toHref(`/micky/video/${encodeURIComponent(videoId)}`, { commentsPage: 1 })}
+  videoHref={(videoId) =>
+    toHref(`/micky/video/${encodeURIComponent(videoId)}`, { commentsPage: 1 })}
   videoPageHref={(page) =>
     toHref(`/micky/sponsor/${encodeURIComponent(id)}`, {
       page,

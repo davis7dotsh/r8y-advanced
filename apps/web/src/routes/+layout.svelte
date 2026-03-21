@@ -7,6 +7,9 @@
   import { signOut } from '@/remote/auth.remote'
   import { toHref } from '@/utils/url'
 
+  type Theme = 'light' | 'dark'
+  type ThemePreference = Theme | null
+
   const getSearchShortcutLabel = () => {
     if (typeof navigator === 'undefined') {
       return '⌘K'
@@ -29,9 +32,22 @@
     return isAppleDevice ? '⌘K' : 'Ctrl K'
   }
 
-  const getInitialTheme = (): 'light' | 'dark' => {
-    if (typeof document !== 'undefined') {
-      return document.documentElement.classList.contains('dark')
+  const getStoredThemePreference = (): ThemePreference => {
+    if (typeof localStorage === 'undefined') {
+      return null
+    }
+
+    try {
+      const storedTheme = localStorage.getItem('theme')
+      return storedTheme === 'dark' || storedTheme === 'light' ? storedTheme : null
+    } catch {
+      return null
+    }
+  }
+
+  const getSystemTheme = (): Theme => {
+    if (typeof window !== 'undefined') {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches
         ? 'dark'
         : 'light'
     }
@@ -41,9 +57,11 @@
 
   let { children } = $props()
 
-  let theme = $state<'light' | 'dark'>(getInitialTheme())
+  let themePreference = $state<ThemePreference>(getStoredThemePreference())
+  let systemTheme = $state<Theme>(getSystemTheme())
   let commandOpen = $state(false)
   const searchShortcutLabel = getSearchShortcutLabel()
+  const theme = $derived(themePreference ?? systemTheme)
 
   const showNavigation = $derived(
     !page.url.pathname.startsWith('/unlock') &&
@@ -51,7 +69,7 @@
   )
 
   const toggleTheme = () => {
-    theme = theme === 'dark' ? 'light' : 'dark'
+    themePreference = theme === 'dark' ? 'light' : 'dark'
   }
 
   const handleSignOut = async () => {
@@ -72,7 +90,10 @@
       return
     }
 
-    theme = event.newValue === 'dark' ? 'dark' : 'light'
+    themePreference =
+      event.newValue === 'dark' || event.newValue === 'light'
+        ? event.newValue
+        : null
   }
 
   $effect(() => {
@@ -83,9 +104,29 @@
     }
 
     try {
-      localStorage.setItem('theme', theme)
+      if (themePreference) {
+        localStorage.setItem('theme', themePreference)
+      } else {
+        localStorage.removeItem('theme')
+      }
     } catch {
       // ignore storage errors
+    }
+  })
+
+  $effect(() => {
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
+
+    const updateSystemTheme = (event?: MediaQueryListEvent) => {
+      const prefersDark = event?.matches ?? mediaQuery.matches
+      systemTheme = prefersDark ? 'dark' : 'light'
+    }
+
+    updateSystemTheme()
+    mediaQuery.addEventListener('change', updateSystemTheme)
+
+    return () => {
+      mediaQuery.removeEventListener('change', updateSystemTheme)
     }
   })
 </script>

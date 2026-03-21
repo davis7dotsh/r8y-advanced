@@ -3,6 +3,15 @@
   import PaginationControls from '@/components/PaginationControls.svelte'
   import VideoCard from '@/components/channel/VideoCard.svelte'
 
+  const SKELETON_CARD_IDS = [
+    'video-skeleton-1',
+    'video-skeleton-2',
+    'video-skeleton-3',
+    'video-skeleton-4',
+    'video-skeleton-5',
+    'video-skeleton-6',
+  ] as const
+
   type ListPayload =
     | {
         status: 'ok'
@@ -35,14 +44,7 @@
         }
       }
 
-  let {
-    load,
-    search,
-    errorTitle,
-    listHref,
-    videoHref,
-    sponsorHref,
-  } = $props<{
+  let { load, search, errorTitle, listHref, videoHref, sponsorHref } = $props<{
     load: unknown
     search: {
       q?: string
@@ -64,17 +66,29 @@
       aria-busy="true"
     >
       <div class="space-y-2">
-        <div class="h-4 w-52 animate-pulse rounded bg-neutral-200 dark:bg-neutral-700"></div>
-        <div class="h-3 w-40 animate-pulse rounded bg-neutral-100 dark:bg-neutral-800"></div>
+        <div
+          class="h-4 w-52 animate-pulse rounded bg-neutral-200 dark:bg-neutral-700"
+        ></div>
+        <div
+          class="h-3 w-40 animate-pulse rounded bg-neutral-100 dark:bg-neutral-800"
+        ></div>
       </div>
 
       <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
-        {#each Array(6) as _}
-          <article class="overflow-hidden rounded-xl border border-neutral-200 bg-white dark:border-neutral-700 dark:bg-neutral-900">
-            <div class="aspect-video w-full animate-pulse bg-neutral-200 dark:bg-neutral-800"></div>
+        {#each SKELETON_CARD_IDS as skeletonId (skeletonId)}
+          <article
+            class="overflow-hidden rounded-xl border border-neutral-200 bg-white dark:border-neutral-700 dark:bg-neutral-900"
+          >
+            <div
+              class="aspect-video w-full animate-pulse bg-neutral-200 dark:bg-neutral-800"
+            ></div>
             <div class="space-y-2 p-4">
-              <div class="h-3.5 w-5/6 animate-pulse rounded bg-neutral-200 dark:bg-neutral-700"></div>
-              <div class="h-3.5 w-2/3 animate-pulse rounded bg-neutral-100 dark:bg-neutral-800"></div>
+              <div
+                class="h-3.5 w-5/6 animate-pulse rounded bg-neutral-200 dark:bg-neutral-700"
+              ></div>
+              <div
+                class="h-3.5 w-2/3 animate-pulse rounded bg-neutral-100 dark:bg-neutral-800"
+              ></div>
             </div>
           </article>
         {/each}
@@ -118,7 +132,7 @@
       </div>
 
       <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
-        {#each items as video}
+        {#each items as video (video.videoId)}
           <VideoCard
             title={video.title}
             thumbnailUrl={video.thumbnailUrl}
@@ -126,10 +140,12 @@
             likeCount={video.likeCount}
             xViews={video.xPost?.views ?? null}
             videoHref={videoHref(video.videoId)}
-            sponsorLinks={video.sponsors.map((sponsor: { slug: string; name: string }) => ({
-              href: sponsorHref(sponsor.slug),
-              name: sponsor.name,
-            }))}
+            sponsorLinks={video.sponsors.map(
+              (sponsor: { slug: string; name: string }) => ({
+                href: sponsorHref(sponsor.slug),
+                name: sponsor.name,
+              }),
+            )}
           />
         {/each}
       </div>

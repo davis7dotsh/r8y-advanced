@@ -38,7 +38,10 @@ const toIsoDate = (value: unknown) => {
   return Number.isNaN(parsed.getTime()) ? new Date(0) : parsed;
 };
 
-const buildYouTubeUrl = (path: string, query: Record<string, string | undefined>) => {
+const buildYouTubeUrl = (
+  path: string,
+  query: Record<string, string | undefined>,
+) => {
   const params = new URLSearchParams();
 
   for (const [key, value] of Object.entries(query)) {
@@ -61,12 +64,17 @@ const videoResponseSchema = (raw: unknown) => {
 
 const mapVideoSnapshot = (videoId: string, raw: Record<string, unknown>) => {
   const snippet = (raw.snippet as Record<string, unknown> | undefined) ?? {};
-  const statistics = (raw.statistics as Record<string, unknown> | undefined) ?? {};
-  const thumbnails = (snippet.thumbnails as Record<string, unknown> | undefined) ?? {};
-  const maxRes = (thumbnails.maxres as Record<string, unknown> | undefined) ?? {};
+  const statistics =
+    (raw.statistics as Record<string, unknown> | undefined) ?? {};
+  const thumbnails =
+    (snippet.thumbnails as Record<string, unknown> | undefined) ?? {};
+  const maxRes =
+    (thumbnails.maxres as Record<string, unknown> | undefined) ?? {};
   const high = (thumbnails.high as Record<string, unknown> | undefined) ?? {};
-  const medium = (thumbnails.medium as Record<string, unknown> | undefined) ?? {};
-  const defaultThumbnail = (thumbnails.default as Record<string, unknown> | undefined) ?? {};
+  const medium =
+    (thumbnails.medium as Record<string, unknown> | undefined) ?? {};
+  const defaultThumbnail =
+    (thumbnails.default as Record<string, unknown> | undefined) ?? {};
 
   const thumbnailUrl =
     (typeof maxRes.url === "string" && maxRes.url) ||
@@ -78,7 +86,8 @@ const mapVideoSnapshot = (videoId: string, raw: Record<string, unknown>) => {
   return {
     videoId,
     title: typeof snippet.title === "string" ? snippet.title : "",
-    description: typeof snippet.description === "string" ? snippet.description : "",
+    description:
+      typeof snippet.description === "string" ? snippet.description : "",
     thumbnailUrl,
     publishedAt: toIsoDate(snippet.publishedAt),
     viewCount: parseCount(statistics.viewCount),
@@ -89,7 +98,8 @@ const mapVideoSnapshot = (videoId: string, raw: Record<string, unknown>) => {
 
 const mapCommentSnapshot = (raw: Record<string, unknown>) => {
   const snippet = (raw.snippet as Record<string, unknown> | undefined) ?? {};
-  const topLevel = (snippet.topLevelComment as Record<string, unknown> | undefined) ?? {};
+  const topLevel =
+    (snippet.topLevelComment as Record<string, unknown> | undefined) ?? {};
   const topLevelSnippet =
     (topLevel.snippet as Record<string, unknown> | undefined) ?? {};
 
@@ -108,14 +118,17 @@ const mapCommentSnapshot = (raw: Record<string, unknown>) => {
         : "",
     publishedAt: toIsoDate(topLevelSnippet.publishedAt),
     likeCount: parseCount(topLevelSnippet.likeCount),
-    replyCount: typeof snippet.totalReplyCount === "number" ? snippet.totalReplyCount : 0,
+    replyCount:
+      typeof snippet.totalReplyCount === "number" ? snippet.totalReplyCount : 0,
   };
 };
 
 const mapPlaylistVideoId = (raw: Record<string, unknown>) => {
   const contentDetails =
     (raw.contentDetails as Record<string, unknown> | undefined) ?? {};
-  return typeof contentDetails.videoId === "string" ? contentDetails.videoId : "";
+  return typeof contentDetails.videoId === "string"
+    ? contentDetails.videoId
+    : "";
 };
 
 const isObjectRecord = (value: unknown): value is Record<string, unknown> =>
@@ -143,14 +156,17 @@ const parseYouTubeError = (body: string, status: number) => {
     };
 
     const error = isObjectRecord(parsed.error) ? parsed.error : undefined;
-    const nestedError = Array.isArray(error?.errors) ? error.errors[0] : undefined;
+    const nestedError = Array.isArray(error?.errors)
+      ? error.errors[0]
+      : undefined;
     const message =
       typeof nestedError?.message === "string"
         ? nestedError.message
         : typeof error?.message === "string"
           ? error.message
           : `Request failed with status ${status}`;
-    const reason = typeof nestedError?.reason === "string" ? nestedError.reason : null;
+    const reason =
+      typeof nestedError?.reason === "string" ? nestedError.reason : null;
 
     return { message, reason };
   } catch {
@@ -161,7 +177,10 @@ const parseYouTubeError = (body: string, status: number) => {
   }
 };
 
-const isRetryableYouTubeError = (status: number | null, reason: string | null) =>
+const isRetryableYouTubeError = (
+  status: number | null,
+  reason: string | null,
+) =>
   status !== null &&
   (status >= 500 || reason === "backendError" || reason === "internalError");
 
@@ -191,7 +210,9 @@ const toRequestError = (endpoint: string, cause: unknown) => {
     reason: null,
     retryable: true,
     message:
-      cause instanceof Error ? cause.message : "Unknown YouTube API request error",
+      cause instanceof Error
+        ? cause.message
+        : "Unknown YouTube API request error",
   });
 };
 
@@ -227,11 +248,15 @@ type PlaylistVideoIdsResult = {
 };
 
 export namespace YouTubeApiService {
-  export class MissingYouTubeApiKeyError extends Data.TaggedError("MissingYouTubeApiKeyError")<{
+  export class MissingYouTubeApiKeyError extends Data.TaggedError(
+    "MissingYouTubeApiKeyError",
+  )<{
     message: string;
   }> {}
 
-  export class YouTubeApiRequestError extends Data.TaggedError("YouTubeApiRequestError")<{
+  export class YouTubeApiRequestError extends Data.TaggedError(
+    "YouTubeApiRequestError",
+  )<{
     endpoint: string;
     status: number | null;
     reason: string | null;
@@ -239,22 +264,31 @@ export namespace YouTubeApiService {
     message: string;
   }> {}
 
-  export class YouTubeVideoNotFoundError extends Data.TaggedError("YouTubeVideoNotFoundError")<{
+  export class YouTubeVideoNotFoundError extends Data.TaggedError(
+    "YouTubeVideoNotFoundError",
+  )<{
     videoId: string;
     message: string;
   }> {}
 
-  export class YouTubeChannelNotFoundError extends Data.TaggedError("YouTubeChannelNotFoundError")<{
+  export class YouTubeChannelNotFoundError extends Data.TaggedError(
+    "YouTubeChannelNotFoundError",
+  )<{
     channelId: string;
     message: string;
   }> {}
 
-  export class YouTubePlaylistNotFoundError extends Data.TaggedError("YouTubePlaylistNotFoundError")<{
+  export class YouTubePlaylistNotFoundError extends Data.TaggedError(
+    "YouTubePlaylistNotFoundError",
+  )<{
     channelId: string;
     message: string;
   }> {}
 
-  const getYouTubeApiKey = (): Effect.Effect<string, MissingYouTubeApiKeyError> => {
+  const getYouTubeApiKey = (): Effect.Effect<
+    string,
+    MissingYouTubeApiKeyError
+  > => {
     const apiKey = process.env.YT_API_KEY;
 
     if (apiKey) {
@@ -268,7 +302,9 @@ export namespace YouTubeApiService {
     );
   };
 
-  const fetchJson = <T>(url: string): Effect.Effect<T, YouTubeApiRequestError> =>
+  const fetchJson = <T>(
+    url: string,
+  ): Effect.Effect<T, YouTubeApiRequestError> =>
     Effect.tryPromise({
       try: async (signal) => {
         const endpoint = getEndpointLabel(url);
@@ -305,8 +341,12 @@ export namespace YouTubeApiService {
       catch: (cause) => toRequestError(getEndpointLabel(url), cause),
     });
 
-  export const isQuotaExceededError = (error: { reason: string | null; message: string }) =>
-    error.reason === "quotaExceeded" || error.message.toLowerCase().includes("quota exceeded");
+  export const isQuotaExceededError = (error: {
+    reason: string | null;
+    message: string;
+  }) =>
+    error.reason === "quotaExceeded" ||
+    error.message.toLowerCase().includes("quota exceeded");
 
   export const getVideoById = (
     videoId: string,
@@ -315,7 +355,9 @@ export namespace YouTubeApiService {
     },
   ): Effect.Effect<
     VideoSnapshot,
-    MissingYouTubeApiKeyError | YouTubeApiRequestError | YouTubeVideoNotFoundError
+    | MissingYouTubeApiKeyError
+    | YouTubeApiRequestError
+    | YouTubeVideoNotFoundError
   > => {
     const logger = options?.logger;
 
@@ -392,7 +434,9 @@ export namespace YouTubeApiService {
       const apiKey = yield* getYouTubeApiKey().pipe(
         Effect.tapError(() =>
           Effect.sync(() => {
-            logWarn(logger, "listTopLevelComments:missing-api-key", { videoId });
+            logWarn(logger, "listTopLevelComments:missing-api-key", {
+              videoId,
+            });
           }),
         ),
       );
@@ -460,7 +504,10 @@ export namespace YouTubeApiService {
         const pageItems = Array.isArray(payload.items) ? payload.items : [];
         const mapped = pageItems
           .map(mapCommentSnapshot)
-          .filter((comment) => comment.commentId.length > 0 && comment.videoId === videoId);
+          .filter(
+            (comment) =>
+              comment.commentId.length > 0 && comment.videoId === videoId,
+          );
 
         const roomLeft = maxComments - comments.length;
         const pageComments = roomLeft > 0 ? mapped.slice(0, roomLeft) : [];
@@ -489,7 +536,9 @@ export namespace YouTubeApiService {
         }
 
         nextPageToken =
-          typeof payload.nextPageToken === "string" ? payload.nextPageToken : undefined;
+          typeof payload.nextPageToken === "string"
+            ? payload.nextPageToken
+            : undefined;
         if (!nextPageToken) {
           break;
         }
@@ -535,7 +584,9 @@ export namespace YouTubeApiService {
       const apiKey = yield* getYouTubeApiKey().pipe(
         Effect.tapError(() =>
           Effect.sync(() => {
-            logWarn(logger, "getUploadsPlaylistId:missing-api-key", { channelId });
+            logWarn(logger, "getUploadsPlaylistId:missing-api-key", {
+              channelId,
+            });
           }),
         ),
       );
@@ -552,7 +603,9 @@ export namespace YouTubeApiService {
       const [channel] = videoResponseSchema(response);
       if (!channel) {
         yield* Effect.sync(() => {
-          logWarn(logger, "getUploadsPlaylistId:channel-not-found", { channelId });
+          logWarn(logger, "getUploadsPlaylistId:channel-not-found", {
+            channelId,
+          });
         });
 
         return yield* Effect.fail(
@@ -566,12 +619,16 @@ export namespace YouTubeApiService {
       const contentDetails =
         (channel.contentDetails as Record<string, unknown> | undefined) ?? {};
       const relatedPlaylists =
-        (contentDetails.relatedPlaylists as Record<string, unknown> | undefined) ?? {};
+        (contentDetails.relatedPlaylists as
+          | Record<string, unknown>
+          | undefined) ?? {};
       const uploads = relatedPlaylists.uploads;
 
       if (typeof uploads !== "string" || uploads.length === 0) {
         yield* Effect.sync(() => {
-          logWarn(logger, "getUploadsPlaylistId:uploads-not-found", { channelId });
+          logWarn(logger, "getUploadsPlaylistId:uploads-not-found", {
+            channelId,
+          });
         });
 
         return yield* Effect.fail(
@@ -616,7 +673,9 @@ export namespace YouTubeApiService {
       const apiKey = yield* getYouTubeApiKey().pipe(
         Effect.tapError(() =>
           Effect.sync(() => {
-            logWarn(logger, "listPlaylistVideoIds:missing-api-key", { playlistId });
+            logWarn(logger, "listPlaylistVideoIds:missing-api-key", {
+              playlistId,
+            });
           }),
         ),
       );
@@ -641,7 +700,9 @@ export namespace YouTubeApiService {
         .filter((videoId) => videoId.length > 0);
 
       const nextPageToken =
-        typeof payload.nextPageToken === "string" ? payload.nextPageToken : null;
+        typeof payload.nextPageToken === "string"
+          ? payload.nextPageToken
+          : null;
 
       yield* Effect.sync(() => {
         logInfo(logger, "listPlaylistVideoIds:success", {

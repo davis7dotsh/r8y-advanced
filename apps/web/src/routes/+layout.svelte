@@ -2,37 +2,76 @@
   import '../app.css'
   import { goto } from '$app/navigation'
   import { navigating, page } from '$app/state'
-  import { onMount } from 'svelte'
   import GlobalCommand from '@/components/GlobalCommand.svelte'
   import { clearAuthStorage } from '@/features/auth/auth'
   import { signOut } from '@/remote/auth.remote'
   import { toHref } from '@/utils/url'
 
-  let { children } = $props()
+  type Theme = 'light' | 'dark'
+  type ThemePreference = Theme | null
 
-  let theme = $state<'light' | 'dark'>('light')
-  let commandOpen = $state(false)
-  let searchShortcutLabel = $state('⌘K')
+  const getSearchShortcutLabel = () => {
+    if (typeof navigator === 'undefined') {
+      return '⌘K'
+    }
 
-  const showNavigation = $derived(
-    !page.url.pathname.startsWith('/unlock') && !page.url.pathname.startsWith('/share'),
-  )
+    const platform = (
+      (navigator as Navigator & { userAgentData?: { platform?: string } })
+        .userAgentData?.platform ??
+      navigator.platform ??
+      ''
+    ).toLowerCase()
 
-  const toggleTheme = () => {
-    const next = theme === 'dark' ? 'light' : 'dark'
-    theme = next
+    const isAppleDevice =
+      platform.includes('mac') ||
+      platform.includes('iphone') ||
+      platform.includes('ipad') ||
+      platform.includes('ipod') ||
+      platform.includes('ios')
 
-    if (next === 'dark') {
-      document.documentElement.classList.add('dark')
-    } else {
-      document.documentElement.classList.remove('dark')
+    return isAppleDevice ? '⌘K' : 'Ctrl K'
+  }
+
+  const getStoredThemePreference = (): ThemePreference => {
+    if (typeof localStorage === 'undefined') {
+      return null
     }
 
     try {
-      localStorage.setItem('theme', next)
+      const storedTheme = localStorage.getItem('theme')
+      return storedTheme === 'dark' || storedTheme === 'light'
+        ? storedTheme
+        : null
     } catch {
-      // ignore storage errors
+      return null
     }
+  }
+
+  const getSystemTheme = (): Theme => {
+    if (typeof window !== 'undefined') {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches
+        ? 'dark'
+        : 'light'
+    }
+
+    return 'light'
+  }
+
+  let { children } = $props()
+
+  let themePreference = $state<ThemePreference>(getStoredThemePreference())
+  let systemTheme = $state<Theme>(getSystemTheme())
+  let commandOpen = $state(false)
+  const searchShortcutLabel = getSearchShortcutLabel()
+  const theme = $derived(themePreference ?? systemTheme)
+
+  const showNavigation = $derived(
+    !page.url.pathname.startsWith('/unlock') &&
+      !page.url.pathname.startsWith('/share'),
+  )
+
+  const toggleTheme = () => {
+    themePreference = theme === 'dark' ? 'light' : 'dark'
   }
 
   const handleSignOut = async () => {
@@ -41,43 +80,56 @@
     await goto('/unlock')
   }
 
-  onMount(() => {
-    const platform = (
-      (navigator as Navigator & { userAgentData?: { platform?: string } })
-        .userAgentData?.platform ??
-      navigator.platform ??
-      ''
-    ).toLowerCase()
-    const isAppleDevice =
-      platform.includes('mac') ||
-      platform.includes('iphone') ||
-      platform.includes('ipad') ||
-      platform.includes('ipod') ||
-      platform.includes('ios')
-    searchShortcutLabel = isAppleDevice ? '⌘K' : 'Ctrl K'
+  const handleGlobalKeydown = (event: KeyboardEvent) => {
+    if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+      event.preventDefault()
+      commandOpen = !commandOpen
+    }
+  }
 
-    const persisted = localStorage.getItem('theme')
-    const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches
-    const next: 'light' | 'dark' =
-      persisted === 'dark' || persisted === 'light' ? persisted : systemDark ? 'dark' : 'light'
+  const handleStorage = (event: StorageEvent) => {
+    if (event.key !== 'theme') {
+      return
+    }
 
-    theme = next
+    themePreference =
+      event.newValue === 'dark' || event.newValue === 'light'
+        ? event.newValue
+        : null
+  }
 
-    if (next === 'dark') {
+  $effect(() => {
+    if (theme === 'dark') {
       document.documentElement.classList.add('dark')
     } else {
       document.documentElement.classList.remove('dark')
     }
 
-    const handler = (event: KeyboardEvent) => {
-      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
-        event.preventDefault()
-        commandOpen = !commandOpen
+    try {
+      if (themePreference) {
+        localStorage.setItem('theme', themePreference)
+      } else {
+        localStorage.removeItem('theme')
       }
+    } catch {
+      // ignore storage errors
+    }
+  })
+
+  $effect(() => {
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
+
+    const updateSystemTheme = (event?: MediaQueryListEvent) => {
+      const prefersDark = event?.matches ?? mediaQuery.matches
+      systemTheme = prefersDark ? 'dark' : 'light'
     }
 
-    document.addEventListener('keydown', handler)
-    return () => document.removeEventListener('keydown', handler)
+    updateSystemTheme()
+    mediaQuery.addEventListener('change', updateSystemTheme)
+
+    return () => {
+      mediaQuery.removeEventListener('change', updateSystemTheme)
+    }
   })
 </script>
 
@@ -86,8 +138,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 </svelte:head>
 
+<svelte:window onkeydown={handleGlobalKeydown} onstorage={handleStorage} />
+
 {#if navigating.to}
-  <div class="fixed right-4 top-3 z-50 inline-flex items-center gap-1.5 border border-border bg-background px-2.5 py-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+  <div
+    class="fixed right-4 top-3 z-50 inline-flex items-center gap-1.5 border border-border bg-background px-2.5 py-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground"
+  >
     <span class="size-1.5 animate-pulse bg-muted-foreground"></span>
     Loading
   </div>
@@ -138,7 +194,9 @@
           class="inline-flex items-center gap-2 border border-border bg-muted/50 px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
         >
           <span>Search</span>
-          <kbd class="ml-1 border border-border bg-background px-1.5 py-0.5 text-[10px] font-mono">
+          <kbd
+            class="ml-1 border border-border bg-background px-1.5 py-0.5 text-[10px] font-mono"
+          >
             {searchShortcutLabel}
           </kbd>
         </button>

@@ -1,0 +1,12 @@
+node_modules
+.turbo
+dist
+out
+.next
+.vercel
+.svelte-kit
+bun.lock
+coverage
+*.tgz
+.btca
+**/baml_client/**

@@ -22,7 +22,9 @@ const logWarn = (
 };
 
 export namespace AiEnrichmentService {
-  export class MissingOpencodeApiKeyError extends Data.TaggedError("MissingOpencodeApiKeyError")<{
+  export class MissingOpencodeApiKeyError extends Data.TaggedError(
+    "MissingOpencodeApiKeyError",
+  )<{
     message: string;
   }> {}
 

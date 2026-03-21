@@ -22,7 +22,7 @@
   let inputValue = $state('')
   let debouncedQuery = $state('')
   let isLoading = $state(false)
-  let results = $state<SearchResults>(emptyResults)
+  let results = $state.raw<SearchResults>(emptyResults)
 
   const channel = $derived(
     page.url.pathname.startsWith('/davis')
@@ -31,7 +31,7 @@
         ? 'theo'
         : page.url.pathname.startsWith('/micky')
           ? 'micky'
-        : null,
+          : null,
   )
 
   const showChannelPicker = $derived(inputValue.trim().length === 0)
@@ -46,13 +46,19 @@
   }
 
   const goToVideo = async (videoId: string) => {
-    await goto(toHref(`/${channel}/video/${encodeURIComponent(videoId)}`, { commentsPage: 1 }))
+    await goto(
+      toHref(`/${channel}/video/${encodeURIComponent(videoId)}`, {
+        commentsPage: 1,
+      }),
+    )
     open = false
     inputValue = ''
   }
 
   const goToSponsor = async (slug: string) => {
-    await goto(toHref(`/${channel}/sponsor/${encodeURIComponent(slug)}`, { page: 1 }))
+    await goto(
+      toHref(`/${channel}/sponsor/${encodeURIComponent(slug)}`, { page: 1 }),
+    )
     open = false
     inputValue = ''
   }
@@ -150,7 +156,10 @@
       {#if results.videos.length > 0}
         <Command.Group heading="Videos">
           {#each results.videos as video (video.videoId)}
-            <Command.Item value={video.videoId} onSelect={() => goToVideo(video.videoId)}>
+            <Command.Item
+              value={video.videoId}
+              onSelect={() => goToVideo(video.videoId)}
+            >
               <PlayIcon />
               <span>{video.title}</span>
             </Command.Item>
@@ -161,7 +170,10 @@
         <Command.Separator />
         <Command.Group heading="Sponsors">
           {#each results.sponsors as sponsor (sponsor.sponsorId)}
-            <Command.Item value={sponsor.sponsorId} onSelect={() => goToSponsor(sponsor.slug)}>
+            <Command.Item
+              value={sponsor.sponsorId}
+              onSelect={() => goToSponsor(sponsor.slug)}
+            >
               <MegaphoneIcon />
               <span>{sponsor.name}</span>
             </Command.Item>

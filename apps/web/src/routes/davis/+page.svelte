@@ -5,7 +5,9 @@
   import { getDavisVideos } from '@/remote/davis.remote'
   import { toHref } from '@/utils/url'
 
-  const search = $derived(parseDavisListSearch(Object.fromEntries(page.url.searchParams)))
+  const search = $derived(
+    parseDavisListSearch(Object.fromEntries(page.url.searchParams)),
+  )
 </script>
 
 <ChannelVideoListContent
@@ -13,6 +15,8 @@
   {search}
   errorTitle="Unable to load Davis videos"
   listHref={(page) => toHref('/davis', { page, q: search.q })}
-  videoHref={(videoId) => toHref(`/davis/video/${encodeURIComponent(videoId)}`, { commentsPage: 1 })}
-  sponsorHref={(slug) => toHref(`/davis/sponsor/${encodeURIComponent(slug)}`, { page: 1 })}
+  videoHref={(videoId) =>
+    toHref(`/davis/video/${encodeURIComponent(videoId)}`, { commentsPage: 1 })}
+  sponsorHref={(slug) =>
+    toHref(`/davis/sponsor/${encodeURIComponent(slug)}`, { page: 1 })}
 />

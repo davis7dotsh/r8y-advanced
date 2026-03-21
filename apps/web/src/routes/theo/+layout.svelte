@@ -5,6 +5,10 @@
   let { children } = $props()
 </script>
 
-<ChannelLayout title="Theo" allVideosHref="/theo?page=1" statsLoad={getTheoChannelStats({})}>
+<ChannelLayout
+  title="Theo"
+  allVideosHref="/theo?page=1"
+  statsLoad={getTheoChannelStats({})}
+>
   {@render children()}
 </ChannelLayout>

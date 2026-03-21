@@ -2,8 +2,14 @@
   import { page } from '$app/state'
 </script>
 
-<main class="mx-auto flex min-h-[80vh] w-full max-w-5xl flex-col items-center justify-center px-4 sm:px-6 lg:px-8">
-  <p class="font-serif text-8xl font-bold tracking-tight text-muted-foreground/30">{page.status}</p>
+<main
+  class="mx-auto flex min-h-[80vh] w-full max-w-5xl flex-col items-center justify-center px-4 sm:px-6 lg:px-8"
+>
+  <p
+    class="font-serif text-8xl font-bold tracking-tight text-muted-foreground/30"
+  >
+    {page.status}
+  </p>
   <h1 class="mt-4 font-serif text-2xl font-semibold tracking-tight">
     {page.status === 404 ? 'Page not found' : 'Something went wrong'}
   </h1>

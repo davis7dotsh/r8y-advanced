@@ -5,7 +5,9 @@
   import { getTheoSponsorDetails } from '@/remote/theo.remote'
   import { toHref } from '@/utils/url'
 
-  const search = $derived(parseTheoSponsorSearch(Object.fromEntries(page.url.searchParams)))
+  const search = $derived(
+    parseTheoSponsorSearch(Object.fromEntries(page.url.searchParams)),
+  )
   const id = $derived(page.params.id ?? '')
 </script>
 
@@ -16,7 +18,8 @@
     mentionsPage: search.mentionsPage,
   })}
   sponsorLabel="Sponsor"
-  videoHref={(videoId) => toHref(`/theo/video/${encodeURIComponent(videoId)}`, { commentsPage: 1 })}
+  videoHref={(videoId) =>
+    toHref(`/theo/video/${encodeURIComponent(videoId)}`, { commentsPage: 1 })}
   videoPageHref={(page) =>
     toHref(`/theo/sponsor/${encodeURIComponent(id)}`, {
       page,

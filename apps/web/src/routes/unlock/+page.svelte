@@ -1,6 +1,5 @@
 <script lang="ts">
   import { goto } from '$app/navigation'
-  import { onMount } from 'svelte'
   import { persistAuthStorage } from '@/features/auth/auth'
   import { signInWithPasscode } from '@/remote/auth.remote'
 
@@ -34,14 +33,16 @@
     }
   }
 
-  onMount(() => {
+  $effect(() => {
     passcodeInput?.focus()
   })
 </script>
 
 <main class="flex min-h-screen items-center justify-center px-4">
   <div class="w-full max-w-sm border border-border bg-card p-6 shadow-sm">
-    <h1 class="font-serif text-xl font-semibold text-foreground">Enter passcode</h1>
+    <h1 class="font-serif text-xl font-semibold text-foreground">
+      Enter passcode
+    </h1>
     <p class="mt-1 text-sm text-muted-foreground">This app is protected.</p>
 
     <form class="mt-5 space-y-3" onsubmit={submit}>
@@ -54,7 +55,9 @@
       />
 
       {#if errorMessage}
-        <p class="text-sm text-red-600 dark:text-red-400" role="alert">{errorMessage}</p>
+        <p class="text-sm text-red-600 dark:text-red-400" role="alert">
+          {errorMessage}
+        </p>
       {/if}
 
       <button

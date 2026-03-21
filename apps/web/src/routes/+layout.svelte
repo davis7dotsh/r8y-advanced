@@ -39,7 +39,9 @@
 
     try {
       const storedTheme = localStorage.getItem('theme')
-      return storedTheme === 'dark' || storedTheme === 'light' ? storedTheme : null
+      return storedTheme === 'dark' || storedTheme === 'light'
+        ? storedTheme
+        : null
     } catch {
       return null
     }
